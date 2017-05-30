@@ -1,0 +1,48 @@
+//! Some shared linear algebra concepts
+
+use nalgebra;
+use nalgebra::core::dimension::*;
+use nalgebra::storage::Storage;
+use numeric::{Real, sqrt};
+
+
+// ### BASIC VECTOR TYPES ###
+
+/// Re-export some base vector types for further use
+pub use nalgebra::Vector5;
+pub type Vector8<T> = nalgebra::VectorN<T, U8>;
+
+
+// ### RELATIVISTIC MOMENTA ###
+
+/// We'll be operating in the space of relativistic 4-momenta
+type Vector4 = nalgebra::Vector4<Real>;
+type V4Impl = nalgebra::MatrixArray<Real, U4, U1>;
+pub type Momentum = Vector4;
+
+/// When manipulating 4-momenta, it may be useful to have more explicit names
+/// for the various coordinates.
+pub const X: usize = 0;
+pub const Y: usize = 1;
+pub const Z: usize = 2;
+pub const E: usize = 3;
+
+/// Extract the spatial part of a 4-momentum
+pub fn xyz(m: &Momentum)
+  -> nalgebra::MatrixSlice<Real, U3, U1,
+                           <V4Impl as Storage<Real, U4, U1>>::RStride,
+                           <V4Impl as Storage<Real, U4, U1>>::CStride,
+                           <V4Impl as Storage<Real, U4, U1>>::Alloc>
+{
+  m.fixed_rows::<U3>(X)
+}
+
+/// Lorentz dot product of 4-momenta
+pub fn lorentz_dot(m1: &Momentum, m2: &Momentum) -> Real {
+    m1[E]*m2[E] - m1[Z]*m2[Z] - m1[Y]*m2[Y] - m1[X]*m2[X]
+}
+
+/// Lorentz norm of a 4-momentum
+pub fn lorentz_norm(m: &Momentum) -> Real {
+    sqrt(lorentz_dot(&m, &m))
+}
