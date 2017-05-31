@@ -44,7 +44,12 @@
 //! The fact that we can plug each phase's output as the input of the next phase
 //! lend to a functionnal approach.
 
+// `error_chain!` can recurse deeply
+#![recursion_limit = "1024"]
+
 extern crate chrono;
+#[macro_use]
+extern crate error_chain;
 extern crate nalgebra;
 extern crate num_complex;
 extern crate num_traits;
@@ -70,17 +75,17 @@ use rescont::ResultContribution;
 use resfin::ResultsBuilder;
 use scalar::ScalarProducts;
 use spinor::SpinorProducts;
-use std::{io, result};
 use std::time::Instant;
 
 
-/// This acts as our main function, but can return errors to the actual main()
-fn try_main() -> Result<()> {
+/// This will act as our main function, with suitable error handling
+quick_main!(|| {
     // ### CONFIGURATION READOUT ###
 
     // The work of loading, parsing, and checking the configuration has now been
     // offloaded to a dedicated struct
-    let cfg = Configuration::new("valeurs").map_err(Error::Config)?;
+    let cfg = Configuration::new("valeurs")
+                            .chain_err(|| "Failed to load the configuration")?;
 
 
     // ### SIMULATION INITIALIZATION ###
@@ -147,45 +152,24 @@ fn try_main() -> Result<()> {
     
     // Send the results to the standard output and to disk and we're done
     output::dump_results(&cfg, res_fin, elapsed_time)
-           .map_err(Error::ResultsIo)
-}
+           .chain_err(|| "Failed to output the results")
+});
 
 
-/// Here are the errors that can occur in the main function
-enum Error {
-    /// Something happened when loading the configuration
-    Config(config::Error),
 
-    /// Some results could not be properly written to disk
-    ResultsIo(io::Error),
-}
-
-/// To this error type, we associate the Result type returned by try_main()
-type Result<T> = result::Result<T, Error>;
-
-/// The actual main function calls try_main() and reports errors
-fn main() {
-    if let Err(error) = try_main() {
-        print!("\nERROR: ");
-        match error {
-            Error::Config(config::Error::Io(io_error)) => {
-                println!("Failed to read configuration file. {}", io_error);
-            }
-            Error::Config(config::Error::Missing(name)) => {
-                println!("Configuration file is missing field \"{}\".", name);
-            }
-            Error::Config(config::Error::Unreadable(name, parse_error)) => {
-                println!("Failed to parse configuration field \"{}\". {}",
-                         name,
-                         parse_error);
-            }
-            Error::Config(config::Error::Unsupported(name)) => {
-                println!("Configuration for \"{}\" is unsupported.", name);
-            }
-            Error::ResultsIo(io_error) => {
-                println!("Failed to write results to disk. {}", io_error);
-            }
+// Here are the various things that can go wrong during the main function
+mod errors {
+    error_chain!{
+        links{
+            // Something bad happened while loading the configuration
+            Config(::config::Error, ::config::ErrorKind);
         }
-        println!();
+
+        foreign_links{
+            // Something bad happened while outputting the results
+            ResultsIo(::std::io::Error);
+        }
     }
 }
+//
+use errors::*;

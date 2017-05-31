@@ -2,10 +2,8 @@
 
 use evcut::EventCut;
 use numeric::Real;
-use std::error;
 use std::fs::File;
-use std::io::{self, Read};
-use std::result;
+use std::io::Read;
 
 
 // This struct loads and gives access to the simulation's configuration
@@ -85,7 +83,8 @@ impl Configuration {
         let mut next_item = |name: &'static str| -> ConfigItem {
             ConfigItem {
                 name: name,
-                value: config_iter.next().ok_or(Error::Missing(name))
+                value: config_iter.next()
+                                  .ok_or(ErrorKind::Missing(name).into())
             }
         };
 
@@ -97,13 +96,15 @@ impl Configuration {
             let item_name = item.name;
             item.value?
                 .parse::<i32>()
-                .map_err(|e| Error::Unreadable(item_name, Box::new(e)))
+                .map_err(|e| ErrorKind::Unreadable(item_name,
+                                                   Box::new(e)).into())
         };
         let as_real = |item: ConfigItem| -> Result<Real> {
             let item_name = item.name;
             item.value?
                 .parse::<Real>()
-                .map_err(|e| Error::Unreadable(item_name, Box::new(e)))
+                .map_err(|e| ErrorKind::Unreadable(item_name,
+                                                   Box::new(e)).into())
         };
 
         // Booleans are a bit special: for compatibility with the original
@@ -116,9 +117,10 @@ impl Configuration {
                 ".true." => Ok(true),
                 ".false." => Ok(false),
                 // Delegate other booleans to the standard Rust parser
-                other => other.parse::<bool>()
-                              .map_err(|e| Error::Unreadable(item_name,
-                                                             Box::new(e)))
+                other =>
+                    other.parse::<bool>()
+                         .map_err(|e| ErrorKind::Unreadable(item_name,
+                                                            Box::new(e)).into())
             }
         };
 
@@ -173,12 +175,12 @@ impl Configuration {
 
         // NOTE: This is where the FORTRAN code would setup PAW for plotting.
         //       We don't support plotting, so we only check that it's disabled.
-        if config.plot { return Err(Error::Unsupported("plot")); }
+        if config.plot { return Err(ErrorKind::Unsupported("plot").into()); }
 
         // NOTE: We do not support the initial code's debugging feature which
         //       displays all intermediary results during sampling. That feature
         //       should be configured at compile time to avoid run-time costs.
-        if config.impr { return Err(Error::Unsupported("impr")); }
+        if config.impr { return Err(ErrorKind::Unsupported("impr").into()); }
 
         // If nothing bad occured, we can now return the configuration
         Ok(config)
@@ -186,27 +188,37 @@ impl Configuration {
 }
 
 
-/// Here are the errors that can occur when loading the configuration
-pub enum Error {
-    /// We failed to load the configuration file
-    Io(io::Error),
+// Here are the various things that can go wrong while loading the configuration
+mod config_errors {
+    error_chain!{
+        foreign_links{
+            // Failed to load the simulation configuration
+            Io(::std::io::Error);
+        }
 
-    /// The configuration file is missing some field
-    Missing(&'static str),
+        errors {
+            // The configuration file is missing some field
+            Missing(field: &'static str) {
+                description("Missing configuration field")
+                display("Missing configuration field: '{}'", field)
+            }
 
-    /// A configuration field could not be parsed. The exact parsing error is
-    /// provided for further explanations, but only in type-erased form.
-    Unreadable(&'static str, Box<error::Error>),
+            // A configuration field could not be parsed
+            Unreadable(field: &'static str,
+                       parse_error: Box<::std::error::Error + Send>) {
+                description("Failed to parse configuration field")
+                display("Failed to parse configuration for field '{}' ({})",
+                        field,
+                        parse_error)
+            }
 
-    /// The value of a configuration field is valid, but unsupported
-    Unsupported(&'static str),
-}
-//
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Error {
-        Error::Io(err)
+            // The value of a configuration field is valid, but unsupported
+            Unsupported(field: &'static str) {
+                description("Unsupported configuration")
+                display("Unsupported configuration for field '{}'", field)
+            }
+        }
     }
 }
-
-/// To this error type, we associate a Result type
-type Result<T> = result::Result<T, Error>;
+//
+pub use self::config_errors::*;
