@@ -16,6 +16,8 @@ pub type Complex = num_complex::Complex<Real>;
 // in floating-point expressions, instead of the unpleasant mixture of standard
 // calculator notation and RPN that the Rust standard library forces us into.
 
+// TODO: Try to generate this using macros
+
 /// Absolute value of a real number
 pub fn abs(x: Real) -> Real {
     x.abs()
