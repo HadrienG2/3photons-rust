@@ -60,9 +60,12 @@ impl Configuration {
         // ### LOAD CONFIGURATION ###
 
         // Read out the simulation configuration file or die trying.
-        let mut config_file = File::open(file_name)?;
-        let mut config_str = String::new();
-        config_file.read_to_string(&mut config_str)?;
+        let config_str = {
+            let mut config_file = File::open(file_name)?;
+            let mut buffer = String::new();
+            config_file.read_to_string(&mut buffer)?;
+            buffer
+        };
 
         // We will iterate over the configuration items. In 3photons' simple
         // config file format, these should be the first non-whitespace chunk of
