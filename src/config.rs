@@ -4,6 +4,7 @@ use evcut::EventCut;
 use numeric::Real;
 use std::fs::File;
 use std::io::Read;
+use std::str::FromStr;
 
 
 /// This struct gives access to the simulation's configuration
@@ -75,78 +76,31 @@ impl Configuration {
                       .filter_map(|line| line.split_whitespace()
                                              .next());
 
-        // To allow better error reporting, configuration items will be tagged
-        // with the name of the variable that they are mapped to.
-        struct ConfigItem<'a> {
-            name: &'static str,
-            value: Result<&'a str>,
-        };
-
         // Fetch the next configuration item, in textual form
         let mut next_item = |name: &'static str| -> ConfigItem {
-            ConfigItem {
-                name: name,
-                value: config_iter.next()
-                                  .ok_or(ErrorKind::Missing(name).into())
-            }
-        };
-
-        // Now that we have textual configuration items, we can parse them.
-        // The process is mostly the same for integers and reals, in fact we
-        // could have used a single generic implementation here if Rust allowed
-        // us to write generic closures.
-        let as_i32 = |item: ConfigItem| -> Result<i32> {
-            let item_name = item.name;
-            item.value?
-                .parse::<i32>()
-                .map_err(|e| ErrorKind::Unreadable(item_name,
-                                                   Box::new(e)).into())
-        };
-        let as_real = |item: ConfigItem| -> Result<Real> {
-            let item_name = item.name;
-            item.value?
-                .parse::<Real>()
-                .map_err(|e| ErrorKind::Unreadable(item_name,
-                                                   Box::new(e)).into())
-        };
-
-        // Booleans are a bit special: for compatibility with the original
-        // 3photons code, we also support FORTRAN syntax for them.
-        let as_bool = |item: ConfigItem| -> Result<bool> {
-            let item_name = item.name;
-            let item_value_lower = item.value?.to_lowercase();
-            match item_value_lower.as_str() {
-                // Handle FORTRAN booleans as a special case
-                ".true." => Ok(true),
-                ".false." => Ok(false),
-                // Delegate other booleans to the standard Rust parser
-                other =>
-                    other.parse::<bool>()
-                         .map_err(|e| ErrorKind::Unreadable(item_name,
-                                                            Box::new(e)).into())
-            }
+            ConfigItem::new(name, config_iter.next())
         };
 
         // Decode the configuration items into concrete values
         let config = Configuration {
-            num_events: as_i32(next_item("num_events"))?,
-            e_tot: as_real(next_item("e_tot"))?,
-            event_cut: EventCut::new(as_real(next_item("a_cut"))?,
-                                     as_real(next_item("b_cut"))?,
-                                     as_real(next_item("e_min"))?,
-                                     as_real(next_item("sin_cut"))?),
-            alpha: as_real(next_item("alpha"))?,
-            alpha_z: as_real(next_item("alpha_z"))?,
-            convers: as_real(next_item("convers"))?,
-            m_z0: as_real(next_item("m_z0"))?,
-            g_z0: as_real(next_item("g_z0"))?,
-            sin2_w: as_real(next_item("sin2_w"))?,
-            br_ep_em: as_real(next_item("br_ep_em"))?,
-            beta_plus: as_real(next_item("beta_plus"))?,
-            beta_minus: as_real(next_item("beta_moins"))?,
-            n_bin: as_i32(next_item("n_bin"))?,
-            impr: as_bool(next_item("impr"))?,
-            plot: as_bool(next_item("plot"))?,
+            num_events: next_item("num_events").parse::<i32>()?,
+            e_tot: next_item("e_tot").parse::<Real>()?,
+            event_cut: EventCut::new(next_item("a_cut").parse::<Real>()?,
+                                     next_item("b_cut").parse::<Real>()?,
+                                     next_item("e_min").parse::<Real>()?,
+                                     next_item("sin_cut").parse::<Real>()?),
+            alpha: next_item("alpha").parse::<Real>()?,
+            alpha_z: next_item("alpha_z").parse::<Real>()?,
+            convers: next_item("convers").parse::<Real>()?,
+            m_z0: next_item("m_z0").parse::<Real>()?,
+            g_z0: next_item("g_z0").parse::<Real>()?,
+            sin2_w: next_item("sin2_w").parse::<Real>()?,
+            br_ep_em: next_item("br_ep_em").parse::<Real>()?,
+            beta_plus: next_item("beta_plus").parse::<Real>()?,
+            beta_minus: next_item("beta_moins").parse::<Real>()?,
+            n_bin: next_item("n_bin").parse::<i32>()?,
+            impr: next_item("impr").parse_bool()?,
+            plot: next_item("plot").parse_bool()?,
         };
 
         // Display it the way the C++ version used to (this eases comparisons)
@@ -188,6 +142,49 @@ impl Configuration {
         println!("NBIN           : {}", self.n_bin);
         println!("oParam.IMPR    : {}", self.impr);
         println!("PLOT           : {}", self.plot);
+    }
+}
+
+
+/// A value from the configuration file, tagged with the struct field which it
+/// is supposed to map for error reporting purposes.
+struct ConfigItem<'a> {
+    name: &'static str,
+    value: Result<&'a str>,
+}
+//
+impl<'a> ConfigItem<'a> {
+    /// Build a config item from a struct field tag and raw iterator data
+    fn new(name: &'static str, data: Option<&'a str>) -> Self {
+        Self {
+            name,
+            value: data.ok_or(ErrorKind::Missing(name).into())
+        }
+    }
+
+    /// Parse this data using Rust's standard parsing logic
+    fn parse<T: FromStr>(self) -> Result<T>
+        where <T as FromStr>::Err: ::std::error::Error + Send + 'static
+    {
+        let name = self.name;
+        self.value?
+            .parse::<T>()
+            .map_err(|e| ErrorKind::Unreadable(name, Box::new(e)).into())
+    }
+
+    /// Parse this data using special logic which handles Fortran's bool syntax
+    fn parse_bool(self) -> Result<bool> {
+        let name = self.name;
+        let value_lower = self.value?.to_lowercase();
+        match value_lower.as_str() {
+            // Handle FORTRAN booleans as a special case
+            ".true." => Ok(true),
+            ".false." => Ok(false),
+            // Delegate other booleans to the standard Rust parser
+            o => o.parse::<bool>()
+                         .map_err(|e| ErrorKind::Unreadable(name, Box::new(e))
+                                                .into())
+        }
     }
 }
 
