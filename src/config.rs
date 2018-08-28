@@ -77,30 +77,32 @@ impl Configuration {
                                              .next());
 
         // Fetch the next configuration item, in textual form
-        let mut next_item = |name: &'static str| -> ConfigItem {
-            ConfigItem::new(name, config_iter.next())
+        let mut next_item = |name: &'static str| -> Result<ConfigItem> {
+            config_iter.next()
+                       .map(|data| ConfigItem::new(name, data))
+                       .ok_or(ErrorKind::Missing(name).into())
         };
 
         // Decode the configuration items into concrete values
         let config = Configuration {
-            num_events: next_item("num_events").parse::<i32>()?,
-            e_tot: next_item("e_tot").parse::<Real>()?,
-            event_cut: EventCut::new(next_item("a_cut").parse::<Real>()?,
-                                     next_item("b_cut").parse::<Real>()?,
-                                     next_item("e_min").parse::<Real>()?,
-                                     next_item("sin_cut").parse::<Real>()?),
-            alpha: next_item("alpha").parse::<Real>()?,
-            alpha_z: next_item("alpha_z").parse::<Real>()?,
-            convers: next_item("convers").parse::<Real>()?,
-            m_z0: next_item("m_z0").parse::<Real>()?,
-            g_z0: next_item("g_z0").parse::<Real>()?,
-            sin2_w: next_item("sin2_w").parse::<Real>()?,
-            br_ep_em: next_item("br_ep_em").parse::<Real>()?,
-            beta_plus: next_item("beta_plus").parse::<Real>()?,
-            beta_minus: next_item("beta_moins").parse::<Real>()?,
-            n_bin: next_item("n_bin").parse::<i32>()?,
-            impr: next_item("impr").parse_bool()?,
-            plot: next_item("plot").parse_bool()?,
+            num_events: next_item("num_events")?.parse::<i32>()?,
+            e_tot: next_item("e_tot")?.parse::<Real>()?,
+            event_cut: EventCut::new(next_item("a_cut")?.parse::<Real>()?,
+                                     next_item("b_cut")?.parse::<Real>()?,
+                                     next_item("e_min")?.parse::<Real>()?,
+                                     next_item("sin_cut")?.parse::<Real>()?),
+            alpha: next_item("alpha")?.parse::<Real>()?,
+            alpha_z: next_item("alpha_z")?.parse::<Real>()?,
+            convers: next_item("convers")?.parse::<Real>()?,
+            m_z0: next_item("m_z0")?.parse::<Real>()?,
+            g_z0: next_item("g_z0")?.parse::<Real>()?,
+            sin2_w: next_item("sin2_w")?.parse::<Real>()?,
+            br_ep_em: next_item("br_ep_em")?.parse::<Real>()?,
+            beta_plus: next_item("beta_plus")?.parse::<Real>()?,
+            beta_minus: next_item("beta_moins")?.parse::<Real>()?,
+            n_bin: next_item("n_bin")?.parse::<i32>()?,
+            impr: next_item("impr")?.parse_bool()?,
+            plot: next_item("plot")?.parse_bool()?,
         };
 
         // Display it the way the C++ version used to (this eases comparisons)
@@ -150,15 +152,15 @@ impl Configuration {
 /// is supposed to map for error reporting purposes.
 struct ConfigItem<'a> {
     name: &'static str,
-    value: Result<&'a str>,
+    data: &'a str,
 }
 //
 impl<'a> ConfigItem<'a> {
     /// Build a config item from a struct field tag and raw iterator data
-    fn new(name: &'static str, data: Option<&'a str>) -> Self {
+    fn new(name: &'static str, data: &'a str) -> Self {
         Self {
             name,
-            value: data.ok_or(ErrorKind::Missing(name).into())
+            data,
         }
     }
 
@@ -166,24 +168,19 @@ impl<'a> ConfigItem<'a> {
     fn parse<T: FromStr>(self) -> Result<T>
         where <T as FromStr>::Err: ::std::error::Error + Send + 'static
     {
-        let name = self.name;
-        self.value?
+        self.data
             .parse::<T>()
-            .map_err(|e| ErrorKind::Unreadable(name, Box::new(e)).into())
+            .map_err(|e| ErrorKind::Unreadable(self.name, Box::new(e)).into())
     }
 
     /// Parse this data using special logic which handles Fortran's bool syntax
     fn parse_bool(self) -> Result<bool> {
-        let name = self.name;
-        let value_lower = self.value?.to_lowercase();
-        match value_lower.as_str() {
+        match self.data.to_lowercase().as_str() {
             // Handle FORTRAN booleans as a special case
             ".true." => Ok(true),
             ".false." => Ok(false),
             // Delegate other booleans to the standard Rust parser
-            o => o.parse::<bool>()
-                         .map_err(|e| ErrorKind::Unreadable(name, Box::new(e))
-                                                .into())
+            _ => self.parse::<bool>()
         }
     }
 }
