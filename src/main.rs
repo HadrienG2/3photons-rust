@@ -79,7 +79,7 @@ use std::time::Instant;
 
 
 /// This will act as our main function, with suitable error handling
-quick_main!(|| {
+fn main() -> Result<()> {
     // ### CONFIGURATION READOUT ###
 
     // The work of loading, parsing, and checking the configuration has now been
@@ -153,7 +153,7 @@ quick_main!(|| {
     // Send the results to the standard output and to disk and we're done
     output::dump_results(&cfg, res_fin, elapsed_time)
            .chain_err(|| "Failed to output the results")
-});
+}
 
 
 
