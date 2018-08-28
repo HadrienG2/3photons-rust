@@ -79,7 +79,9 @@ impl Configuration {
                       .filter_map(|line| line.split_whitespace()
                                              .next());
 
-        // Fetch the next configuration item, in textual form, handling EOF
+        // This closure fetches the next configuration item, tagging it with
+        // the name of the configuration field which it is supposed to fill to
+        // ease error reporting, and handling unexpected end-of-file too.
         let mut next_item = |name: &'static str| -> Result<ConfigItem> {
             config_iter.next()
                        .map(|data| ConfigItem::new(name, data))
