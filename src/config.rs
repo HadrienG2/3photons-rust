@@ -6,7 +6,7 @@ use std::fs::File;
 use std::io::Read;
 
 
-// This struct loads and gives access to the simulation's configuration
+/// This struct gives access to the simulation's configuration
 pub struct Configuration {
     /// Number of events to be simulated
     pub num_events: i32,
@@ -55,7 +55,7 @@ pub struct Configuration {
 }
 //
 impl Configuration {
-    // Load the configuration from a file, check it, and print it out
+    /// Load the configuration from a file, check it, and print it out
     pub fn load(file_name: &str) -> Result<Self> {
         // ### LOAD CONFIGURATION ###
 
