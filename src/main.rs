@@ -67,14 +67,17 @@ mod resfin;
 mod scalar;
 mod spinor;
 
-use config::Configuration;
-use coupling::Couplings;
-use event::Event;
-use ranf::RanfGenerator;
-use rescont::ResultContribution;
-use resfin::ResultsBuilder;
-use scalar::ScalarProducts;
-use spinor::SpinorProducts;
+use ::{
+    config::Configuration,
+    coupling::Couplings,
+    event::Event,
+    ranf::RanfGenerator,
+    rescont::ResultContribution,
+    resfin::ResultsBuilder,
+    scalar::ScalarProducts,
+    spinor::SpinorProducts,
+};
+
 use std::time::Instant;
 
 
