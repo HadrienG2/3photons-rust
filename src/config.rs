@@ -1,10 +1,15 @@
 //! Mechanism for loading and sharing the simulation configuration
 
-use evcut::EventCut;
-use numeric::Real;
-use std::fs::File;
-use std::io::Read;
-use std::str::FromStr;
+use ::{
+    evcut::EventCut,
+    numeric::Real,
+};
+
+use std::{
+    fs::File,
+    io::Read,
+    str::FromStr,
+};
 
 
 /// This struct gives access to the simulation's configuration
@@ -58,8 +63,6 @@ pub struct Configuration {
 impl Configuration {
     /// Load the configuration from a file, check it, and print it out
     pub fn load(file_name: &str) -> Result<Self> {
-        // ### LOAD CONFIGURATION ###
-
         // Read out the simulation configuration file or die trying.
         let config_str = {
             let mut config_file = File::open(file_name)?;
@@ -76,7 +79,7 @@ impl Configuration {
                       .filter_map(|line| line.split_whitespace()
                                              .next());
 
-        // Fetch the next configuration item, in textual form
+        // Fetch the next configuration item, in textual form, handling EOF
         let mut next_item = |name: &'static str| -> Result<ConfigItem> {
             config_iter.next()
                        .map(|data| ConfigItem::new(name, data))
@@ -108,16 +111,13 @@ impl Configuration {
         // Display it the way the C++ version used to (this eases comparisons)
         config.print();
 
-
-        // ### CHECK UNSUPPORTED FEATURES ###
-
-        // NOTE: This is where the FORTRAN code would setup PAW for plotting.
-        //       We don't support plotting, so we only check that it's disabled.
+        // NOTE: We don't support the original code's PAW-based plotting
+        //       features, so we make sure that it was not enabled.
         if config.plot { return Err(ErrorKind::Unsupported("plot").into()); }
 
         // NOTE: We do not support the initial code's debugging feature which
-        //       displays all intermediary results during sampling. That feature
-        //       should be configured at compile time to avoid run-time costs.
+        //       displays all intermediary results during sampling. Such a
+        //       feature should be set up at build time to avoid run-time costs.
         if config.impr { return Err(ErrorKind::Unsupported("impr").into()); }
 
         // If nothing bad occured, we can now return the configuration
