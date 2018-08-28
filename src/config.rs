@@ -56,7 +56,7 @@ pub struct Configuration {
 //
 impl Configuration {
     // Load the configuration from a file, check it, and print it out
-    pub fn new(file_name: &str) -> Result<Self> {
+    pub fn load(file_name: &str) -> Result<Self> {
         // ### LOAD CONFIGURATION ###
 
         // Read out the simulation configuration file or die trying.

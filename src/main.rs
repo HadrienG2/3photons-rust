@@ -87,7 +87,7 @@ fn main() -> Result<()> {
 
     // The work of loading, parsing, and checking the configuration has now been
     // offloaded to a dedicated struct
-    let cfg = Configuration::new("valeurs")
+    let cfg = Configuration::load("valeurs")
                             .chain_err(|| "Failed to load the configuration")?;
 
 
