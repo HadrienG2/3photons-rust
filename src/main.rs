@@ -47,9 +47,9 @@
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
+#[macro_use] extern crate error_chain;
+
 extern crate chrono;
-#[macro_use]
-extern crate error_chain;
 extern crate nalgebra;
 extern crate num_complex;
 extern crate num_traits;
