@@ -149,29 +149,8 @@ impl Configuration {
             plot: as_bool(next_item("plot"))?,
         };
 
-
-        // ### DISPLAY IT ###
-
-        // Print out the configuration that we extracted from the file, in the
-        // same format as used by the original C++ version (this eases comparisons)
-        println!("ITOT           : {}", config.num_events);
-        println!("ETOT           : {}", config.e_tot);
-        println!("oCutpar.ACUT   : {}", config.event_cut.a_cut);
-        println!("oCutpar.BCUT   : {}", config.event_cut.b_cut);
-        println!("oCutpar.EMIN   : {}", config.event_cut.e_min);
-        println!("oCutpar.SINCUT : {}", config.event_cut.sin_cut);
-        println!("ALPHA          : {}", config.alpha);
-        println!("ALPHAZ         : {}", config.alpha_z);
-        println!("CONVERS        : {}", config.convers);
-        println!("oParam.MZ0     : {}", config.m_z0);
-        println!("oParam.GZ0     : {}", config.g_z0);
-        println!("SIN2W          : {}", config.sin2_w);
-        println!("BREPEM         : {}", config.br_ep_em);
-        println!("BETAPLUS       : {}", config.beta_plus);
-        println!("BETAMOINS      : {}", config.beta_minus);
-        println!("NBIN           : {}", config.n_bin);
-        println!("oParam.IMPR    : {}", config.impr);
-        println!("PLOT           : {}", config.plot);
+        // Display it the way the C++ version used to (this eases comparisons)
+        config.print();
 
 
         // ### CHECK UNSUPPORTED FEATURES ###
@@ -187,6 +166,28 @@ impl Configuration {
 
         // If nothing bad occured, we can now return the configuration
         Ok(config)
+    }
+
+    /// Display the configuration, following formatting of the original version
+    pub fn print(&self) {
+        println!("ITOT           : {}", self.num_events);
+        println!("ETOT           : {}", self.e_tot);
+        println!("oCutpar.ACUT   : {}", self.event_cut.a_cut);
+        println!("oCutpar.BCUT   : {}", self.event_cut.b_cut);
+        println!("oCutpar.EMIN   : {}", self.event_cut.e_min);
+        println!("oCutpar.SINCUT : {}", self.event_cut.sin_cut);
+        println!("ALPHA          : {}", self.alpha);
+        println!("ALPHAZ         : {}", self.alpha_z);
+        println!("CONVERS        : {}", self.convers);
+        println!("oParam.MZ0     : {}", self.m_z0);
+        println!("oParam.GZ0     : {}", self.g_z0);
+        println!("SIN2W          : {}", self.sin2_w);
+        println!("BREPEM         : {}", self.br_ep_em);
+        println!("BETAPLUS       : {}", self.beta_plus);
+        println!("BETAMOINS      : {}", self.beta_minus);
+        println!("NBIN           : {}", self.n_bin);
+        println!("oParam.IMPR    : {}", self.impr);
+        println!("PLOT           : {}", self.plot);
     }
 }
 
