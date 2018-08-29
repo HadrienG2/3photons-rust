@@ -1,9 +1,11 @@
 //! Mechanism to apply a cut to generated events
 
-use event::{Event, OUTGOING_COUNT, OUTGOING_SHIFT};
-use linalg::{self, E};
-use numeric::{abs, Real};
-use scalar::ScalarProducts;
+use ::{
+    event::{Event, OUTGOING_COUNT, OUTGOING_SHIFT},
+    linalg::{self, E},
+    numeric::{abs, Real},
+    scalar::ScalarProducts,
+};
 
 
 /// Cuts on generated events
