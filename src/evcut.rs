@@ -1,7 +1,7 @@
 //! Mechanism to apply a cut to generated events
 
 use ::{
-    event::{Event, OUTGOING_COUNT, OUTGOING_SHIFT},
+    event::{Event, INCOMING_E_M, OUTGOING_COUNT, OUTGOING_SHIFT},
     linalg::{self, E},
     numeric::{abs, Real},
     scalar::ScalarProducts,
@@ -48,7 +48,7 @@ impl EventCut {
         let mut cos_p_el = [0.; OUTGOING_COUNT];
         for (i, cos) in cos_p_el.iter_mut().enumerate() {
             let i_sh = i + OUTGOING_SHIFT;
-            *cos = 1. - scalar.ps(0, i_sh) / (p_el[E] * p_out[i][E])
+            *cos = 1. - scalar.ps(INCOMING_E_M, i_sh) / (p_el[E] * p_out[i][E])
         }
 
         // Check if the (beam, photon) angles pass the cut
