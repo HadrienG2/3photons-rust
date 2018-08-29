@@ -84,11 +84,7 @@ impl ResultContribution {
 
     /// Compute the sums of the squared matrix elements for each contribution
     pub fn m2_sums(&self) -> ResultVector<Real> {
-        // TODO: Replace with self.m2x.map(|contrib| contrib.iter().sum())
-        //       once nalgebra's Matrix::map() allows for heterogeneous maps
-        ResultVector::from_iterator(self.m2x.iter()
-                                            .map(|contrib| contrib.iter()
-                                                                  .sum()))
+        self.m2x.map(|contrib| contrib.iter().sum())
     }
 
     /// Display the results in human-readable form

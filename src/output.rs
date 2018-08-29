@@ -16,7 +16,7 @@ pub fn dump_results(cfg: &Configuration,
                     res_fin: FinalResults,
                     elapsed_time: Duration) -> Result<()> {
     // Get current date and time for result archival purposes
-    let current_time = chrono::UTC::now();
+    let current_time = chrono::Utc::now();
     let timestamp = current_time.format("%d-%b-%y   %T").to_string();
 
     // Write main results file. Try to mimick the original C++ format as well as

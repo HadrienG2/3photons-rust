@@ -109,8 +109,7 @@ impl Event {
         let q_arr = q_arr;
 
         // Calculate the parameters of the conformal transformation
-        // TODO: Replace with r = q.iter().sum() if nalgebra implements support
-        let r = q_arr.iter().fold(Momentum::zero(), |m1, m2| m1 + m2);
+        let r = q_arr.iter().sum();
         let r_norm = 1. / linalg::lorentz_norm(&r);
         let b = -linalg::xyz(&r) * r_norm;
         let g = r[E] * r_norm;

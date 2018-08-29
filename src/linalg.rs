@@ -31,8 +31,7 @@ pub const E: usize = 3;
 pub fn xyz(m: &Momentum)
   -> nalgebra::MatrixSlice<Real, U3, U1,
                            <V4Impl as Storage<Real, U4, U1>>::RStride,
-                           <V4Impl as Storage<Real, U4, U1>>::CStride,
-                           <V4Impl as Storage<Real, U4, U1>>::Alloc>
+                           <V4Impl as Storage<Real, U4, U1>>::CStride>
 {
   m.fixed_rows::<U3>(X)
 }
