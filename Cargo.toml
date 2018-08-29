@@ -9,3 +9,9 @@ num-traits = "0.2"
 chrono = "0.4"
 nalgebra = "0.15"
 error-chain = "0.12"
+
+[features]
+default = []
+
+# Enable fast but less accurate computation of random sines and cosines
+fast-sincos = []

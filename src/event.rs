@@ -7,7 +7,10 @@ use ::{
         exp,
         ln,
         Real,
-        reals::consts::{PI, FRAC_PI_2},
+        reals::{
+            MIN_POSITIVE,
+            consts::{PI, FRAC_PI_2},
+        },
         sin,
         sqr,
         sqrt
@@ -111,11 +114,26 @@ impl Event {
         for q in q_arr.iter_mut() {
             let cos_theta = 2. * rng.random() - 1.;
             let sin_theta = sqrt(1.0 - sqr(cos_theta));
-            let phi = 2. * PI * rng.random();
+            let (cos_phi, sin_phi) =
+                if cfg!(feature = "fast-sincos") {
+                    const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
+                    loop {
+                        let x = 2. * rng.random() - 1.;
+                        let y = 2. * rng.random() - 1.;
+                        let n2 = sqr(x) + sqr(y);
+                        if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
+                            let n = sqrt(n2);
+                            break (x/n, y/n);
+                        }
+                    }
+                } else {
+                    let phi = 2. * PI * rng.random();
+                    (cos(phi), sin(phi))
+                };
             q[E] = - ln(rng.random() * rng.random());
             q[Z] = q[E] * cos_theta;
-            q[Y] = q[E] * sin_theta * cos(phi);
-            q[X] = q[E] * sin_theta * sin(phi);
+            q[Y] = q[E] * sin_theta * cos_phi;
+            q[X] = q[E] * sin_theta * sin_phi;
         }
         let q_arr = q_arr;
 
