@@ -74,7 +74,6 @@ use ::{
     ranf::RanfGenerator,
     rescont::ResultContribution,
     resfin::ResultsBuilder,
-    scalar::ScalarProducts,
     spinor::SpinorProducts,
 };
 
@@ -125,13 +124,12 @@ fn main() -> Result<()> {
         // Sort the outgoing photons by energy
         event.sort_output_momenta();
 
-        // Compute spinor inner products and scalar products
+        // Compute spinor inner products
         let spinor = SpinorProducts::new(&event);
-        let scalar = ScalarProducts::new(&spinor);
 
         // If the event passes the cut, compute the total weight (incl. matrix
         // elements) and integrate it into the final results.
-        if cfg.event_cut.keep(&event, scalar) {
+        if cfg.event_cut.keep(&event, &spinor) {
             let res_contrib = ResultContribution::new(&couplings, &spinor);
             // NOTE: This is where the original code would display the result
             res_builder.integrate(res_contrib);

@@ -5,6 +5,7 @@ use ::{
     linalg::{self, E},
     numeric::{abs, Real},
     scalar::ScalarProducts,
+    spinor::SpinorProducts,
 };
 
 
@@ -35,7 +36,7 @@ impl EventCut {
     }
 
     /// Decide whether a generated event passes the cut or should be rejected
-    pub fn keep(&self, event: &Event, scalar: ScalarProducts) -> bool
+    pub fn keep(&self, event: &Event, spinor: &SpinorProducts) -> bool
     {
         // Check if the outgoing photons pass the energy cut
         let p_out = event.dump_outgoing();
@@ -45,6 +46,7 @@ impl EventCut {
         let p_el = event.dump_electron();
 
         // Compute the cosines of the angles between photons and the e- beam
+        let scalar = ScalarProducts::new(spinor);
         let mut cos_p_el = [0.; OUTGOING_COUNT];
         for (i, cos) in cos_p_el.iter_mut().enumerate() {
             let i_sh = i + OUTGOING_SHIFT;
