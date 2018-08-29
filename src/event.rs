@@ -114,7 +114,7 @@ impl Event {
         for q in q_arr.iter_mut() {
             let cos_theta = 2. * rng.random() - 1.;
             let sin_theta = sqrt(1.0 - sqr(cos_theta));
-            let (cos_phi, sin_phi) = Self::random_sincos(rng);
+            let [cos_phi, sin_phi] = Self::random_sincos(rng);
             q[E] = - ln(rng.random() * rng.random());
             q[Z] = q[E] * cos_theta;
             q[Y] = q[E] * sin_theta * cos_phi;
@@ -142,7 +142,7 @@ impl Event {
     }
 
     /// Generate a (sin(x), cos(x)) pair where x is uniform in [0, 2*PI[
-    fn random_sincos(rng: &mut RanfGenerator) -> (Real, Real) {
+    fn random_sincos(rng: &mut RanfGenerator) -> [Real; 2] {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different algorithm to go faster.
@@ -165,13 +165,13 @@ impl Event {
                     // Normalize by n and you get a point on the unit
                     // circle, i.e. a sin/cos pair!
                     let n = sqrt(n2);
-                    break (x/n, y/n);
+                    break [x/n, y/n];
                 }
             }
         } else {
             // This code path strictly follows the original 3photons alg
             let phi = 2. * PI * rng.random();
-            (cos(phi), sin(phi))
+            [cos(phi), sin(phi)]
         }
     }
 
