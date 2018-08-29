@@ -1,10 +1,21 @@
 //! This module takes care of event generation and storage
 
-use linalg::{self, Momentum, X, Y, Z, E};
-use numeric::{cos, exp, ln, Real, sin, sqr, sqrt};
-use numeric::reals::consts::{PI, FRAC_PI_2};
+use ::{
+    linalg::{self, Momentum, X, Y, Z, E},
+    numeric::{
+        cos,
+        exp,
+        ln,
+        Real,
+        reals::consts::{PI, FRAC_PI_2},
+        sin,
+        sqr,
+        sqrt
+    },
+    ranf::RanfGenerator,
+};
+
 use num_traits::identities::Zero;
-use ranf::RanfGenerator;
 
 
 /// Number of 4-impulsions that are generated per event (replaces original INP)
