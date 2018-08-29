@@ -116,17 +116,29 @@ impl Event {
             let sin_theta = sqrt(1.0 - sqr(cos_theta));
             let (cos_phi, sin_phi) =
                 if cfg!(feature = "fast-sincos") {
+                    // This code path takes advantage of the fact that random
+                    // number generation is much faster than sin/cos calls in
+                    // order to speed things up.
                     const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
                     loop {
+                        // Grab a point on the unit square
                         let x = 2. * rng.random() - 1.;
                         let y = 2. * rng.random() - 1.;
+
+                        // Compute (squared) distance from center
                         let n2 = sqr(x) + sqr(y);
+
+                        // Discard points which are outside of the unit circle
+                        // or too close to the center for good normalization.
                         if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
+                            // Normalize by n and you get a point on the unit
+                            // circle, i.e. a sin/cos pair!
                             let n = sqrt(n2);
                             break (x/n, y/n);
                         }
                     }
                 } else {
+                    // This code path strictly follows the original 3photons alg
                     let phi = 2. * PI * rng.random();
                     (cos(phi), sin(phi))
                 };
