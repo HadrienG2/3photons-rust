@@ -9,7 +9,7 @@ use ::{
         Real,
         reals::{
             MIN_POSITIVE,
-            consts::{PI, FRAC_PI_2},
+            consts::{FRAC_PI_2, PI},
         },
         sin,
         sqr,
@@ -114,34 +114,7 @@ impl Event {
         for q in q_arr.iter_mut() {
             let cos_theta = 2. * rng.random() - 1.;
             let sin_theta = sqrt(1.0 - sqr(cos_theta));
-            let (cos_phi, sin_phi) =
-                if cfg!(feature = "fast-sincos") {
-                    // This code path takes advantage of the fact that random
-                    // number generation is much faster than sin/cos calls in
-                    // order to speed things up.
-                    const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
-                    loop {
-                        // Grab a point on the unit square
-                        let x = 2. * rng.random() - 1.;
-                        let y = 2. * rng.random() - 1.;
-
-                        // Compute (squared) distance from center
-                        let n2 = sqr(x) + sqr(y);
-
-                        // Discard points which are outside of the unit circle
-                        // or too close to the center for good normalization.
-                        if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
-                            // Normalize by n and you get a point on the unit
-                            // circle, i.e. a sin/cos pair!
-                            let n = sqrt(n2);
-                            break (x/n, y/n);
-                        }
-                    }
-                } else {
-                    // This code path strictly follows the original 3photons alg
-                    let phi = 2. * PI * rng.random();
-                    (cos(phi), sin(phi))
-                };
+            let (cos_phi, sin_phi) = Self::random_sincos(rng);
             q[E] = - ln(rng.random() * rng.random());
             q[Z] = q[E] * cos_theta;
             q[Y] = q[E] * sin_theta * cos_phi;
@@ -165,6 +138,40 @@ impl Event {
             let p_xyz = d * (q_xyz + b * (q[E] + a * bq));
             let p_e = d * (g * q[E] + bq);
             *p = Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e);
+        }
+    }
+
+    /// Generate a (sin(x), cos(x)) pair where x is uniform in [0, 2*PI[
+    fn random_sincos(rng: &mut RanfGenerator) -> (Real, Real) {
+        // This function has two operating modes: a default mode which produces
+        // bitwise identical results w.r.t. the original 3photons code, and a
+        // mode which uses a different algorithm to go faster.
+        if cfg!(feature = "fast-sincos") {
+            // This code path takes advantage of the fact that random
+            // number generation is much faster than sin/cos calls in
+            // order to speed things up.
+            const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
+            loop {
+                // Grab a point on the unit square
+                let x = 2. * rng.random() - 1.;
+                let y = 2. * rng.random() - 1.;
+
+                // Compute (squared) distance from center
+                let n2 = sqr(x) + sqr(y);
+
+                // Discard points which are outside of the unit circle
+                // or too close to the center for good normalization.
+                if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
+                    // Normalize by n and you get a point on the unit
+                    // circle, i.e. a sin/cos pair!
+                    let n = sqrt(n2);
+                    break (x/n, y/n);
+                }
+            }
+        } else {
+            // This code path strictly follows the original 3photons alg
+            let phi = 2. * PI * rng.random();
+            (cos(phi), sin(phi))
         }
     }
 
