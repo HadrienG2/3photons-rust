@@ -109,13 +109,13 @@ impl Event {
         // TODO: Once Rust supports it, initialize q_arr more directly
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
         for q in q_arr.iter_mut() {
-            let c = 2. * rng.random() - 1.;
-            let s = sqrt(1.0 - sqr(c));
-            let f = 2. * PI * rng.random();
+            let cos_theta = 2. * rng.random() - 1.;
+            let sin_theta = sqrt(1.0 - sqr(cos_theta));
+            let phi = 2. * PI * rng.random();
             q[E] = - ln(rng.random() * rng.random());
-            q[Z] = q[E] * c;
-            q[Y] = q[E] * s * cos(f);
-            q[X] = q[E] * s * sin(f);
+            q[Z] = q[E] * cos_theta;
+            q[Y] = q[E] * sin_theta * cos(phi);
+            q[X] = q[E] * sin_theta * sin(phi);
         }
         let q_arr = q_arr;
 
