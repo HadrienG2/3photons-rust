@@ -38,7 +38,7 @@ pub fn xyz(m: &Momentum)
 
 /// Lorentz dot product of 4-momenta
 pub fn lorentz_dot(m1: &Momentum, m2: &Momentum) -> Real {
-    m1[E]*m2[E] - m1[Z]*m2[Z] - m1[Y]*m2[Y] - m1[X]*m2[X]
+    m1[E]*m2[E] - xyz(m1).dot(&xyz(m2))
 }
 
 /// Lorentz norm of a 4-momentum
