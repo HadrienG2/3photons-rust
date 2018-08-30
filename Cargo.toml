@@ -4,11 +4,11 @@ version = "0.1.0"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 
 [dependencies]
+chrono = "0.4"
+error-chain = "0.12"
+nalgebra = "0.15"
 num-complex = "0.2"
 num-traits = "0.2"
-chrono = "0.4"
-nalgebra = "0.15"
-error-chain = "0.12"
 
 [features]
 default = []
