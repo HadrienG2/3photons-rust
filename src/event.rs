@@ -20,6 +20,8 @@ use ::{
 
 use num_traits::identities::Zero;
 
+use std::cmp::Ordering;
+
 
 /// Number of 4-impulsions that are generated per event (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
@@ -181,23 +183,17 @@ impl Event {
     /// Sort outgoing photons in order of decreasing energy
     /// Roughly equivalent to the original ppp::TRI method
     pub fn sort_output_momenta(&mut self) {
-        // As currently written, this function only works with 3 output momenta
-        debug_assert_eq!(OUTGOING_COUNT, 3);
-
-        // Original sorting algorithm from the C++ version of 3photons
-        self.sort_output_indices(0, 1);
-        self.sort_output_indices(0, 2);
-        self.sort_output_indices(1, 2);
-    }
-
-    /// Order output momenta i and j, where it is assumed that i < j, according
-    /// to their energy. This is just a helper for the sorting method.
-    fn sort_output_indices(&mut self, i: usize, j: usize) {
-        debug_assert!(i < j);
-        let p_out = self.dump_outgoing_mut();
-        if p_out[j][E] > p_out[i][E] {
-            p_out.swap(i, j);
-        }
+        self.dump_outgoing_mut()
+            .sort_unstable_by(|a, b| {
+                // Treat NaNs as equal
+                if a[E] > b[E] {
+                    Ordering::Less
+                } else if a[E] < b[E] {
+                    Ordering::Greater
+                } else {
+                    Ordering::Equal
+                }
+            });
     }
 
 
