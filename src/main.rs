@@ -71,7 +71,6 @@ use ::{
     config::Configuration,
     coupling::Couplings,
     event::EventGenerator,
-    ranf::RanfGenerator,
     rescont::ResultContribution,
     resfin::ResultsBuilder,
     spinor::SpinorProducts,
@@ -105,9 +104,6 @@ fn main() -> Result<()> {
     // Compute physical couplings
     let couplings = Couplings::new(&cfg);
 
-    // Initialize the random number generator
-    let mut rng = RanfGenerator::new();
-
     // Initialize the event generator
     let mut evgen = EventGenerator::new(cfg.e_tot);
 
@@ -119,7 +115,7 @@ fn main() -> Result<()> {
 
     for _ in 0..cfg.num_events {
         // Generate an event
-        let event = evgen.generate(&mut rng);
+        let event = evgen.generate();
 
         // Compute spinor inner products
         let spinor = SpinorProducts::new(&event);

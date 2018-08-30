@@ -47,6 +47,9 @@ pub struct EventGenerator {
 
     /// Weight of generated events
     ev_weight: Real,
+
+    /// Random number generator
+    rng: RanfGenerator,
 }
 //
 impl EventGenerator {
@@ -86,6 +89,7 @@ impl EventGenerator {
         EventGenerator {
             e_tot,
             ev_weight,
+            rng: RanfGenerator::new(),
         }
     }
 
@@ -96,14 +100,11 @@ impl EventGenerator {
     /// Beautifully Organized) algorithm from S.D. Ellis, R. Kleiss and W.J.
     /// Stirling in order to generate the momenta of the three outgoing photons.
     ///
-    /// All events have the same weight, which can be read via self.ev_weight().
-    ///
-    /// "rng" is a random number generator. For now, it has to be RANF, later
-    /// we'll make the code generic with respect to this consideration.
+    /// All events have the same weight, which can be read via event_weight().
     ///
     /// The momenta of output photons is sorted in order of decreasing energy.
     ///
-    pub fn generate(&mut self, rng: &mut RanfGenerator) -> Event {
+    pub fn generate(&mut self) -> Event {
         // Prepare storage for the final event
         let half_e_tot = self.e_tot / 2.;
         let mut event = Event { p: [Momentum::zero(); PARTICLE_COUNT] };
@@ -114,10 +115,10 @@ impl EventGenerator {
         // TODO: Once Rust supports it, initialize q_arr more directly
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
         for q in q_arr.iter_mut() {
-            let cos_theta = 2. * rng.random() - 1.;
+            let cos_theta = 2. * self.rng.random() - 1.;
             let sin_theta = sqrt(1.0 - sqr(cos_theta));
-            let [cos_phi, sin_phi] = Self::random_sincos(rng);
-            q[E] = - ln(rng.random() * rng.random());
+            let [cos_phi, sin_phi] = self.random_sincos();
+            q[E] = - ln(self.rng.random() * self.rng.random());
             q[Z] = q[E] * cos_theta;
             q[Y] = q[E] * sin_theta * cos_phi;
             q[X] = q[E] * sin_theta * sin_phi;
@@ -151,7 +152,7 @@ impl EventGenerator {
     }
 
     /// Generate a (sin(x), cos(x)) pair where x is uniform in [0, 2*PI[
-    fn random_sincos(rng: &mut RanfGenerator) -> [Real; 2] {
+    fn random_sincos(&mut self) -> [Real; 2] {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different algorithm to go faster.
@@ -162,8 +163,8 @@ impl EventGenerator {
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
             loop {
                 // Grab a point on the unit square
-                let x = 2. * rng.random() - 1.;
-                let y = 2. * rng.random() - 1.;
+                let x = 2. * self.rng.random() - 1.;
+                let y = 2. * self.rng.random() - 1.;
 
                 // Compute (squared) distance from center
                 let n2 = sqr(x) + sqr(y);
@@ -179,7 +180,7 @@ impl EventGenerator {
             }
         } else {
             // This code path strictly follows the original 3photons alg
-            let phi = 2. * PI * rng.random();
+            let phi = 2. * PI * self.rng.random();
             [cos(phi), sin(phi)]
         }
     }
