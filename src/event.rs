@@ -41,10 +41,7 @@ pub type OutgoingMomenta<'a> = &'a [Momentum];
 
 
 /// Array of incoming and generated particle momenta
-pub struct Event {
-    /// Array of incoming and outgoing 4-momenta
-    p: Momenta,
-
+pub struct EventGenerator {
     /// Total center-of-mass energy of the collision
     e_tot: Real,
 
@@ -52,7 +49,7 @@ pub struct Event {
     ev_weight: Real,
 }
 //
-impl Event {
+impl EventGenerator {
     // ### CONSTRUCTION ###
 
     /// Initialize incoming 4-momenta with a center-of-mass energy of e_tot.
@@ -81,30 +78,19 @@ impl Event {
         //       Counting of nonzero masses is also gone because it was unused.
 
         // All generated events will have the same weight, so we pre-compute it
-        let weight = (2. * (OUTGOING_COUNT as Real) - 4.) * ln(e_tot) + z;
-        assert!((weight >= -180.) && (weight <= 174.));
-        let weight = exp(weight);
+        let ln_weight = (2. * (OUTGOING_COUNT as Real) - 4.) * ln(e_tot) + z;
+        assert!((ln_weight >= -180.) && (ln_weight <= 174.));
+        let ev_weight = exp(ln_weight);
         
         // Construct and return the output data structure
-        let mut result = Event {
-            p: [Momentum::zero(); PARTICLE_COUNT],
-            e_tot: e_tot,
-            ev_weight: weight,
-        };
-        result.p[INCOMING_E_M] = Momentum::new(-e_tot/2., 0., 0., e_tot/2.);
-        result.p[INCOMING_E_P] = Momentum::new(e_tot/2., 0., 0., e_tot/2.);
-        // NOTE: The outgoing momenta have been zero-initialized above
-        result
+        EventGenerator {
+            e_tot,
+            ev_weight,
+        }
     }
 
 
     // ### EVENT GENERATION ###
-
-    /// Generate an event, with the outgoing photons sorted by decreasing energy
-    pub fn generate(&mut self, rng: &mut RanfGenerator) {
-        self.generate_momenta(rng);
-        self.sort_output_momenta();
-    }
 
     /// Use a highly specialized version of the RAMBO (RAndom Momenta
     /// Beautifully Organized) algorithm from S.D. Ellis, R. Kleiss and W.J.
@@ -115,7 +101,15 @@ impl Event {
     /// "rng" is a random number generator. For now, it has to be RANF, later
     /// we'll make the code generic with respect to this consideration.
     ///
-    pub fn generate_momenta(&mut self, rng: &mut RanfGenerator) {
+    /// The momenta of output photons is sorted in order of decreasing energy.
+    ///
+    pub fn generate(&mut self, rng: &mut RanfGenerator) -> Event {
+        // Prepare storage for the final event
+        let half_e_tot = self.e_tot / 2.;
+        let mut event = Event { p: [Momentum::zero(); PARTICLE_COUNT] };
+        event.p[INCOMING_E_M] = Momentum::new(-half_e_tot, 0., 0., half_e_tot);
+        event.p[INCOMING_E_P] = Momentum::new(half_e_tot, 0., 0., half_e_tot);
+
         // Generate massless outgoing momenta in infinite phase space
         // TODO: Once Rust supports it, initialize q_arr more directly
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
@@ -139,14 +133,21 @@ impl Event {
         let d = self.e_tot * r_norm;  // NOTE: Was called X in original code
 
         // Transform the Q's conformally into output momenta
-        let p_out = self.dump_outgoing_mut();
-        for (p, q) in p_out.iter_mut().zip(q_arr.iter()) {
+        for (p, q) in event.dump_outgoing_mut().iter_mut()
+                                               .zip(q_arr.iter())
+        {
             let q_xyz = linalg::xyz(q);
             let bq = b.dot(&q_xyz);
             let p_xyz = d * (q_xyz + b * (q[E] + a * bq));
             let p_e = d * (g * q[E] + bq);
             *p = Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e);
         }
+
+        // Sort the output momenta in order of decreasing energy
+        event.sort_output_momenta();
+
+        // Hand off the generated event
+        event
     }
 
     /// Generate a (sin(x), cos(x)) pair where x is uniform in [0, 2*PI[
@@ -183,29 +184,24 @@ impl Event {
         }
     }
 
-    /// Sort outgoing photons in order of decreasing energy
-    /// Roughly equivalent to the original ppp::TRI method
-    pub fn sort_output_momenta(&mut self) {
-        self.dump_outgoing_mut()
-            .sort_unstable_by(|a, b| {
-                // Treat NaNs as equal
-                if a[E] > b[E] {
-                    Ordering::Less
-                } else if a[E] < b[E] {
-                    Ordering::Greater
-                } else {
-                    Ordering::Equal
-                }
-            });
-    }
 
+    // ### EVENT PROPERTIES ###
 
-    // ### ACCESSORS ###
-
-    /// Access the event weight
-    pub fn weight(&self) -> Real {
+    /// Access the event weight (identical for all generated events)
+    pub fn event_weight(&self) -> Real {
         self.ev_weight
     }
+}
+
+
+/// Array of incoming and generated particle momenta
+pub struct Event {
+    /// Array of incoming and outgoing 4-momenta
+    p: Momenta,
+}
+//
+impl Event {
+    // ### ACCESSORS ###
 
     /// Access the full internal momentum matrix by reference
     pub fn dump_momenta(&self) -> &Momenta {
@@ -231,6 +227,25 @@ impl Event {
     /// Mutable access to the outgoing momenta (not publicly exported)
     fn dump_outgoing_mut(&mut self) -> &mut [Momentum] {
         &mut self.p[OUTGOING_SHIFT..PARTICLE_COUNT]
+    }
+
+
+    // ### GENERATOR HELPERS ###
+
+    /// Sort outgoing photons in order of decreasing energy
+    /// Roughly equivalent to the original ppp::TRI method
+    fn sort_output_momenta(&mut self) {
+        self.dump_outgoing_mut()
+            .sort_unstable_by(|a, b| {
+                // Treat NaNs as equal
+                if a[E] > b[E] {
+                    Ordering::Less
+                } else if a[E] < b[E] {
+                    Ordering::Greater
+                } else {
+                    Ordering::Equal
+                }
+            });
     }
 
 

@@ -70,7 +70,7 @@ mod spinor;
 use ::{
     config::Configuration,
     coupling::Couplings,
-    event::Event,
+    event::EventGenerator,
     ranf::RanfGenerator,
     rescont::ResultContribution,
     resfin::ResultsBuilder,
@@ -109,17 +109,17 @@ fn main() -> Result<()> {
     let mut rng = RanfGenerator::new();
 
     // Initialize the event generator
-    let mut event = Event::new(cfg.e_tot);
+    let mut evgen = EventGenerator::new(cfg.e_tot);
 
     // Initialize results accumulator
-    let mut res_builder = ResultsBuilder::new(&cfg, event.weight());
+    let mut res_builder = ResultsBuilder::new(&cfg, evgen.event_weight());
 
 
     // ### SAMPLING LOOP ###
 
     for _ in 0..cfg.num_events {
         // Generate an event
-        event.generate(&mut rng);
+        let event = evgen.generate(&mut rng);
 
         // Compute spinor inner products
         let spinor = SpinorProducts::new(&event);
