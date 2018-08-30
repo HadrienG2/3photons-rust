@@ -37,14 +37,17 @@ impl SpinorProducts {
     // ### GRAM MATRIX ACCESSORS ###
 
     /// Quickly access the underlying Gram matrix of spinor products
+    #[inline]
     fn s(&self, i: usize, j: usize) -> Complex {
         self.gram_matrix.s(i, j)
     }
 
+    #[inline]
     fn t(&self, i: usize, j: usize) -> Complex {
         self.gram_matrix.t(i, j)
     }
 
+    #[inline]
     pub fn s2(&self, i: usize, j: usize) -> Real {
         self.s(i, j).norm_sqr()
     }
@@ -53,28 +56,33 @@ impl SpinorProducts {
     // ### AMPLITUDE COMPUTATIONS ###
 
     /// Standard amplitude for helicities ++-
+    #[inline]
     pub fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8 * self.s(0, 1) * sqr(self.s(0, k3)) /
             (self.s(0, k1) * self.s(0, k2) * self.s(1, k1) * self.s(1, k2))
     }
 
     /// Standard amplitude for helicities +--
+    #[inline]
     pub fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8 * self.t(0, 1) * sqr(self.t(1, k1)) /
             (self.t(1, k2) * self.t(1, k3) * self.t(0, k2) * self.t(0, k3))
     }
 
     /// Anomalous amplitude for helicities ++-
+    #[inline]
     pub fn b_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8 * self.t(0, 1) * sqr(self.t(k1, k2) * self.s(k3, 0))
     }
 
     /// Anomalous amplitude for helicities +--
+    #[inline]
     pub fn b_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8 * self.s(0, 1) * sqr(self.t(k1, 1) * self.s(k2, k3))
     }
 
     /// Anomalous amplitude for helicities +++
+    #[inline]
     pub fn b_ppp(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8 * self.s(0, 1) * (sqr(self.t(k1, k2) * self.t(k3, 1)) +
                                 sqr(self.t(k1, k3) * self.t(k2, 1)) +
@@ -82,6 +90,7 @@ impl SpinorProducts {
     }
 
     /// Anomalous amplitude for helicities ---
+    #[inline]
     pub fn b_mmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8 * self.t(0, 1) * (sqr(self.s(k1, 0) * self.s(k2, k3)) +
                                 sqr(self.s(k2, 0) * self.s(k1, k3)) +
@@ -147,11 +156,13 @@ impl ComplexGramMatrix {
     }
 
     /// Massless momenta spinor inner products Gram matrix accessor
+    #[inline]
     fn s(&self, i: usize, j: usize) -> Complex {
         self.sx[i][j]
     }
 
     /// Massless momenta conjugate spinor inner products Gram matrix accessor
+    #[inline]
     fn t(&self, i: usize, j: usize) -> Complex {
         -self.s(i, j).conj()
     }
