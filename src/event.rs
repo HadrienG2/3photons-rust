@@ -100,6 +100,12 @@ impl Event {
 
     // ### EVENT GENERATION ###
 
+    /// Generate an event, with the outgoing photons sorted by decreasing energy
+    pub fn generate(&mut self, rng: &mut RanfGenerator) {
+        self.generate_momenta(rng);
+        self.sort_output_momenta();
+    }
+
     /// Use a highly specialized version of the RAMBO (RAndom Momenta
     /// Beautifully Organized) algorithm from S.D. Ellis, R. Kleiss and W.J.
     /// Stirling in order to generate the momenta of the three outgoing photons.
@@ -176,9 +182,6 @@ impl Event {
             [cos(phi), sin(phi)]
         }
     }
-
-
-    // ### PHOTON SORTING ###
 
     /// Sort outgoing photons in order of decreasing energy
     /// Roughly equivalent to the original ppp::TRI method

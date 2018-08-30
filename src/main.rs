@@ -119,10 +119,7 @@ fn main() -> Result<()> {
 
     for _ in 0..cfg.num_events {
         // Generate an event
-        event.generate_momenta(&mut rng);
-
-        // Sort the outgoing photons by energy
-        event.sort_output_momenta();
+        event.generate(&mut rng);
 
         // Compute spinor inner products
         let spinor = SpinorProducts::new(&event);
