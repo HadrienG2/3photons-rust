@@ -130,7 +130,7 @@ impl ComplexGramMatrix {
             fx[i] = Complex::new(p[X], p[Y]) / xx[i];
         }
 
-        // We will only fill the lower half of the matrix
+        // Fill up the matrix
         let mut result = ComplexGramMatrix {
             sx: [[Complex::zero(); PARTICLE_COUNT]; PARTICLE_COUNT],
         };
@@ -138,6 +138,7 @@ impl ComplexGramMatrix {
             for i in 0..j {
                 let cx = fx[i]*xx[j] - fx[j]*xx[i];
                 result.sx[i][j] = cx;
+                result.sx[j][i] = -cx;
             }
         }
 
@@ -147,11 +148,7 @@ impl ComplexGramMatrix {
 
     /// Massless momenta spinor inner products Gram matrix accessor
     fn s(&self, i: usize, j: usize) -> Complex {
-        if i < j {
-            self.sx[i][j]
-        } else {
-            -self.sx[j][i]
-        }
+        self.sx[i][j]
     }
 
     /// Massless momenta conjugate spinor inner products Gram matrix accessor
