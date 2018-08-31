@@ -40,7 +40,7 @@ type Momenta = [Momentum; PARTICLE_COUNT];
 pub type OutgoingMomenta<'a> = &'a [Momentum];
 
 
-/// Array of incoming and generated particle momenta
+/// Generator of ee -> ppp events
 pub struct EventGenerator {
     /// Total center-of-mass energy of the collision
     e_tot: Real,
