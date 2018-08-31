@@ -156,11 +156,8 @@ impl EventGenerator {
         {
             let q_xyz = linalg::xyz(q);
             let rq = r_xyz.dot(&q_xyz);
-            // FIXME: Make this more elegant once nalgebra has better slicing
             let p_xyz = r_norm * q_xyz + (beta * rq - q[E]) * r_xyz;
-            p[X] = p_xyz[X];
-            p[Y] = p_xyz[Y];
-            p[Z] = p_xyz[Z];
+            linalg::xyz_mut(p).copy_from(&p_xyz);
             p[E] = r[E] * q[E] - rq;
             *p *= alpha;
         }

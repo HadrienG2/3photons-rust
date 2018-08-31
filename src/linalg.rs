@@ -35,3 +35,10 @@ pub fn xyz(m: &Momentum)
 {
   m.fixed_rows::<U3>(X)
 }
+pub fn xyz_mut(m: &mut Momentum)
+  -> nalgebra::MatrixSliceMut<Real, U3, U1,
+                              <V4Impl as Storage<Real, U4, U1>>::RStride,
+                              <V4Impl as Storage<Real, U4, U1>>::CStride>
+{
+  m.fixed_rows_mut::<U3>(X)
+}
