@@ -157,8 +157,11 @@ impl EventGenerator {
             let q_xyz = linalg::xyz(q);
             let rq = r_xyz.dot(&q_xyz);
             let p_xyz = r_norm * q_xyz + (beta * rq - q[E]) * r_xyz;
-            let p_e = r[E] * q[E] - rq;
-            *p = alpha * Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e);
+            p[X] = p_xyz[X];
+            p[Y] = p_xyz[Y];
+            p[Z] = p_xyz[Z];
+            p[E] = r[E] * q[E] - rq;
+            *p *= alpha;
         }
 
         // Sort the output momenta in order of decreasing energy
