@@ -61,10 +61,10 @@ impl EventGenerator {
     pub fn new(e_tot: Real) -> Self {
         // Check on the number of particles. The check for N<101 is gone since
         // unlike the original RAMBO, we don't use arrays of hardcoded size.
-        debug_assert!(OUTGOING_COUNT > 1);
+        assert!(OUTGOING_COUNT > 1);
 
         // As currently written, this code only works for two incoming particles
-        debug_assert_eq!(INCOMING_COUNT, 2);
+        assert_eq!(INCOMING_COUNT, 2);
 
         // Compute some numerical constants. Replaces the lazy initialization
         // from the original RAMBO code with something less branchy.

@@ -267,8 +267,8 @@ pub struct FinalResults<'a> {
 impl<'a> FinalResults<'a> {
     /// Display results using Eric's (???) parametrization
     pub fn eric(&self) {
-        debug_assert_eq!(INCOMING_COUNT, 2);
-        debug_assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(INCOMING_COUNT, 2);
+        assert_eq!(OUTGOING_COUNT, 3);
 
         let cfg = self.config;
 
@@ -305,8 +305,8 @@ impl<'a> FinalResults<'a> {
     /// Display Fawzi's (???) analytical results and compare them to the Monte
     /// Carlo results that we have computed
     pub fn fawzi(&self) {
-        debug_assert_eq!(INCOMING_COUNT, 2);
-        debug_assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(INCOMING_COUNT, 2);
+        assert_eq!(OUTGOING_COUNT, 3);
 
         let cfg = self.config;
         let ref ev_cut = cfg.event_cut;

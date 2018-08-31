@@ -90,7 +90,7 @@ impl ResultContribution {
     /// Display the results in human-readable form
     #[allow(dead_code)]
     pub fn display(&self) {
-        debug_assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(OUTGOING_COUNT, 3);
         
         for (index, contribution) in self.m2x.iter().enumerate() {
             println!("Contribution {}", index);
