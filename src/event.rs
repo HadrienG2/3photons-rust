@@ -111,14 +111,31 @@ impl EventGenerator {
         event.p[INCOMING_E_M] = Momentum::new(-half_e_tot, 0., 0., half_e_tot);
         event.p[INCOMING_E_P] = Momentum::new(half_e_tot, 0., 0., half_e_tot);
 
+        // Pregenerate the random parameters (thusly isolating the harmful
+        // branching and data dependency side-effects of the RNG)
+        #[derive(Clone, Copy, Default)]
+        struct RandomParameters {
+            cos_theta: Real,
+            sincos_phi: [Real; 2],
+            exp_minus_e: Real,
+        }
+        let mut rand_params_arr = [RandomParameters::default(); OUTGOING_COUNT];
+        for rand_params in rand_params_arr.iter_mut() {
+            *rand_params = RandomParameters {
+                cos_theta: 2. * self.rng.random() - 1.,
+                sincos_phi: self.random_sincos(),
+                exp_minus_e: self.rng.random() * self.rng.random(),
+            };
+        }
+
         // Generate massless outgoing momenta in infinite phase space
         // TODO: Once Rust supports it, initialize q_arr more directly
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
-        for q in q_arr.iter_mut() {
-            let cos_theta = 2. * self.rng.random() - 1.;
+        for (q, params) in q_arr.iter_mut().zip(rand_params_arr.iter()) {
+            let cos_theta = params.cos_theta;
             let sin_theta = sqrt(1.0 - sqr(cos_theta));
-            let [cos_phi, sin_phi] = self.random_sincos();
-            q[E] = - ln(self.rng.random() * self.rng.random());
+            let [cos_phi, sin_phi] = params.sincos_phi;
+            q[E] = - ln(params.exp_minus_e);
             q[Z] = q[E] * cos_theta;
             q[Y] = q[E] * sin_theta * cos_phi;
             q[X] = q[E] * sin_theta * sin_phi;
