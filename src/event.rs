@@ -127,21 +127,21 @@ impl EventGenerator {
 
         // Calculate the parameters of the conformal transformation
         let r = q_arr.iter().sum();
-        let r_norm = 1. / linalg::lorentz_norm(&r);
-        let b = -linalg::xyz(&r) * r_norm;
-        let g = r[E] * r_norm;
-        let a = 1. / (1. + g);
-        let d = self.e_tot * r_norm;  // NOTE: Was called X in original code
+        let r_xyz = linalg::xyz(&r);
+        let r_norm_2 = r[E] * r[E] - r_xyz.dot(&r_xyz);
+        let alpha = self.e_tot / r_norm_2;
+        let r_norm = sqrt(r_norm_2);
+        let beta = 1. / (r_norm + r[E]);
 
         // Transform the Q's conformally into output momenta
         for (p, q) in event.dump_outgoing_mut().iter_mut()
                                                .zip(q_arr.iter())
         {
             let q_xyz = linalg::xyz(q);
-            let bq = b.dot(&q_xyz);
-            let p_xyz = d * (q_xyz + b * (q[E] + a * bq));
-            let p_e = d * (g * q[E] + bq);
-            *p = Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e);
+            let rq = r_xyz.dot(&q_xyz);
+            let p_xyz = r_norm * q_xyz + (beta * rq - q[E]) * r_xyz;
+            let p_e = r[E] * q[E] - rq;
+            *p = alpha * Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e);
         }
 
         // Sort the output momenta in order of decreasing energy

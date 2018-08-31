@@ -3,7 +3,7 @@
 use nalgebra;
 use nalgebra::core::dimension::*;
 use nalgebra::storage::Storage;
-use numeric::{Real, sqrt};
+use numeric::Real;
 
 
 // ### BASIC VECTOR TYPES ###
@@ -34,14 +34,4 @@ pub fn xyz(m: &Momentum)
                            <V4Impl as Storage<Real, U4, U1>>::CStride>
 {
   m.fixed_rows::<U3>(X)
-}
-
-/// Lorentz dot product of 4-momenta
-pub fn lorentz_dot(m1: &Momentum, m2: &Momentum) -> Real {
-    m1[E]*m2[E] - xyz(m1).dot(&xyz(m2))
-}
-
-/// Lorentz norm of a 4-momentum
-pub fn lorentz_norm(m: &Momentum) -> Real {
-    sqrt(lorentz_dot(&m, &m))
 }
