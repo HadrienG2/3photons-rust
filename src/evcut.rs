@@ -46,36 +46,27 @@ impl EventCut {
         let p_el = event.electron_momentum();
         let p_out = event.outgoing_momenta();
 
-        // Compute the cosines of the angles between photons and the e- beam
-        let mut cos_p_el = [0.; OUTGOING_COUNT];
-        let p_el_xyz = linalg::xyz(&p_el);
-        for (cos, p_ph) in cos_p_el.iter_mut().zip(p_out.iter()) {
-            let p_ph_xyz = linalg::xyz(&p_ph);
-            *cos = p_el_xyz.dot(&p_ph_xyz) / (p_el[E] * p_ph[E]);
-        }
-
         // Check if the (beam, photon) angles pass the cut
-        if cos_p_el.iter().any(|&cos| abs(cos) > self.a_cut) { return false; }
-
-        // Compute the cosines of the angles between photon pairs
-        const OUTGOING_PAIRS: usize = OUTGOING_COUNT * (OUTGOING_COUNT-1) / 2;
-        let mut cos_p_p = [0.; OUTGOING_PAIRS];
-        {
-            let mut cos_iter = cos_p_p.iter_mut();
-            for i in 1..OUTGOING_COUNT {
-                let p_ph1 = p_out[i];
-                let p_ph1_xyz = linalg::xyz(&p_ph1);
-                for j in 0..i {
-                    let cos = cos_iter.next().unwrap();
-                    let p_ph2 = p_out[j];
-                    let p_ph2_xyz = linalg::xyz(&p_ph2);
-                    *cos = p_ph1_xyz.dot(&p_ph2_xyz) / (p_ph1[E] * p_ph2[E]);
-                }
-            }
+        let p_el_xyz = linalg::xyz(&p_el);
+        for p_ph in p_out.iter() {
+            let p_ph_xyz = linalg::xyz(&p_ph);
+            let cos_num = p_el_xyz.dot(&p_ph_xyz);
+            let cos_denom = p_el[E] * p_ph[E];
+            if abs(cos_num) > self.a_cut*cos_denom { return false; }
         }
 
         // Check if the (photon, photon) angles pass the cut
-        if cos_p_p.iter().any(|&cos| cos > self.b_cut) { return false; }
+        for i in 1..OUTGOING_COUNT {
+            let p_ph1 = &p_out[i];
+            let p_ph1_xyz = linalg::xyz(p_ph1);
+            for j in 0..i {
+                let p_ph2 = &p_out[j];
+                let p_ph2_xyz = linalg::xyz(p_ph2);
+                let cos_num = p_ph1_xyz.dot(&p_ph2_xyz);
+                let cos_denom = p_ph1[E] * p_ph2[E];
+                if cos_num > self.b_cut * cos_denom { return false; }
+            }
+        }
 
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
@@ -83,9 +74,10 @@ impl EventCut {
         let n_ppp = linalg::xyz(&p_out[0]).cross(&linalg::xyz(&p_out[1]));
 
         // Compute the cosine of the angle between the beam and this vector
-        let cos_n = linalg::xyz(p_el).dot(&n_ppp) / (p_el[E] * n_ppp.norm());
+        let cos_num = linalg::xyz(p_el).dot(&n_ppp);
+        let cos_denom = p_el[E] * n_ppp.norm();
 
         // Check if the (beam, normal to photon plane) angle passes the cut
-        abs(cos_n) >= self.sin_cut
+        abs(cos_num) >= self.sin_cut * cos_denom
     }
 }
