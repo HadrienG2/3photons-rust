@@ -15,52 +15,24 @@ pub mod functions {
     use super::Real;
 
 
-    // The following functions are trivial wrappers around member functions of
-    // floating-point types. Their only purpose is to achieve a consistent notation
-    // in floating-point expressions, instead of the unpleasant mixture of standard
-    // calculator notation and RPN that the Rust standard library forces us into.
-
-    // TODO: Try to generate this using macros
-
-    /// Absolute value of a real number
-    #[inline]
-    pub fn abs(x: Real) -> Real {
-        x.abs()
+    // Generate trivial wrappers around member functions of floating-point types
+    // to allow for a consistent notation in floating-point expressions. For
+    // example, this allows using sin(x) instead of x.sin().
+    //
+    macro_rules! prefix_unary_funcs {
+        ( $( $name:ident ),* ) => ( $(
+            #[inline]
+            pub fn $name(x: Real) -> Real {
+                x.$name()
+            }
+        )* )
     }
-
-    /// Square root of a real number
-    #[inline]
-    pub fn sqrt(x: Real) -> Real {
-        x.sqrt()
-    }
-
-    /// Natural logarithm of a real number
-    #[inline]
-    pub fn ln(x: Real) -> Real {
-        x.ln()
-    }
-
-    /// Exponential of a real number
-    #[inline]
-    pub fn exp(x: Real) -> Real {
-        x.exp()
-    }
-
-    /// Sine of a real number
-    #[inline]
-    pub fn sin(x: Real) -> Real {
-        x.sin()
-    }
-
-    /// Cosine of a real number
-    #[inline]
-    pub fn cos(x: Real) -> Real {
-        x.cos()
-    }
+    //
+    prefix_unary_funcs!{ abs, cos, exp, ln, sin, sqrt }
 
 
-    // The following functions are generic in nature, and designed to work on both
-    // real and complex numbers.
+    // The following functions are generic in nature, and designed to work on
+    // both real and complex numbers.
 
     /// Compute the square of any number, optimized shorthand for powi(x, 2)
     #[inline]
@@ -70,19 +42,19 @@ pub mod functions {
         x * x
     }
 
-    /// Raise a number to an arbitrary integer power, like {float}.powi(), using a
-    /// binary exponentiation algorithm.
+    /// Raise a number to an arbitrary integer power, like {float}.powi(), using
+    /// a binary exponentiation algorithm.
     ///
-    /// This recursive version is clean and concise, but should only be used when n
-    /// is known at compile time, so that the compiler can unroll the recursion...
+    /// This recursive version is clean and concise, but should only be used
+    /// when n is known at compile time, and the recursion can be unrolled...
     ///
     #[inline]
     pub fn powi<T>(x: T, n: i32) -> T
         where T: Mul<Output=T> + Div<Output=T> + Copy + One
     {
         match n {
-            1 => x,
             0 => T::one(),
+            1 => x,
             _ if n >= 2 => powi(x, n%2) * powi(sqr(x), n/2),
             _ => T::one() / powi(x, -n)  // Here, we must have n < 0
         }
