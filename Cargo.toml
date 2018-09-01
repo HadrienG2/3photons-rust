@@ -14,5 +14,5 @@ num-traits = "0.2"
 [features]
 default = []
 
-# Enable fast but less accurate computation of random sines and cosines
+# Use faster algorithm for random unit vector generation
 fast-sincos = []
