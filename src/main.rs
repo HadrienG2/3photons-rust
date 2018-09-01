@@ -73,7 +73,6 @@ use ::{
     event::EventGenerator,
     rescont::ResultContribution,
     resfin::ResultsBuilder,
-    spinor::SpinorProducts,
 };
 
 use std::time::Instant;
@@ -120,17 +119,9 @@ fn main() -> Result<()> {
         // If the event passes the cut, compute the total weight (incl. matrix
         // elements) and integrate it into the final results.
         if cfg.event_cut.keep(&event) {
-            // Compute spinor inner products
-            let spinor = SpinorProducts::new(&event);
-
-            // Deduce how this event will contribute to the results
-            let res_contrib = ResultContribution::new(&couplings, &spinor);
-
+            let res_contrib = ResultContribution::new(&couplings, &event);
             // NOTE: This is where the original code would display the result
-
-            // Integrate the contribution to the results
             res_builder.integrate(res_contrib);
-
             // NOTE: This is where the FORTRAN code would fill histograms
         }
     }
