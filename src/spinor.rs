@@ -29,8 +29,8 @@ impl SpinorProducts {
 
     /// Build spinor products from previously generated particle 4-momenta
     pub fn new(event: &Event) -> Self {
-        // The underlying Gram matrix is not particularly specific to the
-        // physical problem of e+e- -> ppp collisions, but our methods are
+        // The underlying Gram matrix is not specific to the physics of
+        // e+e- -> ppp collisions, but our methods are specific to it.
         debug_assert_eq!(INCOMING_COUNT, 2);
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
