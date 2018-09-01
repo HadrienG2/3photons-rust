@@ -18,7 +18,6 @@ pub mod functions {
     // Generate trivial wrappers around member functions of floating-point types
     // to allow for a consistent notation in floating-point expressions. For
     // example, this allows using sin(x) instead of x.sin().
-    //
     macro_rules! prefix_unary_funcs {
         ( $( $name:ident ),* ) => ( $(
             #[inline]
@@ -27,14 +26,9 @@ pub mod functions {
             }
         )* )
     }
-    //
     prefix_unary_funcs!{ abs, cos, exp, ln, sin, sqrt }
 
-
-    // The following functions are generic in nature, and designed to work on
-    // both real and complex numbers.
-
-    /// Compute the square of any number, optimized shorthand for powi(x, 2)
+    /// Compute the square of a number
     #[inline]
     pub fn sqr<T>(x: T) -> T
         where T: Mul<Output=T> + Copy
@@ -42,7 +36,7 @@ pub mod functions {
         x * x
     }
 
-    /// Raise a number to an arbitrary integer power, like {float}.powi() does
+    /// Raise a number to an arbitrary integer power
     #[inline]
     pub fn powi<T>(x: T, n: i32) -> T
         where T: Mul<Output=T> + Div<Output=T> + Copy + One
