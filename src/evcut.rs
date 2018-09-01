@@ -50,7 +50,8 @@ impl EventCut {
         let mut cos_p_el = [0.; OUTGOING_COUNT];
         let p_el_xyz = linalg::xyz(&p_el);
         for (cos, p_ph) in cos_p_el.iter_mut().zip(p_out.iter()) {
-            *cos = p_el_xyz.dot(&linalg::xyz(&p_ph)) / (p_el[E] * p_ph[E]);
+            let p_ph_xyz = linalg::xyz(&p_ph);
+            *cos = p_el_xyz.dot(&p_ph_xyz) / (p_el[E] * p_ph[E]);
         }
 
         // Check if the (beam, photon) angles pass the cut
