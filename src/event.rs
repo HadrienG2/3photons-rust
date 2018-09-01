@@ -255,6 +255,12 @@ impl Event {
         array_mut_ref![self.p, OUTGOING_SHIFT, OUTGOING_COUNT]
     }
 
+    /// Minimal outgoing photon energy
+    pub fn min_photon_energy(&self) -> Real {
+        // Use the fact that photons are sorted in order of decreasing energy
+        self.p[OUTGOING_SHIFT+OUTGOING_COUNT-1][E]
+    }
+
 
     // ### DEBUGGING TOOLS ###
 

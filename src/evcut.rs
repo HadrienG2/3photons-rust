@@ -42,11 +42,11 @@ impl EventCut {
     pub fn keep(&self, event: &Event, spinor: &SpinorProducts) -> bool
     {
         // Check if the outgoing photons pass the energy cut
-        let p_out = event.outgoing_momenta();
-        if p_out.iter().any(|p| p[E] < self.e_min) { return false; }
+        if event.min_photon_energy() < self.e_min { return false; }
 
-        // Get the incoming electron 4-momentum
+        // Get the incoming electron 4-momentum and outgoing photon 4-momenta
         let p_el = event.electron_momentum();
+        let p_out = event.outgoing_momenta();
 
         // Compute the cosines of the angles between photons and the e- beam
         let scalar = ScalarProducts::new(spinor);
