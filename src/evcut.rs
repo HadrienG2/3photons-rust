@@ -2,7 +2,7 @@
 
 use ::{
     event::{Event, OUTGOING_COUNT},
-    linalg::{self, E},
+    linalg::{E, xyz},
     numeric::{
         functions::abs,
         Real
@@ -47,10 +47,8 @@ impl EventCut {
         let p_out = event.outgoing_momenta();
 
         // Check if the (beam, photon) angles pass the cut
-        let p_el_xyz = linalg::xyz(&p_el);
         for p_ph in p_out.iter() {
-            let p_ph_xyz = linalg::xyz(&p_ph);
-            let cos_num = p_el_xyz.dot(&p_ph_xyz);
+            let cos_num = xyz(p_el).dot(&xyz(p_ph));
             let cos_denom = p_el[E] * p_ph[E];
             if abs(cos_num) > self.a_cut*cos_denom { return false; }
         }
@@ -58,11 +56,9 @@ impl EventCut {
         // Check if the (photon, photon) angles pass the cut
         for i in 1..OUTGOING_COUNT {
             let p_ph1 = &p_out[i];
-            let p_ph1_xyz = linalg::xyz(p_ph1);
             for j in 0..i {
                 let p_ph2 = &p_out[j];
-                let p_ph2_xyz = linalg::xyz(p_ph2);
-                let cos_num = p_ph1_xyz.dot(&p_ph2_xyz);
+                let cos_num = xyz(p_ph1).dot(&xyz(p_ph2));
                 let cos_denom = p_ph1[E] * p_ph2[E];
                 if cos_num > self.b_cut * cos_denom { return false; }
             }
@@ -71,10 +67,10 @@ impl EventCut {
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
         debug_assert_eq!(OUTGOING_COUNT, 3);
-        let n_ppp = linalg::xyz(&p_out[0]).cross(&linalg::xyz(&p_out[1]));
+        let n_ppp = xyz(&p_out[0]).cross(&xyz(&p_out[1]));
 
         // Compute the cosine of the angle between the beam and this vector
-        let cos_num = linalg::xyz(p_el).dot(&n_ppp);
+        let cos_num = xyz(p_el).dot(&n_ppp);
         let cos_denom = p_el[E] * n_ppp.norm();
 
         // Check if the (beam, normal to photon plane) angle passes the cut
