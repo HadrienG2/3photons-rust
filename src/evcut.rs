@@ -1,14 +1,12 @@
 //! Mechanism to apply a cut to generated events
 
 use ::{
-    event::{Event, INCOMING_E_M, OUTGOING_COUNT, OUTGOING_SHIFT},
+    event::{Event, OUTGOING_COUNT},
     linalg::{self, E},
     numeric::{
         functions::abs,
         Real
     },
-    scalar::ScalarProducts,
-    spinor::SpinorProducts,
 };
 
 
@@ -39,7 +37,7 @@ impl EventCut {
     }
 
     /// Decide whether a generated event passes the cut or should be rejected
-    pub fn keep(&self, event: &Event, spinor: &SpinorProducts) -> bool
+    pub fn keep(&self, event: &Event) -> bool
     {
         // Check if the outgoing photons pass the energy cut
         if event.min_photon_energy() < self.e_min { return false; }
@@ -49,11 +47,10 @@ impl EventCut {
         let p_out = event.outgoing_momenta();
 
         // Compute the cosines of the angles between photons and the e- beam
-        let scalar = ScalarProducts::new(spinor);
         let mut cos_p_el = [0.; OUTGOING_COUNT];
-        for (i, cos) in cos_p_el.iter_mut().enumerate() {
-            let i_sh = i + OUTGOING_SHIFT;
-            *cos = 1. - scalar.ps(INCOMING_E_M, i_sh) / (p_el[E] * p_out[i][E])
+        let p_el_xyz = linalg::xyz(&p_el);
+        for (cos, p_ph) in cos_p_el.iter_mut().zip(p_out.iter()) {
+            *cos = p_el_xyz.dot(&linalg::xyz(&p_ph)) / (p_el[E] * p_ph[E]);
         }
 
         // Check if the (beam, photon) angles pass the cut
@@ -67,10 +64,10 @@ impl EventCut {
             for j in 1..OUTGOING_COUNT {
                 for i in 0..j {
                     let cos = cos_iter.next().unwrap();
-                    let i_sh = i + OUTGOING_SHIFT;
-                    let j_sh = j + OUTGOING_SHIFT;
-                    *cos = 1. - scalar.ps(i_sh, j_sh) /
-                               (p_out[i][E] * p_out[j][E]);
+                    let p_ph_1 = &p_out[i];
+                    let p_ph_2 = &p_out[j];
+                    *cos = linalg::xyz(&p_ph_1).dot(&linalg::xyz(&p_ph_2)) /
+                               (p_ph_1[E] * p_ph_2[E]);
                 }
             }
         }

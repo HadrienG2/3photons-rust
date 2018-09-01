@@ -65,7 +65,6 @@ pub mod output;
 pub mod ranf;
 pub mod rescont;
 pub mod resfin;
-pub mod scalar;
 pub mod spinor;
 
 use ::{
@@ -118,15 +117,20 @@ fn main() -> Result<()> {
         // Generate an event
         let event = evgen.generate();
 
-        // Compute spinor inner products
-        let spinor = SpinorProducts::new(&event);
-
         // If the event passes the cut, compute the total weight (incl. matrix
         // elements) and integrate it into the final results.
-        if cfg.event_cut.keep(&event, &spinor) {
+        if cfg.event_cut.keep(&event) {
+            // Compute spinor inner products
+            let spinor = SpinorProducts::new(&event);
+
+            // Deduce how this event will contribute to the results
             let res_contrib = ResultContribution::new(&couplings, &spinor);
+
             // NOTE: This is where the original code would display the result
+
+            // Integrate the contribution to the results
             res_builder.integrate(res_contrib);
+
             // NOTE: This is where the FORTRAN code would fill histograms
         }
     }
