@@ -1,4 +1,4 @@
-//! Facilities for passing around Lorentz scalar products of momenta
+//! Facilities for passing around Lorentz scalar products of 4-momenta
 
 use ::{
     numeric::Real,

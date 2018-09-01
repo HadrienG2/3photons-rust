@@ -45,7 +45,7 @@ impl EventCut {
         let p_out = event.outgoing_momenta();
         if p_out.iter().any(|p| p[E] < self.e_min) { return false; }
 
-        // Get the incoming electron momentum
+        // Get the incoming electron 4-momentum
         let p_el = event.electron_momentum();
 
         // Compute the cosines of the angles between photons and the e- beam

@@ -18,23 +18,23 @@ use num_traits::Zero;
 const RAC8: Real = 2. * SQRT_2;
 
 
-/// Array of massless momenta spinor products
+/// Massless 4-momenta spinor inner products
 pub struct SpinorProducts {
-    /// Massless momenta spinor inner products Gram matrix
+    /// Gram matrix associated with the inner products
     sx: [[Complex; PARTICLE_COUNT]; PARTICLE_COUNT],
 }
 //
 impl SpinorProducts {
     // ### CONSTRUCTION ###
 
-    /// Build spinor products from previously generated particle momenta
+    /// Build spinor products from previously generated particle 4-momenta
     pub fn new(event: &Event) -> Self {
         // The underlying GramMatrix is not particularly specific to the
         // physical problem of e+e- -> ppp collisions, but this struct is
         debug_assert_eq!(INCOMING_COUNT, 2);
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
-        // Access the array of incoming and outgoing particle momenta
+        // Access the array of incoming and outgoing particle 4-momenta
         let p_arr = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)

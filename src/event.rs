@@ -18,21 +18,36 @@ use num_traits::identities::Zero;
 use std::cmp::Ordering;
 
 
-/// Number of 4-impulsions that are generated per event (replaces original INP)
+// Incoming (electron/positron) and outgoing (photon) particle 4-momenta will
+// be stored together as consecutive rows in an array
+
+/// Index of the incoming electron in the 4-momentum array
+pub const INCOMING_E_M: usize = 0;
+
+/// Index of the incoming positron in the 4-momentum array
+pub const INCOMING_E_P: usize = 1;
+
+/// Number of incoming particles
+pub const INCOMING_COUNT: usize = 2;
+
+/// Index of the first outgoing photon in the 4-momentum array
+pub const OUTGOING_SHIFT: usize = INCOMING_COUNT;
+
+/// Number of 4-momenta that are generated per event (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
 
-/// Incoming (electron/positron) and outgoing (photon) particle impulsions will
-/// be stored together as consecutive rows in an array
-pub const INCOMING_E_M: usize = 0;
-pub const INCOMING_E_P: usize = 1;
-pub const INCOMING_COUNT: usize = 2;
-pub const OUTGOING_SHIFT: usize = INCOMING_COUNT;
+/// Total number of particles in an event
 pub const PARTICLE_COUNT: usize = INCOMING_COUNT+OUTGOING_COUNT;
+
+/// Storage for event 4-momenta
 type Momenta = [Momentum; PARTICLE_COUNT];
 
-/// A client can get access to the outgoing momenta alone if needed.
-/// The resulting slice will always have OUTGOING_COUNT elements.
+/// Read-only view into the outgoing 4-momenta of an event
+/// HACK: This slice will always have OUTGOING_COUNT elements.
 pub type OutgoingMomenta<'a> = &'a [Momentum];
+
+/// Multable view into the outgoing 4-momenta of an event
+/// HACK: This slice will always have OUTGOING_COUNT elements.
 pub type OutgoingMomentaMut<'a> = &'a mut [Momentum];
 
 
@@ -94,11 +109,11 @@ impl EventGenerator {
 
     /// Use a highly specialized version of the RAMBO (RAndom Momenta
     /// Beautifully Organized) algorithm from S.D. Ellis, R. Kleiss and W.J.
-    /// Stirling in order to generate the momenta of the three outgoing photons.
+    /// Stirling to generate the 4-momenta of the three outgoing photons.
     ///
     /// All events have the same weight, which can be read via event_weight().
     ///
-    /// The momenta of output photons is sorted in order of decreasing energy.
+    /// The 4-momenta of output photons are sorted by decreasing energy.
     ///
     pub fn generate(&mut self) -> Event {
         // Prepare storage for the final event
@@ -124,7 +139,7 @@ impl EventGenerator {
             };
         }
 
-        // Generate massless outgoing momenta in infinite phase space
+        // Generate massless outgoing 4-momenta in infinite phase space
         // TODO: Once Rust supports it, initialize q_arr more directly
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
         for (q, params) in q_arr.iter_mut().zip(rand_params_arr.iter()) {
@@ -146,7 +161,7 @@ impl EventGenerator {
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 
-        // Transform the Q's conformally into output momenta
+        // Transform the Q's conformally into output 4-momenta
         for (p, q) in event.outgoing_momenta_mut().iter_mut()
                                                   .zip(q_arr.iter())
         {
@@ -158,7 +173,7 @@ impl EventGenerator {
             *p *= alpha;
         }
 
-        // Sort the output momenta in order of decreasing energy
+        // Sort the output 4-momenta in order of decreasing energy
         event.outgoing_momenta_mut()
              .sort_unstable_by(|a, b| {
                  // Treat NaNs as equal
@@ -219,7 +234,7 @@ impl EventGenerator {
 }
 
 
-/// Array of incoming and generated particle momenta
+/// Storage for ee -> ppp event data
 pub struct Event {
     /// Array of incoming and outgoing 4-momenta
     p: Momenta,
@@ -228,28 +243,28 @@ pub struct Event {
 impl Event {
     // ### ACCESSORS ###
 
-    /// Access the full internal momentum matrix by reference
+    /// Access the full internal 4-momentum array by reference
     pub fn all_momenta(&self) -> &Momenta {
         &self.p
     }
 
-    /// Access the electron momentum only
+    /// Access the electron 4-momentum only
     pub fn electron_momentum(&self) -> &Momentum {
         &self.p[INCOMING_E_M]
     }
 
-    /// Access the positron momentum only
+    /// Access the positron 4-momentum only
     #[allow(dead_code)]
     pub fn positron_momentum(&self) -> &Momentum {
         &self.p[INCOMING_E_P]
     }
 
-    /// Access the outgoing momenta only
+    /// Access the outgoing 4-momenta only
     pub fn outgoing_momenta(&self) -> OutgoingMomenta {
         &self.p[OUTGOING_SHIFT..PARTICLE_COUNT]
     }
 
-    /// Mutable access to the outgoing momenta (for internal use)
+    /// Mutable access to the outgoing 4-momenta (for internal use)
     fn outgoing_momenta_mut(&mut self) -> OutgoingMomentaMut {
         &mut self.p[OUTGOING_SHIFT..PARTICLE_COUNT]
     }
