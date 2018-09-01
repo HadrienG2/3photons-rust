@@ -1,9 +1,12 @@
 //! Some shared linear algebra concepts
 
-use nalgebra;
-use nalgebra::core::dimension::*;
-use nalgebra::storage::Storage;
-use numeric::Real;
+use ::numeric::Real;
+
+use nalgebra::{
+    core::dimension::*,
+    self,
+    storage::Storage
+};
 
 
 // ### BASIC VECTOR TYPES ###

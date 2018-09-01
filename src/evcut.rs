@@ -3,7 +3,10 @@
 use ::{
     event::{Event, INCOMING_E_M, OUTGOING_COUNT, OUTGOING_SHIFT},
     linalg::{self, E},
-    numeric::{abs, Real},
+    numeric::{
+        functions::abs,
+        Real
+    },
     scalar::ScalarProducts,
     spinor::SpinorProducts,
 };

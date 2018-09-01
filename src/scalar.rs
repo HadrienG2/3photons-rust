@@ -1,7 +1,9 @@
 //! Facilities for passing around Lorentz scalar products of momenta
 
-use numeric::Real;
-use spinor::SpinorProducts;
+use ::{
+    numeric::Real,
+    spinor::SpinorProducts,
+};
 
 
 /// Array of all possible Lorentz 4-momenta products (Gram matrix)

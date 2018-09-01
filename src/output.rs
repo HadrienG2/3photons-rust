@@ -1,14 +1,23 @@
 //! This module is in charge of outputting the final simulation results to the
 //! standard output and various files
 
-use config::Configuration;
+use ::{
+    config::Configuration,
+    numeric::{
+        functions::{abs, sqr, sqrt},
+        Real,
+    },
+    rescont::NUM_RESULTS,
+    resfin::FinalResults,
+};
+
 use chrono;
-use numeric::{abs, Real, sqr, sqrt};
-use rescont::NUM_RESULTS;
-use resfin::FinalResults;
-use std::fs::{File, OpenOptions};
-use std::io::{Result, Write};
-use std::time::Duration;
+
+use std::{
+  fs::{File, OpenOptions},
+  io::{Result, Write},
+  time::Duration,
+};
 
 
 // Output the simulation results to the console and to disk

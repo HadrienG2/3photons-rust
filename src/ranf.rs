@@ -2,6 +2,7 @@
 
 use numeric::Real;
 
+
 // Generated random numbers will have a granularity of 1/MODULO
 type Integer = i32;
 const MODULO: Integer = 1_000_000_000;

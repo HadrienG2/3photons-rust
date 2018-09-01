@@ -3,17 +3,12 @@
 use ::{
     linalg::{self, Momentum, X, Y, Z, E},
     numeric::{
-        cos,
-        exp,
-        ln,
+        functions::{cos, exp, ln, sin, sqr, sqrt},
         Real,
         reals::{
             MIN_POSITIVE,
             consts::{FRAC_PI_2, PI},
         },
-        sin,
-        sqr,
-        sqrt
     },
     ranf::RanfGenerator,
 };

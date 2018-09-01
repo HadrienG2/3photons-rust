@@ -1,12 +1,19 @@
 //! This module contains everything that is needed to compute, store, and
 //! analyze the final results: differential cross-section, sum & variance
 
-use config::Configuration;
-use event::{INCOMING_COUNT, OUTGOING_COUNT};
-use numeric::{abs, Complex, powi, Real, sqr, sqrt};
-use numeric::reals::consts::PI;
+use ::{
+    config::Configuration,
+    event::{INCOMING_COUNT, OUTGOING_COUNT},
+    numeric::{
+        Complex,
+        functions::{abs, powi, sqr, sqrt},
+        Real,
+        reals::consts::PI,
+    },
+    rescont::{ResultContribution, ResultVector},
+};
+
 use num_traits::Zero;
-use rescont::{ResultContribution, ResultVector};
 
 
 /// Number of spins

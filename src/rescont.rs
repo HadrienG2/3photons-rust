@@ -1,10 +1,13 @@
 //! Intermediary results of the computation for one event
 
-use coupling::Couplings;
-use event::{INCOMING_COUNT, OUTGOING_COUNT};
-use linalg::{Vector5, Vector8};
-use numeric::{Complex, Real};
-use spinor::SpinorProducts;
+use ::{
+    coupling::Couplings,
+    event::{INCOMING_COUNT, OUTGOING_COUNT},
+    linalg::{Vector5, Vector8},
+    numeric::{Complex, Real},
+    spinor::SpinorProducts,
+};
+
 use std::mem;
 
 

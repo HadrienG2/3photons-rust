@@ -3,8 +3,7 @@
 use ::{
     config::Configuration,
     numeric::{
-        powi,
-        sqrt,
+        functions::{powi, sqrt},
         Real,
         reals::consts::PI,
     },

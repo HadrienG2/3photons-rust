@@ -1,9 +1,16 @@
 //! Facilities for computing spinor products
 
-use event::{Event, INCOMING_COUNT, OUTGOING_COUNT, PARTICLE_COUNT};
-use linalg::{X, Y, Z, E};
-use numeric::{Complex, Real, sqr, sqrt};
-use numeric::reals::consts::SQRT_2;
+use ::{
+    event::{Event, INCOMING_COUNT, OUTGOING_COUNT, PARTICLE_COUNT},
+    linalg::{X, Y, Z, E},
+    numeric::{
+        Complex,
+        functions::{sqr, sqrt},
+        Real,
+        reals::consts::SQRT_2,
+    },
+};
+
 use num_traits::Zero;
 
 
