@@ -99,7 +99,7 @@ impl EventGenerator {
     /// Beautifully Organized) algorithm from S.D. Ellis, R. Kleiss and W.J.
     /// Stirling to generate the 4-momenta of the three outgoing photons.
     ///
-    /// All events have the same weight, which can be read via event_weight().
+    /// All events have the same weight, it can be queried via event_weight().
     ///
     /// The 4-momenta of output photons are sorted by decreasing energy.
     ///
