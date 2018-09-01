@@ -29,8 +29,8 @@ impl SpinorProducts {
 
     /// Build spinor products from previously generated particle 4-momenta
     pub fn new(event: &Event) -> Self {
-        // The underlying GramMatrix is not particularly specific to the
-        // physical problem of e+e- -> ppp collisions, but this struct is
+        // The underlying Gram matrix is not particularly specific to the
+        // physical problem of e+e- -> ppp collisions, but our methods are
         debug_assert_eq!(INCOMING_COUNT, 2);
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
@@ -38,7 +38,6 @@ impl SpinorProducts {
         let p_arr = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        // TODO: Once Rust supports it, initialize xx and fx more directly
         let mut xx = [0.; PARTICLE_COUNT];
         let mut fx = [Complex::new(0., 0.); PARTICLE_COUNT];
         for (i, p) in p_arr.iter().enumerate() {
