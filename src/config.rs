@@ -63,7 +63,7 @@ pub struct Configuration {
 impl Configuration {
     /// Load the configuration from a file, check it, and print it out
     pub fn load(file_name: &str) -> Result<Self> {
-        // Read out the simulation configuration file or die trying.
+        // Read out the simulation's configuration file or die trying.
         let config_str = {
             let mut config_file = File::open(file_name)?;
             let mut buffer = String::new();
