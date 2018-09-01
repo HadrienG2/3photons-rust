@@ -42,12 +42,7 @@ pub mod functions {
         x * x
     }
 
-    /// Raise a number to an arbitrary integer power, like {float}.powi(), using
-    /// a binary exponentiation algorithm.
-    ///
-    /// This recursive version is clean and concise, but should only be used
-    /// when n is known at compile time, and the recursion can be unrolled...
-    ///
+    /// Raise a number to an arbitrary integer power, like {float}.powi() does
     #[inline]
     pub fn powi<T>(x: T, n: i32) -> T
         where T: Mul<Output=T> + Div<Output=T> + Copy + One
@@ -56,7 +51,7 @@ pub mod functions {
             0 => T::one(),
             1 => x,
             _ if n >= 2 => powi(x, n%2) * powi(sqr(x), n/2),
-            _ => T::one() / powi(x, -n)  // Here, we must have n < 0
+            _ /* if n < 0 */ => T::one() / powi(x, -n)
         }
     }
 }
