@@ -106,8 +106,8 @@ impl EventGenerator {
         event.p[INCOMING_E_M] = Momentum::new(-half_e_tot, 0., 0., half_e_tot);
         event.p[INCOMING_E_P] = Momentum::new(half_e_tot, 0., 0., half_e_tot);
 
-        // Pregenerate the random parameters (thusly isolating the harmful
-        // branching and data dependency side-effects of the RNG)
+        // Pregenerate the random parameters to shield later computations from
+        // the averse impact of RNG calls on the compiler's loop optimizations.
         #[derive(Clone, Copy, Default)]
         struct RandomParameters {
             cos_theta: Real,
