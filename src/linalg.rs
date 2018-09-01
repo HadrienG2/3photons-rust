@@ -4,8 +4,10 @@ use ::numeric::Real;
 
 use nalgebra::{
     core::dimension::*,
-    self,
-    storage::Storage
+    MatrixSlice,
+    MatrixSliceMut,
+    Vector4,
+    VectorN,
 };
 
 
@@ -15,16 +17,13 @@ use nalgebra::{
 pub use nalgebra::Vector5;
 
 /// Re-export of nalgebra's 8-vector type
-pub type Vector8<T> = nalgebra::VectorN<T, U8>;
+pub type Vector8<T> = VectorN<T, U8>;
 
 
 // ### RELATIVISTIC 4-MOMENTA ###
 
 /// 4-vectors of real numbers, as used by special relativity
-type Vector4R = nalgebra::Vector4<Real>;
-
-/// Underlying storage of nalgebra's 4-vector implementation
-type V4RImpl = nalgebra::MatrixArray<Real, U4, U1>;
+type Vector4R = Vector4<Real>;
 
 /// Relativistic 4-momentum
 pub type Momentum = Vector4R;
@@ -42,19 +41,11 @@ pub const Z: usize = 2;
 pub const E: usize = 3;
 
 /// Get a read-only view on the spatial part of a 4-momentum
-pub fn xyz(m: &Momentum)
-  -> nalgebra::MatrixSlice<Real, U3, U1,
-                           <V4RImpl as Storage<Real, U4, U1>>::RStride,
-                           <V4RImpl as Storage<Real, U4, U1>>::CStride>
-{
-  m.fixed_rows::<U3>(X)
+pub fn xyz(m: &Momentum) -> MatrixSlice<Real, U3, U1, U1, U4> {
+    m.fixed_rows::<U3>(X)
 }
 
 /// Get a mutable view on the spatial part of a 4-momentum
-pub fn xyz_mut(m: &mut Momentum)
-  -> nalgebra::MatrixSliceMut<Real, U3, U1,
-                              <V4RImpl as Storage<Real, U4, U1>>::RStride,
-                              <V4RImpl as Storage<Real, U4, U1>>::CStride>
-{
-  m.fixed_rows_mut::<U3>(X)
+pub fn xyz_mut(m: &mut Momentum) -> MatrixSliceMut<Real, U3, U1, U1, U4> {
+    m.fixed_rows_mut::<U3>(X)
 }
