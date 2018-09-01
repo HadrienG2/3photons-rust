@@ -35,14 +35,14 @@ impl SpinorProducts {
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
         // Access the array of incoming and outgoing particle 4-momenta
-        let p_arr = event.all_momenta();
+        let p = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
         let mut xx = [0.; PARTICLE_COUNT];
         let mut fx = [Complex::new(0., 0.); PARTICLE_COUNT];
-        for (i, p) in p_arr.iter().enumerate() {
-            xx[i] = sqrt(p[E] + p[Z]);
-            fx[i] = Complex::new(p[X], p[Y]) / xx[i];
+        for i in 0..PARTICLE_COUNT {
+            xx[i] = sqrt(p[i][E] + p[i][Z]);
+            fx[i] = Complex::new(p[i][X], p[i][Y]) * (1. / xx[i]);
         }
 
         // Fill up the matrix
