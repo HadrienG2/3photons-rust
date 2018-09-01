@@ -45,15 +45,14 @@ impl SpinorProducts {
             fx[i] = Complex::new(p[i][X], p[i][Y]) * (1. / xx[i]);
         }
 
-        // Fill up the matrix
+        // Fill up the Gram matrix
+        // TODO: Can we leverage antisymmetry + zero diagonal better?
         let mut result = Self {
             sx: [[Complex::zero(); PARTICLE_COUNT]; PARTICLE_COUNT],
         };
-        for j in 1..PARTICLE_COUNT {
-            for i in 0..j {
-                let cx = fx[i]*xx[j] - fx[j]*xx[i];
-                result.sx[i][j] = cx;
-                result.sx[j][i] = -cx;
+        for i in 0..PARTICLE_COUNT {
+            for j in 0..PARTICLE_COUNT {
+                result.sx[i][j] = fx[i]*xx[j] - fx[j]*xx[i];
             }
         }
 
