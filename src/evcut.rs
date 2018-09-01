@@ -63,12 +63,13 @@ impl EventCut {
         {
             let mut cos_iter = cos_p_p.iter_mut();
             for j in 1..OUTGOING_COUNT {
+                let p_ph2 = &p_out[j];
+                let p_ph2_xyz = linalg::xyz(&p_ph2);
                 for i in 0..j {
                     let cos = cos_iter.next().unwrap();
-                    let p_ph_1 = &p_out[i];
-                    let p_ph_2 = &p_out[j];
-                    *cos = linalg::xyz(&p_ph_1).dot(&linalg::xyz(&p_ph_2)) /
-                               (p_ph_1[E] * p_ph_2[E]);
+                    let p_ph1 = &p_out[i];
+                    let p_ph1_xyz = linalg::xyz(&p_ph1);
+                    *cos = p_ph1_xyz.dot(&p_ph2_xyz) / (p_ph1[E] * p_ph2[E]);
                 }
             }
         }
