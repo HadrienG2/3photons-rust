@@ -76,11 +76,6 @@ impl SpinorProducts {
         -self.s(i, j).conj()
     }
 
-    #[inline]
-    pub fn s2(&self, i: usize, j: usize) -> Real {
-        self.s(i, j).norm_sqr()
-    }
-
 
     // ### AMPLITUDE COMPUTATIONS ###
 

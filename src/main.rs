@@ -55,17 +55,17 @@ extern crate nalgebra;
 extern crate num_complex;
 extern crate num_traits;
 
-pub mod config;
-pub mod coupling;
-pub mod evcut;
-pub mod event;
-pub mod linalg;
-pub mod numeric;
-pub mod output;
-pub mod ranf;
-pub mod rescont;
-pub mod resfin;
-pub mod spinor;
+mod config;
+mod coupling;
+mod evcut;
+mod event;
+mod linalg;
+mod numeric;
+mod output;
+mod ranf;
+mod rescont;
+mod resfin;
+mod spinor;
 
 use ::{
     config::Configuration,
