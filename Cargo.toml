@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 
 [dependencies]
+arrayref = "0.3"
 chrono = "0.4"
 error-chain = "0.12"
 nalgebra = "0.15"

@@ -18,8 +18,14 @@ use num_traits::identities::Zero;
 use std::cmp::Ordering;
 
 
-// Incoming (electron/positron) and outgoing (photon) particle 4-momenta will
-// be stored together as consecutive rows in an array
+/// Number of incoming particles
+pub const INCOMING_COUNT: usize = 2;
+
+/// Number of outgoing particles (replaces original INP)
+pub const OUTGOING_COUNT: usize = 3;
+
+/// Total number of particles in an event
+pub const PARTICLE_COUNT: usize = INCOMING_COUNT+OUTGOING_COUNT;
 
 /// Index of the incoming electron in the 4-momentum array
 pub const INCOMING_E_M: usize = 0;
@@ -27,28 +33,8 @@ pub const INCOMING_E_M: usize = 0;
 /// Index of the incoming positron in the 4-momentum array
 pub const INCOMING_E_P: usize = 1;
 
-/// Number of incoming particles
-pub const INCOMING_COUNT: usize = 2;
-
 /// Index of the first outgoing photon in the 4-momentum array
 pub const OUTGOING_SHIFT: usize = INCOMING_COUNT;
-
-/// Number of 4-momenta that are generated per event (replaces original INP)
-pub const OUTGOING_COUNT: usize = 3;
-
-/// Total number of particles in an event
-pub const PARTICLE_COUNT: usize = INCOMING_COUNT+OUTGOING_COUNT;
-
-/// Storage for event 4-momenta
-type Momenta = [Momentum; PARTICLE_COUNT];
-
-/// Read-only view into the outgoing 4-momenta of an event
-/// HACK: This slice will always have OUTGOING_COUNT elements.
-pub type OutgoingMomenta<'a> = &'a [Momentum];
-
-/// Multable view into the outgoing 4-momenta of an event
-/// HACK: This slice will always have OUTGOING_COUNT elements.
-pub type OutgoingMomentaMut<'a> = &'a mut [Momentum];
 
 
 /// Generator of ee -> ppp events
@@ -66,9 +52,11 @@ pub struct EventGenerator {
 impl EventGenerator {
     // ### CONSTRUCTION ###
 
-    /// Initialize incoming 4-momenta with a center-of-mass energy of e_tot.
+    /// Initialize event generation for a center-of-mass energy of e_tot.
+    ///
     /// Combines former functionality of ppp constructor and IBEGIN-based lazy
     /// initialization from the original C++ 3photons code.
+    ///
     pub fn new(e_tot: Real) -> Self {
         // Check on the number of particles. The check for N<101 is gone since
         // unlike the original RAMBO, we don't use arrays of hardcoded size.
@@ -91,7 +79,7 @@ impl EventGenerator {
         //       massless photons and so the total energy will always be enough.
         //       Counting of nonzero masses is also gone because it was unused.
 
-        // All generated events will have the same weight, so we pre-compute it
+        // All generated events will have the same weight: pre-compute it
         let ln_weight = (2. * (OUTGOING_COUNT as Real) - 4.) * ln(e_tot) + z;
         assert!((ln_weight >= -180.) && (ln_weight <= 174.));
         let ev_weight = exp(ln_weight);
@@ -140,7 +128,6 @@ impl EventGenerator {
         }
 
         // Generate massless outgoing 4-momenta in infinite phase space
-        // TODO: Once Rust supports it, initialize q_arr more directly
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
         for (q, params) in q_arr.iter_mut().zip(rand_params_arr.iter()) {
             let cos_theta = params.cos_theta;
@@ -194,11 +181,10 @@ impl EventGenerator {
     fn random_sincos(&mut self) -> [Real; 2] {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
-        // mode which uses a different algorithm to go faster.
+        // mode which uses a different (faster) algorithm.
         if cfg!(feature = "fast-sincos") {
-            // This code path takes advantage of the fact that random
-            // number generation is much faster than sin/cos calls in
-            // order to speed things up.
+            // In a nutshell, this path is faster because it avoids calling very
+            // expensive trigonometric functions.
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
             loop {
                 // Grab a point on the unit square
@@ -218,7 +204,7 @@ impl EventGenerator {
                 }
             }
         } else {
-            // This code path strictly follows the original 3photons alg
+            // This code path strictly follows the original 3photons algorithm
             let phi = 2. * PI * self.rng.random();
             [cos(phi), sin(phi)]
         }
@@ -237,14 +223,14 @@ impl EventGenerator {
 /// Storage for ee -> ppp event data
 pub struct Event {
     /// Array of incoming and outgoing 4-momenta
-    p: Momenta,
+    p: [Momentum; PARTICLE_COUNT],
 }
 //
 impl Event {
     // ### ACCESSORS ###
 
     /// Access the full internal 4-momentum array by reference
-    pub fn all_momenta(&self) -> &Momenta {
+    pub fn all_momenta(&self) -> &[Momentum; PARTICLE_COUNT] {
         &self.p
     }
 
@@ -260,13 +246,13 @@ impl Event {
     }
 
     /// Access the outgoing 4-momenta only
-    pub fn outgoing_momenta(&self) -> OutgoingMomenta {
-        &self.p[OUTGOING_SHIFT..PARTICLE_COUNT]
+    pub fn outgoing_momenta(&self) -> &[Momentum; OUTGOING_COUNT] {
+        array_ref![self.p, OUTGOING_SHIFT, OUTGOING_COUNT]
     }
 
     /// Mutable access to the outgoing 4-momenta (for internal use)
-    fn outgoing_momenta_mut(&mut self) -> OutgoingMomentaMut {
-        &mut self.p[OUTGOING_SHIFT..PARTICLE_COUNT]
+    fn outgoing_momenta_mut(&mut self) -> &mut [Momentum; OUTGOING_COUNT] {
+        array_mut_ref![self.p, OUTGOING_SHIFT, OUTGOING_COUNT]
     }
 
 
