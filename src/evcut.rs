@@ -50,14 +50,12 @@ impl EventCut {
         for p_ph in p_out.iter() {
             let cos_num = xyz(p_el).dot(&xyz(p_ph));
             let cos_denom = p_el[E] * p_ph[E];
-            if abs(cos_num) > self.a_cut*cos_denom { return false; }
+            if abs(cos_num) > self.a_cut * cos_denom { return false; }
         }
 
         // Check if the (photon, photon) angles pass the cut
-        for i in 1..OUTGOING_COUNT {
-            let p_ph1 = &p_out[i];
-            for j in 0..i {
-                let p_ph2 = &p_out[j];
+        for (i, p_ph1) in p_out[1..].iter().enumerate() {
+            for p_ph2 in &p_out[..=i] {
                 let cos_num = xyz(p_ph1).dot(&xyz(p_ph2));
                 let cos_denom = p_ph1[E] * p_ph2[E];
                 if cos_num > self.b_cut * cos_denom { return false; }
