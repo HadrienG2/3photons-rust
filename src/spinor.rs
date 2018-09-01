@@ -35,7 +35,7 @@ impl SpinorProducts {
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
         // Access the array of incoming and outgoing particle momenta
-        let p_arr = event.dump_momenta();
+        let p_arr = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
         // TODO: Once Rust supports it, initialize xx and fx more directly

@@ -33,6 +33,7 @@ type Momenta = [Momentum; PARTICLE_COUNT];
 /// A client can get access to the outgoing momenta alone if needed.
 /// The resulting slice will always have OUTGOING_COUNT elements.
 pub type OutgoingMomenta<'a> = &'a [Momentum];
+pub type OutgoingMomentaMut<'a> = &'a mut [Momentum];
 
 
 /// Generator of ee -> ppp events
@@ -146,8 +147,8 @@ impl EventGenerator {
         let beta = 1. / (r_norm + r[E]);
 
         // Transform the Q's conformally into output momenta
-        for (p, q) in event.dump_outgoing_mut().iter_mut()
-                                               .zip(q_arr.iter())
+        for (p, q) in event.outgoing_momenta_mut().iter_mut()
+                                                  .zip(q_arr.iter())
         {
             let q_xyz = linalg::xyz(q);
             let rq = r_xyz.dot(&q_xyz);
@@ -158,7 +159,17 @@ impl EventGenerator {
         }
 
         // Sort the output momenta in order of decreasing energy
-        event.sort_output_momenta();
+        event.outgoing_momenta_mut()
+             .sort_unstable_by(|a, b| {
+                 // Treat NaNs as equal
+                 if a[E] > b[E] {
+                     Ordering::Less
+                 } else if a[E] < b[E] {
+                     Ordering::Greater
+                 } else {
+                     Ordering::Equal
+                 }
+             });
 
         // Hand off the generated event
         event
@@ -218,48 +229,29 @@ impl Event {
     // ### ACCESSORS ###
 
     /// Access the full internal momentum matrix by reference
-    pub fn dump_momenta(&self) -> &Momenta {
+    pub fn all_momenta(&self) -> &Momenta {
         &self.p
     }
 
     /// Access the electron momentum only
-    pub fn dump_electron(&self) -> &Momentum {
+    pub fn electron_momentum(&self) -> &Momentum {
         &self.p[INCOMING_E_M]
     }
 
     /// Access the positron momentum only
     #[allow(dead_code)]
-    pub fn dump_positron(&self) -> &Momentum {
+    pub fn positron_momentum(&self) -> &Momentum {
         &self.p[INCOMING_E_P]
     }
 
     /// Access the outgoing momenta only
-    pub fn dump_outgoing(&self) -> OutgoingMomenta {
+    pub fn outgoing_momenta(&self) -> OutgoingMomenta {
         &self.p[OUTGOING_SHIFT..PARTICLE_COUNT]
     }
 
-    /// Mutable access to the outgoing momenta (not publicly exported)
-    fn dump_outgoing_mut(&mut self) -> &mut [Momentum] {
+    /// Mutable access to the outgoing momenta (for internal use)
+    fn outgoing_momenta_mut(&mut self) -> OutgoingMomentaMut {
         &mut self.p[OUTGOING_SHIFT..PARTICLE_COUNT]
-    }
-
-
-    // ### GENERATOR HELPERS ###
-
-    /// Sort outgoing photons in order of decreasing energy
-    /// Roughly equivalent to the original ppp::TRI method
-    fn sort_output_momenta(&mut self) {
-        self.dump_outgoing_mut()
-            .sort_unstable_by(|a, b| {
-                // Treat NaNs as equal
-                if a[E] > b[E] {
-                    Ordering::Less
-                } else if a[E] < b[E] {
-                    Ordering::Greater
-                } else {
-                    Ordering::Equal
-                }
-            });
     }
 
 
@@ -268,7 +260,7 @@ impl Event {
     /// Dump 4-momenta of the 3 outgoing photons
     #[allow(dead_code)]
     pub fn display(&self) {
-        let p_out = self.dump_outgoing();
+        let p_out = self.outgoing_momenta();
         for ip in p_out.iter().enumerate() {
             let (i, p) = ip;
             println!("p{}: {}", i+1, p);
