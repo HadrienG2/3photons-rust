@@ -47,7 +47,7 @@ pub struct ResultsBuilder<'a> {
     // ### PHYSICAL CONSTANTS (CACHED FOR FINALIZATION) ###
 
     /// Configuration of the simulation
-    config: &'a Configuration,
+    cfg: &'a Configuration,
 
     /// Common factor, non-averaged over spins=1
     ///                  /(symmetry factor)
@@ -115,11 +115,11 @@ impl<'a> ResultsBuilder<'a> {
             sigma: 0.,
             variance: 0.,
 
-            config: cfg,
-            fact_com: fact_com,
-            norm_weight: norm_weight,
-            propag: propag,
-            ecart_pic: ecart_pic,
+            cfg,
+            fact_com,
+            norm_weight,
+            propag,
+            ecart_pic,
         }
     }
 
@@ -137,7 +137,7 @@ impl<'a> ResultsBuilder<'a> {
     // After integration is done, build final simulations results
     pub fn finalize(self) -> FinalResults<'a> {
         // Extract whatever our needs from the results builder
-        let cfg = self.config;
+        let cfg = self.cfg;
 
         // Compute the final results
         let mut results = FinalResults {
