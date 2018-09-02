@@ -110,6 +110,8 @@ impl EventGenerator {
         event.p[INCOMING_E_M] = Momentum::new(-half_e_tot, 0., 0., half_e_tot);
         event.p[INCOMING_E_P] = Momentum::new(half_e_tot, 0., 0., half_e_tot);
 
+        // TODO: There might be room for more vectorization or layout optims
+
         // Pregenerate the random parameters to shield later computations from
         // the averse impact of RNG calls on the compiler's loop optimizations.
         #[derive(Clone, Copy, Default)]
@@ -221,6 +223,9 @@ impl EventGenerator {
 /// Storage for ee -> ppp event data
 pub struct Event {
     /// Array of incoming and outgoing 4-momenta
+    ///
+    /// TODO: Should use a matrix here (and review row/column layout)
+    ///
     p: [Momentum; PARTICLE_COUNT],
 }
 //

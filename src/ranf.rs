@@ -63,6 +63,7 @@ impl RanfGenerator {
     /// Generate a random number between 0 and 1, with INV_MODULO granularity
     /// Roughly maps to the RN() method in the original code.
     pub fn random(&mut self) -> Real {
+        // TODO: Consider flipping indices so that iteration goes forward
         if self.index == 0 {
             self.reset();
             self.index = 55;

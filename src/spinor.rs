@@ -21,6 +21,9 @@ const RAC8: Real = 2. * SQRT_2;
 /// Massless 4-momenta spinor inner products
 pub struct SpinorProducts {
     /// Gram matrix associated with the inner products
+    ///
+    /// TODO: Should probably be an nalgebra matrix
+    ///
     sx: [[Complex; PARTICLE_COUNT]; PARTICLE_COUNT],
 }
 //
@@ -76,6 +79,13 @@ impl SpinorProducts {
 
 
     // ### AMPLITUDE COMPUTATIONS ###
+    //
+    // TODO: These long products of complex numbers are getting expensive,
+    //       try expanding them on paper to see if they can be reworded into a
+    //       simpler overall expression.
+    //
+    // TODO: Also, the RAC8 prefactor should be applied to the final result, not
+    //       to every contribution thereof.
 
     /// Standard amplitude for helicities ++-
     #[inline]
