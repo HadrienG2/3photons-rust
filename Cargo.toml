@@ -5,12 +5,12 @@ authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 
 [features]
 default = []
+# Use single precision instead of double precision
+f32 = []
 # Use faster algorithm for random unit vector generation
 fast-sincos = []
 # Use a standard algorithm for random number generation
 standard-random = ["rand", "xoshiro"]
-# Use single precision instead of double precision
-f32 = []
 
 [dependencies]
 arrayref = "0.3"
@@ -19,6 +19,5 @@ error-chain = "0.12"
 nalgebra = "0.15"
 num-complex = "0.2"
 num-traits = "0.2"
-
 rand = { version = "0.5", optional = true }
 xoshiro = { version = "0.0.4", optional = true }

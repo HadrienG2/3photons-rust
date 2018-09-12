@@ -9,6 +9,24 @@ Once you're ready, the program can be built and run with the following command:
     cargo run --release
 
 
+## Tuning knobs
+
+By default, the simulation aims for ~perfect result reproducibility with respect
+to the original 3photons program. However, if you feel like exploring other
+points in the design space, here are some features which you can enable:
+
+- The `f32` feature moves all computations to single precision.
+- The `fast-sincos` feature uses a different algorithm for computing points on
+  the unit circle, which provides a great computational speedup.
+- The `standard-random` uses standard Rust abstractions for random number
+  generation. The current algorithm (`xoshiro256+`) is _slower_ than what
+  3photons uses by default (`ranf`), but more amenable to parallelization.
+
+To enable all of these feautres, one would run:
+
+    cargo run --release --features fast-sincos,f32,standard-random
+
+
 ## Error handling
 
 Owing to Rust's strong focus on software engineering best practices, this
