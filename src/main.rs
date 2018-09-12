@@ -54,6 +54,8 @@ extern crate chrono;
 extern crate nalgebra;
 extern crate num_complex;
 extern crate num_traits;
+#[cfg(feature = "standard-random")] extern crate rand;
+#[cfg(feature = "standard-random")] extern crate xoshiro;
 
 mod config;
 mod coupling;
@@ -62,7 +64,7 @@ mod event;
 mod linalg;
 mod numeric;
 mod output;
-mod ranf;
+mod random;
 mod rescont;
 mod resfin;
 mod spinor;

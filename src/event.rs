@@ -10,7 +10,7 @@ use ::{
             consts::{FRAC_PI_2, PI},
         },
     },
-    ranf::RanfGenerator,
+    random::RandomGenerator,
 };
 
 use num_traits::identities::Zero;
@@ -55,7 +55,7 @@ pub struct EventGenerator {
     ///        - Ranf's interface is more restrictive than rand's, so rand would
     ///          need to be wrapped in order to keep a backward-compatible mode.
     ///
-    rng: RanfGenerator,
+    rng: RandomGenerator,
 }
 //
 impl EventGenerator {
@@ -97,7 +97,7 @@ impl EventGenerator {
         EventGenerator {
             e_tot,
             ev_weight,
-            rng: RanfGenerator::new(),
+            rng: RandomGenerator::new(),
         }
     }
 
