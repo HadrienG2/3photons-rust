@@ -39,6 +39,8 @@ pub fn dump_results(cfg: &Configuration,
         // Prepare to write our results into a file
         let mut res_file = File::create("res.dat")?;
 
+        // TODO: Use a writer struct instead of closures
+
         // Create a few closure shorthands for common writing operations
         let write_i32 = |file: &mut File, title: &str, value: i32| {
           writeln!(*file, " {:<31}: {:<16}", title, value)

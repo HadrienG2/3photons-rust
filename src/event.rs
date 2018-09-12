@@ -46,6 +46,15 @@ pub struct EventGenerator {
     ev_weight: Real,
 
     /// Random number generator
+    ///
+    /// FIXME: I would really like to become rand-compatible and to avoid
+    ///        making the RNG a member of EventGenerator, but there are a few
+    ///        complications in that way:
+    ///
+    ///        - Rand is not yet performance-competitive with ranf
+    ///        - Ranf's interface is more restrictive than rand's, so rand would
+    ///          need to be wrapped in order to keep a backward-compatible mode.
+    ///
     rng: RanfGenerator,
 }
 //
@@ -114,6 +123,9 @@ impl EventGenerator {
 
         // Pregenerate the random parameters to shield later computations from
         // the averse impact of RNG calls on the compiler's loop optimizations.
+        //
+        // TODO: Try using a less evil RNG instead.
+        //
         #[derive(Clone, Copy, Default)]
         struct RandomParameters {
             cos_theta: Real,
@@ -161,6 +173,11 @@ impl EventGenerator {
         }
 
         // Sort the output 4-momenta in order of decreasing energy
+        //
+        // FIXME: Is that really necessary? Disabling it does not seem to alter
+        //        the result much, and AFAIK we only rely on it in
+        //        event::min_photon_energy()...
+        //
         event.outgoing_momenta_mut()
              .sort_unstable_by(|a, b| {
                  // Treat NaNs as equal
@@ -178,6 +195,12 @@ impl EventGenerator {
     }
 
     /// Generate a (sin(x), cos(x)) pair where x is uniform in [0, 2*PI[
+    ///
+    /// TODO: Make this a full-blown unit vector generator and explore if we can
+    ///       do better on the theta front.
+    ///
+    /// TODO: Use an nalgebra vector type instead of an array.
+    ///
     fn random_sincos(&mut self) -> [Real; 2] {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a

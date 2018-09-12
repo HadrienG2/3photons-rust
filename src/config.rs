@@ -189,6 +189,9 @@ impl<'a> ConfigItem<'a> {
 
 
 // Here are the various things that can go wrong while loading the configuration
+//
+// TODO: Migrate to failure?
+//
 mod config_errors {
     error_chain!{
         foreign_links{

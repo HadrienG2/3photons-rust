@@ -148,6 +148,9 @@ fn main() -> Result<()> {
 
 
 // Here are the various things that can go wrong during the main function
+//
+// TODO: Move to failure
+//
 mod errors {
     error_chain!{
         links{
