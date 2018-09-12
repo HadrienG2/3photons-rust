@@ -45,6 +45,9 @@ pub fn dump_results(cfg: &Configuration,
         let write_i32 = |file: &mut File, title: &str, value: i32| {
           writeln!(*file, " {:<31}: {:<16}", title, value)
         };
+        let write_usize = |file: &mut File, title: &str, value: usize| {
+          writeln!(*file, " {:<31}: {:<16}", title, value)
+        };
         let write_f = |file: &mut File, title: &str, value: Real| {
           // TODO: Use engineering notation here
           writeln!(*file, " {:<31}: {:<16}", title, value)
@@ -53,7 +56,7 @@ pub fn dump_results(cfg: &Configuration,
         // Write the results to the file
         writeln!(res_file, " {}", timestamp.as_str())?;
         writeln!(res_file)?;
-        write_i32(&mut res_file, "Nombre d'evenements", cfg.num_events)?;
+        write_usize(&mut res_file, "Nombre d'evenements", cfg.num_events)?;
         write_i32(&mut res_file, "... apres coupure", res_fin.selected_events)?;
         write_f(&mut res_file, "energie dans le CdM (GeV)", cfg.e_tot)?;
         write_f(&mut res_file,

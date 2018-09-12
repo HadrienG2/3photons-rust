@@ -15,7 +15,7 @@ use std::{
 /// This struct gives access to the simulation's configuration
 pub struct Configuration {
     /// Number of events to be simulated
-    pub num_events: i32,
+    pub num_events: usize,
 
     /// Collision energy at center of mass (GeV)
     pub e_tot: Real,
@@ -90,7 +90,7 @@ impl Configuration {
 
         // Decode the configuration items into concrete values
         let config = Configuration {
-            num_events: next_item("num_events")?.parse::<i32>()?,
+            num_events: next_item("num_events")?.parse::<usize>()?,
             e_tot: next_item("e_tot")?.parse::<Real>()?,
             event_cut: EventCut::new(next_item("a_cut")?.parse::<Real>()?,
                                      next_item("b_cut")?.parse::<Real>()?,
