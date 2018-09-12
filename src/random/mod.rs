@@ -14,7 +14,7 @@ mod standard_random {
     type Engine = ::xoshiro::Xoshiro256Plus;
 
     /// Facade which makes the rand crate look like RanfGenerator
-    pub(crate) struct RandGenerator {
+    pub struct RandGenerator {
         rng: Engine,
     }
     //
@@ -33,6 +33,6 @@ mod standard_random {
 
 /// Select the RNG implementation in use
 #[cfg(feature = "standard-random")]
-pub(crate) use self::standard_random::RandGenerator as RandomGenerator;
+pub use self::standard_random::RandGenerator as RandomGenerator;
 #[cfg(not(feature = "standard-random"))]
-pub(crate) use self::ranf::RanfGenerator as RandomGenerator;
+pub use self::ranf::RanfGenerator as RandomGenerator;

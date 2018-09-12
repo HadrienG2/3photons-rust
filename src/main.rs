@@ -73,6 +73,7 @@ use ::{
     config::Configuration,
     coupling::Couplings,
     event::EventGenerator,
+    random::RandomGenerator,
     rescont::ResultContribution,
     resfin::ResultsBuilder,
 };
@@ -106,7 +107,10 @@ fn main() -> Result<()> {
     let couplings = Couplings::new(&cfg);
 
     // Initialize the event generator
-    let mut evgen = EventGenerator::new(cfg.e_tot);
+    let evgen = EventGenerator::new(cfg.e_tot);
+
+    // Initialize the random number generator
+    let mut rng = RandomGenerator::new();
 
     // Initialize results accumulator
     let mut res_builder = ResultsBuilder::new(&cfg, evgen.event_weight());
@@ -116,7 +120,7 @@ fn main() -> Result<()> {
 
     for _ in 0..cfg.num_events {
         // Generate an event
-        let event = evgen.generate();
+        let event = evgen.generate(&mut rng);
 
         // If the event passes the cut, compute the total weight (incl. matrix
         // elements) and integrate it into the final results.

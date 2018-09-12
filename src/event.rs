@@ -44,18 +44,6 @@ pub struct EventGenerator {
 
     /// Weight of generated events
     ev_weight: Real,
-
-    /// Random number generator
-    ///
-    /// FIXME: I would really like to become rand-compatible and to avoid
-    ///        making the RNG a member of EventGenerator, but there are a few
-    ///        complications in that way:
-    ///
-    ///        - Rand is not yet performance-competitive with ranf
-    ///        - Ranf's interface is more restrictive than rand's, so rand would
-    ///          need to be wrapped in order to keep a backward-compatible mode.
-    ///
-    rng: RandomGenerator,
 }
 //
 impl EventGenerator {
@@ -97,7 +85,6 @@ impl EventGenerator {
         EventGenerator {
             e_tot,
             ev_weight,
-            rng: RandomGenerator::new(),
         }
     }
 
@@ -112,7 +99,7 @@ impl EventGenerator {
     ///
     /// The 4-momenta of output photons are sorted by decreasing energy.
     ///
-    pub fn generate(&mut self) -> Event {
+    pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
         // Prepare storage for the final event
         let half_e_tot = self.e_tot / 2.;
         let mut event = Event { p: [Momentum::zero(); PARTICLE_COUNT] };
@@ -135,9 +122,9 @@ impl EventGenerator {
         let mut rand_params_arr = [RandomParameters::default(); OUTGOING_COUNT];
         for rand_params in rand_params_arr.iter_mut() {
             *rand_params = RandomParameters {
-                cos_theta: 2. * self.rng.random() - 1.,
-                sincos_phi: self.random_sincos(),
-                exp_minus_e: self.rng.random() * self.rng.random(),
+                cos_theta: 2. * rng.random() - 1.,
+                sincos_phi: Self::random_sincos(rng),
+                exp_minus_e: rng.random() * rng.random(),
             };
         }
 
@@ -201,7 +188,7 @@ impl EventGenerator {
     ///
     /// TODO: Use an nalgebra vector type instead of an array.
     ///
-    fn random_sincos(&mut self) -> [Real; 2] {
+    fn random_sincos(rng: &mut RandomGenerator) -> [Real; 2] {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different (faster) algorithm.
@@ -211,8 +198,8 @@ impl EventGenerator {
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
             loop {
                 // Grab a point on the unit square
-                let x = 2. * self.rng.random() - 1.;
-                let y = 2. * self.rng.random() - 1.;
+                let x = 2. * rng.random() - 1.;
+                let y = 2. * rng.random() - 1.;
 
                 // Compute (squared) distance from center
                 let n2 = sqr(x) + sqr(y);
@@ -228,7 +215,7 @@ impl EventGenerator {
             }
         } else {
             // This code path strictly follows the original 3photons algorithm
-            let phi = 2. * PI * self.rng.random();
+            let phi = 2. * PI * rng.random();
             [cos(phi), sin(phi)]
         }
     }
