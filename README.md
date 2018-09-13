@@ -25,8 +25,8 @@ here are some features which you can enable:
   scalability cost. You can remove this constraint and allow the program to take
   more performance shortcuts by also enabling the `faster-threading` feature.
 - The `standard-random` uses standard Rust abstractions for random number
-  generation. The current algorithm (`xoshiro256+`) is _slower_ than what
-  3photons uses by default (`ranf`), but more friendly to parallelization
+  generation. The current algorithm (`xoshiro256+`) is not faster than what
+  3photons uses by default (`ranf`), but is more friendly to parallelization
   (especially in `faster-threading` mode).
 
 These features are enabled using the `--features` flag to cargo, as follows:
