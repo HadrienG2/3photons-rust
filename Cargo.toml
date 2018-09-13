@@ -3,6 +3,7 @@ name = "trois_photons"
 version = "0.1.0"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 
+
 [features]
 default = []
 # Use single precision instead of double precision
@@ -16,6 +17,7 @@ multi-threading = ["rayon"]
 # Use a standard algorithm for random number generation
 standard-random = ["rand", "xoshiro"]
 
+
 [dependencies]
 arrayref = "0.3"
 chrono = "0.4"
@@ -28,5 +30,8 @@ rand = { version = "0.5", optional = true }
 rayon = { version = "1.0", optional = true }
 xoshiro = { version = "0.0.4", optional = true }
 
+
 [profile.release]
+# Aborting panics mean no app cleanup when a panic is encountered, but better
+# compiler optimizations. For scientific computation, that's a good trade-off.
 panic = "abort"
