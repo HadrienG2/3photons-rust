@@ -72,10 +72,10 @@ in this configuration, use the following command:
 
 ## Miscellaneous remarks, subjected to future obsolescence
 
-As of 2017-04-20, various other things can be said about this version of
+As of 2018-09-13, various other things can be said about this version of
 3photons, which I do not expect to remain accurate in the future.
 
-1. You will need at least Rust v1.16 to compile it.
+1. You will need at least Rust v1.25 to compile it.
 2. Comparing its performance with that of other versions would be unfair,
    because the porting process enabled many optimizations which other versions
    did not receive yet.
