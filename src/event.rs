@@ -126,6 +126,11 @@ impl EventGenerator {
         }
 
         // Generate massless outgoing 4-momenta in infinite phase space
+        //
+        // FIXME: The main obvious remaining bottleneck of this function is that
+        //        it spends 25% of its time computing scalar logarithms. Using
+        //        a vectorized ln() implementation should help there.
+        //
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
         for (q, params) in q_arr.iter_mut().zip(rand_params_arr.iter()) {
             let cos_theta = params.cos_theta;
