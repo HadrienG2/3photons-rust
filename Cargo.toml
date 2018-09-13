@@ -9,6 +9,10 @@ default = []
 f32 = []
 # Use faster algorithm for random unit vector generation
 fast-sincos = []
+# Maximize multi-threaded performance at the expense of result reproducibility
+faster-threading = []
+# Parallelize the computation via multi-threading
+multi-threading = ["rayon"]
 # Use a standard algorithm for random number generation
 standard-random = ["rand", "xoshiro"]
 
@@ -19,5 +23,7 @@ error-chain = "0.12"
 nalgebra = "0.15"
 num-complex = "0.2"
 num-traits = "0.2"
+
 rand = { version = "0.5", optional = true }
+rayon = { version = "1.0", optional = true }
 xoshiro = { version = "0.0.4", optional = true }

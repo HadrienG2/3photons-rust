@@ -134,6 +134,15 @@ impl<'a> ResultsBuilder<'a> {
         self.variance += sqr(weight);
     }
 
+    /// Integrate simulation results from another ResultsBuilder
+    pub fn merge(&mut self, other: Self) {
+        self.selected_events += other.selected_events;
+        self.spm2 += other.spm2;
+        self.vars += other.vars;
+        self.sigma += other.sigma;
+        self.variance += other.variance;
+    }
+
     // After integration is done, build final simulations results
     pub fn finalize(self) -> FinalResults<'a> {
         // Extract whatever our needs from the results builder

@@ -11,20 +11,45 @@ Once you're ready, the program can be built and run with the following command:
 
 ## Tuning knobs
 
-By default, the simulation aims for ~perfect result reproducibility with respect
-to the original 3photons program. However, if you feel like exploring other
-points in the design space, here are some features which you can enable:
+By default, the simulation aims for maximal result reproducibility with respect
+to the original `3photons` program. However, if you feel like going beyond that,
+here are some features which you can enable:
 
 - The `f32` feature moves all computations to single precision.
 - The `fast-sincos` feature uses a different algorithm for computing points on
-  the unit circle, which provides a great computational speedup.
+  the unit circle, which provides a great computational speedup at the cost of
+  making reproducible parallelization more challenging.
+- The `multi-threading` feature parallelizes the computation using multi-
+  threading. By default, it generates results which are identical to the
+  sequential version, but this has a performance and scalability cost. You can
+  remove this constraint and optimize for performance instead by also enabling
+  the `faster-threading` feature.
 - The `standard-random` uses standard Rust abstractions for random number
   generation. The current algorithm (`xoshiro256+`) is _slower_ than what
-  3photons uses by default (`ranf`), but more amenable to parallelization.
+  3photons uses by default (`ranf`), but more friendly to parallelization
+  (especially in `faster-threading` mode).
 
-To enable all of these feautres, one would run:
+These features are enabled using the `--features` flag to cargo, as follows:
 
-    cargo run --release --features fast-sincos,f32,standard-random
+    cargo run --release --features fast-sincos,multi-threading
+
+
+## Reproducibility considerations
+
+This version aims to produce results which are as close as possible to what the
+original `3photons` program would emit, with one notable exception.
+
+Instead of aggregating data about all events in a single accumulator, then
+normalizing, it slices up the event data into batches of a certain size
+(implementation-defined, currently 10k events), accumulates them, and then
+merges the resulting accumulators.
+
+There are two good reasons to do this:
+
+- It reduces worst-case accumulation error. As an accumulator grows large, there
+  is a risk of new input not being well integrated into the accumulator.
+- It makes the simulation more naturally parallelizable, enabling perfect
+  reproducibility between the sequential and parallel versions.
 
 
 ## Error handling

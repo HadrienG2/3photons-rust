@@ -220,6 +220,30 @@ impl EventGenerator {
         }
     }
 
+    /// Simulate the impact of a certain number of calls to "generate()" on a
+    /// random number generator. This code must be manually synchronized with
+    /// the implementation of "generate()", but such is the price for perfect
+    /// reproducibility between single-threaded and multi-threaded mode...
+    #[cfg(all(feature = "multi-threading",
+              not(feature = "faster-threading")))]
+    pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
+                                       num_events: usize) {
+        if cfg!(feature = "fast-sincos") {
+            // If fast-sincos is enabled, the number of RNG calls per event is
+            // nondeterministic, so we must simulate events one by one.
+            for _ in 0..num_events*OUTGOING_COUNT {
+                rng.skip(1);
+                Self::random_sincos(rng);
+                rng.skip(2);
+            }
+        } else {
+            // If fast-sincos is not enabled, we know exactly how many RNG calls
+            // will be made per event, and we can let the RNG skip through the
+            // events as quickly as it can.
+            rng.skip(num_events*OUTGOING_COUNT*4);
+        }
+    }
+
 
     // ### EVENT PROPERTIES ###
 

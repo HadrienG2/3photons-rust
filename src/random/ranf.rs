@@ -10,7 +10,11 @@ const INV_MODULO: Real = 1e-9;
 
 
 /// Random number generator
+#[derive(Clone)]
 pub struct RanfGenerator {
+    /// Seed which this generator was initialized with
+    seed: Integer,
+
     /// Current set of random numbers, maps to IA in original code
     numbers: [Integer; 56],
 
@@ -32,6 +36,7 @@ impl RanfGenerator {
     fn seeded_new(seed: Integer) -> RanfGenerator {
         // Start by zero-initializing the generator state
         let mut result = RanfGenerator {
+            seed,
             numbers: [0; 56],
             index: 55,
         };
@@ -83,5 +88,20 @@ impl RanfGenerator {
             self.numbers[i] -= self.numbers[i-24];
             if self.numbers[i] < 0 { self.numbers[i] += MODULO };
         }
+    }
+
+    // Advance state as if "iterations" numbers had been generated
+    #[cfg(all(feature = "multi-threading",
+              not(feature = "faster-threading")))]
+    pub fn skip(&mut self, iterations: usize) {
+        for _ in 0..iterations { self.random(); }
+    }
+
+    // Just switch to another state as fast as we can
+    #[cfg(all(feature = "multi-threading",
+              feature = "faster-threading"))]
+    pub fn jump(&mut self) {
+        let new_seed = self.seed + 123456789;
+        ::std::mem::replace(self, Self::seeded_new(new_seed));
     }
 }

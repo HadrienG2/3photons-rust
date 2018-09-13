@@ -44,18 +44,22 @@
 //! The fact that we can plug each phase's output as the input of the next phase
 //! lend to a functionnal approach.
 
+#![warn(missing_docs)]
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
 #[macro_use] extern crate arrayref;
 #[macro_use] extern crate error_chain;
 
+#[cfg(feature = "multi-threading")] extern crate rayon;
+
+#[cfg(feature = "standard-random")] extern crate rand;
+#[cfg(feature = "standard-random")] extern crate xoshiro;
+
 extern crate chrono;
 extern crate nalgebra;
 extern crate num_complex;
 extern crate num_traits;
-#[cfg(feature = "standard-random")] extern crate rand;
-#[cfg(feature = "standard-random")] extern crate xoshiro;
 
 mod config;
 mod coupling;
@@ -67,6 +71,7 @@ mod output;
 mod random;
 mod rescont;
 mod resfin;
+mod scheduling;
 mod spinor;
 
 use ::{
@@ -77,6 +82,7 @@ use ::{
     rescont::ResultContribution,
     resfin::ResultsBuilder,
 };
+
 
 use std::time::Instant;
 
@@ -109,34 +115,37 @@ fn main() -> Result<()> {
     // Initialize the event generator
     let evgen = EventGenerator::new(cfg.e_tot);
 
-    // Initialize the random number generator
-    let mut rng = RandomGenerator::new();
 
-    // Initialize results accumulator
-    let mut res_builder = ResultsBuilder::new(&cfg, evgen.event_weight());
+    // ### SIMULATION EXECUTION ###
 
+    // This kernel simulates a number of events, given an initial random number
+    // generator state, and return the accumulated intermediary results
+    let simulate_events = |num_events: usize,
+                           rng: &mut RandomGenerator| -> ResultsBuilder {
+        // Setup a results accumulator
+        let mut res_builder = ResultsBuilder::new(&cfg, evgen.event_weight());
 
-    // ### SAMPLING LOOP ###
+        // Simulate the requested number of events
+        for _ in 0..num_events {
+            // Generate an event
+            let event = evgen.generate(rng);
 
-    for _ in 0..cfg.num_events {
-        // Generate an event
-        let event = evgen.generate(&mut rng);
-
-        // If the event passes the cut, compute the total weight (incl. matrix
-        // elements) and integrate it into the final results.
-        if cfg.event_cut.keep(&event) {
-            let res_contrib = ResultContribution::new(&couplings, &event);
-            // NOTE: This is where the original code would display the result
-            res_builder.integrate(res_contrib);
-            // NOTE: This is where the FORTRAN code would fill histograms
+            // If the event passes the cut, compute the total weight (incl.
+            // matrix elements) and integrate it into the final results.
+            if cfg.event_cut.keep(&event) {
+                let res_contrib = ResultContribution::new(&couplings, &event);
+                // NOTE: The original code would display the result here
+                res_builder.integrate(res_contrib);
+                // NOTE: The FORTRAN code would fill histograms here
+            }
         }
-    }
 
+        // Return the accumulated results
+        res_builder
+    };
 
-    // ### PHYSICAL RESULTS COMPUTATION ###
-    
-    // Now that we have integrated everything, compute the physical results
-    let res_fin = res_builder.finalize();
+    // Run the simulation
+    let result = scheduling::run_simulation(cfg.num_events, simulate_events);
 
     // NOTE: This is where the FORTRAN code would normalize histograms
 
@@ -147,7 +156,7 @@ fn main() -> Result<()> {
     let elapsed_time = saved_time.elapsed();
     
     // Send the results to the standard output and to disk and we're done
-    output::dump_results(&cfg, res_fin, elapsed_time)
+    output::dump_results(&cfg, result, elapsed_time)
            .chain_err(|| "Failed to output the results")
 }
 
