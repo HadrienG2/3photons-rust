@@ -22,8 +22,8 @@ here are some features which you can enable:
 - The `multi-threading` feature parallelizes the computation using multi-
   threading. By default, it generates results which are identical to the
   sequential version, but this has a performance, memory footprint and
-  scalability cost. You can remove this constraint and optimize for performance
-  instead by also enabling the `faster-threading` feature.
+  scalability cost. You can remove this constraint and allow the program to take
+  more performance shortcuts by also enabling the `faster-threading` feature.
 - The `standard-random` uses standard Rust abstractions for random number
   generation. The current algorithm (`xoshiro256+`) is _slower_ than what
   3photons uses by default (`ranf`), but more friendly to parallelization
@@ -40,7 +40,7 @@ This version aims to produce results which are as close as possible to what the
 original `3photons` program would emit, with one notable exception.
 
 Instead of aggregating data about all events in a single accumulator, then
-normalizing, it slices up the event data into batches of a certain size
+normalizing, it slices up the generated events into batches of a certain size
 (implementation-defined, currently 10k events), accumulates them, and then
 merges the resulting accumulators.
 
