@@ -113,6 +113,11 @@ impl Configuration {
         // Display it the way the C++ version used to (this eases comparisons)
         config.print();
 
+        // A sensible simulation must run for at least one event
+        if config.num_events <= 0 {
+            return Err(ErrorKind::Unsupported("num_events").into());
+        }
+
         // NOTE: We don't support the original code's PAW-based plotting
         //       features, so we make sure that it was not enabled.
         if config.plot { return Err(ErrorKind::Unsupported("plot").into()); }

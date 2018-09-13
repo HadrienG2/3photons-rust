@@ -21,9 +21,9 @@ here are some features which you can enable:
   making reproducible parallelization more challenging.
 - The `multi-threading` feature parallelizes the computation using multi-
   threading. By default, it generates results which are identical to the
-  sequential version, but this has a performance and scalability cost. You can
-  remove this constraint and optimize for performance instead by also enabling
-  the `faster-threading` feature.
+  sequential version, but this has a performance, memory footprint and
+  scalability cost. You can remove this constraint and optimize for performance
+  instead by also enabling the `faster-threading` feature.
 - The `standard-random` uses standard Rust abstractions for random number
   generation. The current algorithm (`xoshiro256+`) is _slower_ than what
   3photons uses by default (`ranf`), but more friendly to parallelization
@@ -31,7 +31,7 @@ here are some features which you can enable:
 
 These features are enabled using the `--features` flag to cargo, as follows:
 
-    cargo run --release --features fast-sincos,multi-threading
+    cargo run --release --features multi-threading,faster-threading
 
 
 ## Reproducibility considerations
