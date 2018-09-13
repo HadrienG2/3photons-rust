@@ -6,10 +6,7 @@
 
 use ::{
     random::RandomGenerator,
-    resfin::{
-        FinalResults,
-        ResultsBuilder,
-    },
+    resfin::{FinalResults, ResultsBuilder},
 };
 
 

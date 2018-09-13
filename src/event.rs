@@ -109,10 +109,7 @@ impl EventGenerator {
         // TODO: There might be room for more vectorization or layout optims
 
         // Pregenerate the random parameters to shield later computations from
-        // the averse impact of RNG calls on the compiler's loop optimizations.
-        //
-        // TODO: Try using a less evil RNG instead.
-        //
+        // the averse impact of RNG calls on the compiler's loop optimizations
         #[derive(Clone, Copy, Default)]
         struct RandomParameters {
             cos_theta: Real,
