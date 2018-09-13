@@ -162,11 +162,6 @@ impl EventGenerator {
         }
 
         // Sort the output 4-momenta in order of decreasing energy
-        //
-        // FIXME: Is that really necessary? Disabling it does not seem to alter
-        //        the result much, and AFAIK we only rely on it in
-        //        event::min_photon_energy()...
-        //
         event.outgoing_momenta_mut()
              .sort_unstable_by(|a, b| {
                  // Treat NaNs as equal
