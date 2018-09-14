@@ -31,6 +31,7 @@ use std::cmp::Ordering;
 
 /// Number of incoming particles
 pub const INCOMING_COUNT: usize = 2;
+type IncomingVector<T> = Vector2<T>;
 
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
@@ -63,7 +64,7 @@ pub struct EventGenerator {
     ///
     /// FIXME: Should be a matrix
     ///
-    incoming_momenta: Vector2<Momentum>,
+    incoming_momenta: IncomingVector<Momentum>,
 }
 //
 impl EventGenerator {
@@ -103,7 +104,7 @@ impl EventGenerator {
 
         // Compute the incoming particle momenta
         let half_e_tot = e_tot / 2.;
-        let incoming_momenta = Vector2::new(
+        let incoming_momenta = IncomingVector::new(
             Momentum::new(-half_e_tot, 0., 0., half_e_tot),
             Momentum::new(half_e_tot, 0., 0., half_e_tot),
         );
