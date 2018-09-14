@@ -164,17 +164,15 @@ impl EventGenerator {
         //        it spends 25% of its time computing scalar logarithms. Using
         //        a vectorized ln() implementation should help there.
         //
-        let q_vec = OutgoingVector::from_iterator(
-            rand_params_vec.into_iter().map(|rand_params| {
-                let cos_theta = rand_params[COS_THETA];
-                let sin_theta = sqrt(1. - sqr(cos_theta));
-                let energy = -ln(rand_params[EXP_MINUS_E]);
-                energy * Momentum::new(sin_theta * rand_params[SIN_PHI],
-                                       sin_theta * rand_params[COS_PHI],
-                                       cos_theta,
-                                       1.)
-            })
-        );
+        let q_vec = rand_params_vec.map(|rand_params| {
+            let cos_theta = rand_params[COS_THETA];
+            let sin_theta = sqrt(1. - sqr(cos_theta));
+            let energy = -ln(rand_params[EXP_MINUS_E]);
+            energy * Momentum::new(sin_theta * rand_params[SIN_PHI],
+                                   sin_theta * rand_params[COS_PHI],
+                                   cos_theta,
+                                   1.)
+        });
 
         // Calculate the parameters of the conformal transformation
         let r: &Momentum = &q_vec.iter().sum();
