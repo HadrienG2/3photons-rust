@@ -1,7 +1,7 @@
 //! This module takes care of event generation and storage
 
 use ::{
-    linalg::{Momentum, E, Matrix5, Vector5, X, xyz, xyz_mut, Y, Z},
+    linalg::{Momentum, E, Matrix5, Vector2, Vector5, X, xyz, xyz_mut, Y, Z},
     numeric::{
         functions::{cos, exp, ln, sin, sqr, sqrt},
         Real,
@@ -125,19 +125,16 @@ impl EventGenerator {
 
         // Pregenerate the random parameters to shield later computations from
         // the averse impact of RNG calls on the compiler's loop optimizations
-        #[derive(Clone, Copy, Default)]
-        struct RandomParameters {
-            cos_theta: Real,
-            sincos_phi: [Real; 2],
-            exp_minus_e: Real,
-        }
-        let mut rand_params_arr = [RandomParameters::default(); OUTGOING_COUNT];
-        for rand_params in rand_params_arr.iter_mut() {
-            *rand_params = RandomParameters {
-                cos_theta: 2. * rng.random() - 1.,
-                sincos_phi: Self::random_sincos(rng),
-                exp_minus_e: rng.random() * rng.random(),
-            };
+        const COS_THETA: usize = 0;
+        const COS_PHI: usize = 1;
+        const SIN_PHI: usize = 2;
+        const EXP_MINUS_E: usize = 3;
+        let mut rand_params_arr = [[0.; 4]; OUTGOING_COUNT];
+        for params in rand_params_arr.iter_mut() {
+            params[COS_THETA] = 2. * rng.random() - 1.;
+            let sincos_phi = Self::random_sincos(rng);
+            params[COS_PHI..=SIN_PHI].copy_from_slice(&sincos_phi[..]);
+            params[EXP_MINUS_E] = rng.random() * rng.random();
         }
 
         // Generate massless outgoing 4-momenta in infinite phase space
@@ -148,13 +145,12 @@ impl EventGenerator {
         //
         let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
         for (q, params) in q_arr.iter_mut().zip(rand_params_arr.iter()) {
-            let cos_theta = params.cos_theta;
+            let cos_theta = params[COS_THETA];
             let sin_theta = sqrt(1.0 - sqr(cos_theta));
-            let [cos_phi, sin_phi] = params.sincos_phi;
-            q[E] = - ln(params.exp_minus_e);
+            q[E] = - ln(params[EXP_MINUS_E]);
             q[Z] = q[E] * cos_theta;
-            q[Y] = q[E] * sin_theta * cos_phi;
-            q[X] = q[E] * sin_theta * sin_phi;
+            q[Y] = q[E] * sin_theta * params[COS_PHI];
+            q[X] = q[E] * sin_theta * params[SIN_PHI];
         }
         let q_arr = q_arr;
 
@@ -195,7 +191,7 @@ impl EventGenerator {
         event
     }
 
-    /// Generate a (sin(x), cos(x)) pair where x is uniform in [0, 2*PI[
+    /// Generate a (cos(x), sin(x)) pair where x is uniform in [0, 2*PI[
     ///
     /// NOTE: Similar techniques may be used to generate a vector on the unit
     ///       sphere, but that benchmarked unfavorably, likely because it
@@ -203,7 +199,7 @@ impl EventGenerator {
     ///       because the 2D case fits available vector hardware more tightly.
     ///
     /// FIXME: I would like to use a vector type instead of an array here, but
-    ///        nalgebra's operations cause an unacceptable performance hit.
+    ///        nalgebra's lack of Default impl makes that ergonomically costly.
     ///
     fn random_sincos(rng: &mut RandomGenerator) -> [Real; 2] {
         // This function has two operating modes: a default mode which produces
@@ -214,20 +210,19 @@ impl EventGenerator {
             // calls over expensive trigonometric functions
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
             loop {
-                // Grab a point on the unit square
-                let x = 2. * rng.random() - 1.;
-                let y = 2. * rng.random() - 1.;
+                // Grab a random point on the unit square
+                let mut p = Vector2::from_fn(|_, _| 2. * rng.random() - 1.);
 
                 // Compute (squared) distance from center
-                let n2 = sqr(x) + sqr(y);
+                let n2 = p.norm_squared();
 
                 // Discard points which are outside of the unit circle
                 // or too close to the center for good normalization.
                 if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
                     // Normalize by n and you get a point on the unit
                     // circle, i.e. a sin/cos pair!
-                    let n = sqrt(n2);
-                    break [x/n, y/n];
+                    p /= sqrt(n2);
+                    break [p[X], p[Y]];
                 }
             }
         } else {
