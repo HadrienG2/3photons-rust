@@ -48,7 +48,7 @@ impl SpinorProducts {
             });
         let fx =
             ParticleVector::<Complex>::from_fn(|i, _| {
-                Complex::new(p[i][X], p[i][Y]) * (1. / xx[i])
+                Complex::new(p[i][X], p[i][Y]) / xx[i]
             });
 
         // Fill up the Gram matrix
