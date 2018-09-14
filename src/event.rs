@@ -228,14 +228,12 @@ impl EventGenerator {
                 // Grab a random point on the unit square
                 let mut p = Vector2::from_fn(|_, _| 2. * rng.random() - 1.);
 
-                // Compute (squared) distance from center
+                // Compute (squared) distance from the origin
                 let n2 = p.norm_squared();
 
-                // Discard points which are outside of the unit circle
-                // or too close to the center for good normalization.
+                // Discard points outside the unit disc or whose norm is small
                 if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
-                    // Normalize by n and you get a point on the unit
-                    // circle, i.e. a sin/cos pair!
+                    // Normalize and you get a point on the unit circle!
                     p /= sqrt(n2);
                     break p;
                 }
