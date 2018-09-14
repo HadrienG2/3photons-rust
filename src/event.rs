@@ -196,15 +196,16 @@ impl EventGenerator {
     /// TODO: Make this a full-blown unit vector generator and explore if we can
     ///       do better on the theta front.
     ///
-    /// TODO: Use an nalgebra vector type instead of an array.
+    /// FIXME: I would like to use a vector type instead of an array here, but
+    ///        nalgebra's operations cause an unacceptable performance hit.
     ///
     fn random_sincos(rng: &mut RandomGenerator) -> [Real; 2] {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different (faster) algorithm.
         if cfg!(feature = "fast-sincos") {
-            // In a nutshell, this path is faster because it avoids calling very
-            // expensive trigonometric functions.
+            // In a nutshell, this path is faster because it favors cheap RNG
+            // calls over expensive trigonometric functions
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
             loop {
                 // Grab a point on the unit square
