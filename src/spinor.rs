@@ -1,7 +1,13 @@
 //! Facilities for computing spinor products
 
 use ::{
-    event::{Event, INCOMING_COUNT, OUTGOING_COUNT, PARTICLE_COUNT},
+    event::{
+        Event,
+        INCOMING_COUNT,
+        OUTGOING_COUNT,
+        ParticleVector,
+        ParticleMatrix,
+    },
     linalg::{X, Y, Z, E},
     numeric::{
         Complex,
@@ -11,8 +17,6 @@ use ::{
     },
 };
 
-use num_traits::Zero;
-
 
 /// Square root of eight
 const RAC8: Real = 2. * SQRT_2;
@@ -21,10 +25,7 @@ const RAC8: Real = 2. * SQRT_2;
 /// Massless 4-momenta spinor inner products
 pub struct SpinorProducts {
     /// Gram matrix associated with the inner products
-    ///
-    /// TODO: Should probably be an nalgebra matrix
-    ///
-    sx: [[Complex; PARTICLE_COUNT]; PARTICLE_COUNT],
+    sx: ParticleMatrix<Complex>,
 }
 //
 impl SpinorProducts {
@@ -41,23 +42,22 @@ impl SpinorProducts {
         let p = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let mut xx = [0.; PARTICLE_COUNT];
-        let mut fx = [Complex::new(0., 0.); PARTICLE_COUNT];
-        for i in 0..PARTICLE_COUNT {
-            xx[i] = sqrt(p[i][E] + p[i][Z]);
-            fx[i] = Complex::new(p[i][X], p[i][Y]) * (1. / xx[i]);
-        }
+        let xx =
+            ParticleVector::<Real>::from_fn(|i, _| {
+                sqrt(p[i][E] + p[i][Z])
+            });
+        let fx =
+            ParticleVector::<Complex>::from_fn(|i, _| {
+                Complex::new(p[i][X], p[i][Y]) * (1. / xx[i])
+            });
 
         // Fill up the Gram matrix
         // TODO: Can we leverage antisymmetry + zero diagonal better?
-        let mut result = Self {
-            sx: [[Complex::zero(); PARTICLE_COUNT]; PARTICLE_COUNT],
+        let result = Self {
+            sx: ParticleMatrix::from_fn(|i, j| {
+                fx[i]*xx[j] - fx[j]*xx[i]
+            }),
         };
-        for i in 0..PARTICLE_COUNT {
-            for j in 0..PARTICLE_COUNT {
-                result.sx[i][j] = fx[i]*xx[j] - fx[j]*xx[i];
-            }
-        }
 
         // Return the result
         result
@@ -69,7 +69,7 @@ impl SpinorProducts {
     /// Quickly access the underlying Gram matrix of spinor products
     #[inline]
     fn s(&self, i: usize, j: usize) -> Complex {
-        self.sx[i][j]
+        self.sx[(i, j)]
     }
 
     #[inline]

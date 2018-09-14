@@ -1,7 +1,7 @@
 //! This module takes care of event generation and storage
 
 use ::{
-    linalg::{Momentum, E, X, xyz, xyz_mut, Y, Z},
+    linalg::{Momentum, E, Matrix5, Vector5, X, xyz, xyz_mut, Y, Z},
     numeric::{
         functions::{cos, exp, ln, sin, sqr, sqrt},
         Real,
@@ -26,6 +26,8 @@ pub const OUTGOING_COUNT: usize = 3;
 
 /// Total number of particles in an event
 pub const PARTICLE_COUNT: usize = INCOMING_COUNT+OUTGOING_COUNT;
+pub type ParticleVector<T> = Vector5<T>;
+pub type ParticleMatrix<T> = Matrix5<T>;
 
 /// Index of the incoming electron in the 4-momentum array
 pub const INCOMING_E_M: usize = 0;
