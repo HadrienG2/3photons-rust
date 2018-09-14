@@ -35,3 +35,7 @@ xoshiro = { version = "0.0.4", optional = true }
 # Aborting panics mean no app cleanup when a panic is encountered, but better
 # compiler optimizations. For scientific computation, that's a good trade-off.
 panic = "abort"
+# Parallel code generation improves compilation performance but prevents some
+# global optimizations. For this small project, the compilation performance
+# benefit is small, so we would rather have more run-time performance
+codegen-units = 1
