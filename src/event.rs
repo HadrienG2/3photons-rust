@@ -143,9 +143,9 @@ impl EventGenerator {
         const EXP_MINUS_E: usize = 3;
         let rand_params_arr = OutgoingVector::from_fn(|_, _| {
             let cos_theta = 2. * rng.random() - 1.;
-            let sincos_phi = Self::random_sincos(rng);
+            let sincos_phi = Self::random_unit_2d(rng);
             let exp_minus_e = rng.random() * rng.random();
-            [cos_theta, sincos_phi[0], sincos_phi[1], exp_minus_e]
+            [cos_theta, sincos_phi[X], sincos_phi[Y], exp_minus_e]
         });
 
         // Generate massless outgoing 4-momenta in infinite phase space
@@ -203,17 +203,14 @@ impl EventGenerator {
         event
     }
 
-    /// Generate a (cos(x), sin(x)) pair where x is uniform in [0, 2*PI[
+    /// Generate a vector on the unit circle with uniform angle distribution
     ///
     /// NOTE: Similar techniques may be used to generate a vector on the unit
     ///       sphere, but that benchmarked unfavorably, likely because it
     ///       entails bringing more computations close to the RNG calls and
     ///       because the 2D case fits available vector hardware more tightly.
     ///
-    /// FIXME: I would like to use a vector type instead of an array here, but
-    ///        nalgebra's lack of Default impl makes that ergonomically costly.
-    ///
-    fn random_sincos(rng: &mut RandomGenerator) -> [Real; 2] {
+    fn random_unit_2d(rng: &mut RandomGenerator) -> Vector2<Real> {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different (faster) algorithm.
@@ -234,13 +231,13 @@ impl EventGenerator {
                     // Normalize by n and you get a point on the unit
                     // circle, i.e. a sin/cos pair!
                     p /= sqrt(n2);
-                    break [p[X], p[Y]];
+                    break p;
                 }
             }
         } else {
             // This code path strictly follows the original 3photons algorithm
             let phi = 2. * PI * rng.random();
-            [cos(phi), sin(phi)]
+            Vector2::new(cos(phi), sin(phi))
         }
     }
 
