@@ -14,7 +14,7 @@ use nalgebra::{
 // ### BASIC VECTOR TYPES ###
 
 /// Re-export of some nalgebra types
-pub use nalgebra::{Vector2, Vector5, Matrix5};
+pub use nalgebra::{Vector2, Vector3, Vector5, Matrix5};
 
 /// Re-export of nalgebra's 8-vector type
 pub type Vector8<T> = VectorN<T, U8>;

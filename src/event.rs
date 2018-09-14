@@ -1,7 +1,18 @@
 //! This module takes care of event generation and storage
 
 use ::{
-    linalg::{Momentum, E, Matrix5, Vector2, Vector5, X, xyz, xyz_mut, Y, Z},
+    linalg::{
+        Momentum,
+        E,
+        Matrix5,
+        Vector2,
+        Vector3,
+        Vector5,
+        X,
+        xyz,
+        xyz_mut,
+        Y
+    },
     numeric::{
         functions::{cos, exp, ln, sin, sqr, sqrt},
         Real,
@@ -23,6 +34,7 @@ pub const INCOMING_COUNT: usize = 2;
 
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
+type OutgoingVector<T> = Vector3<T>;
 
 /// Total number of particles in an event (= sum of the above)
 pub const PARTICLE_COUNT: usize = 5;
@@ -129,13 +141,12 @@ impl EventGenerator {
         const COS_PHI: usize = 1;
         const SIN_PHI: usize = 2;
         const EXP_MINUS_E: usize = 3;
-        let mut rand_params_arr = [[0.; 4]; OUTGOING_COUNT];
-        for params in rand_params_arr.iter_mut() {
-            params[COS_THETA] = 2. * rng.random() - 1.;
+        let rand_params_arr = OutgoingVector::from_fn(|_, _| {
+            let cos_theta = 2. * rng.random() - 1.;
             let sincos_phi = Self::random_sincos(rng);
-            params[COS_PHI..=SIN_PHI].copy_from_slice(&sincos_phi[..]);
-            params[EXP_MINUS_E] = rng.random() * rng.random();
-        }
+            let exp_minus_e = rng.random() * rng.random();
+            [cos_theta, sincos_phi[0], sincos_phi[1], exp_minus_e]
+        });
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
@@ -143,16 +154,17 @@ impl EventGenerator {
         //        it spends 25% of its time computing scalar logarithms. Using
         //        a vectorized ln() implementation should help there.
         //
-        let mut q_arr = [Momentum::zero(); OUTGOING_COUNT];
-        for (q, params) in q_arr.iter_mut().zip(rand_params_arr.iter()) {
-            let cos_theta = params[COS_THETA];
-            let sin_theta = sqrt(1.0 - sqr(cos_theta));
-            q[E] = - ln(params[EXP_MINUS_E]);
-            q[Z] = q[E] * cos_theta;
-            q[Y] = q[E] * sin_theta * params[COS_PHI];
-            q[X] = q[E] * sin_theta * params[SIN_PHI];
-        }
-        let q_arr = q_arr;
+        let q_arr = OutgoingVector::from_iterator(
+            rand_params_arr.iter().map(|rand_params| {
+                let cos_theta = rand_params[COS_THETA];
+                let sin_theta = sqrt(1. - sqr(cos_theta));
+                let energy = -ln(rand_params[EXP_MINUS_E]);
+                energy * Momentum::new(sin_theta * rand_params[SIN_PHI],
+                                       sin_theta * rand_params[COS_PHI],
+                                       cos_theta,
+                                       1.)
+            })
+        );
 
         // Calculate the parameters of the conformal transformation
         let r: &Momentum = &q_arr.iter().sum();
