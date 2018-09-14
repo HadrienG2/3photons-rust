@@ -271,7 +271,8 @@ impl EventGenerator {
 pub struct Event {
     /// Array of incoming and outgoing 4-momenta
     ///
-    /// TODO: Should use a matrix here (and review row/column layout)
+    /// TODO: Should use a matrix here (and review row/column layout), but won't
+    ///       yet as nalgebra performance and ergonomics make it a bad trade-off
     ///
     p: [Momentum; PARTICLE_COUNT],
 }
