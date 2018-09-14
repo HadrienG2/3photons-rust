@@ -25,7 +25,7 @@ error-chain = "0.12"
 nalgebra = "0.15"
 num-complex = "0.2"
 num-traits = "0.2"
-
+# These deps are only needed when some features are enabled
 rand = { version = "0.5", optional = true }
 rayon = { version = "1.0", optional = true }
 xoshiro = { version = "0.0.4", optional = true }
@@ -39,3 +39,5 @@ panic = "abort"
 # global optimizations. For this small project, the compilation performance
 # benefit is small, so we would rather have more run-time performance
 codegen-units = 1
+# Always enabling debug info is more convenient for this use case
+debug = true
