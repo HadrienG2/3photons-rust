@@ -14,8 +14,8 @@ use ::{
         VectorSliceMut,
         X,
         xyz,
-        xyz_mut,
-        Y
+        Y,
+        Z
     },
     numeric::{
         functions::{cos, exp, ln, sin, sqr, sqrt},
@@ -27,8 +27,6 @@ use ::{
     },
     random::RandomGenerator,
 };
-
-use num_traits::identities::Zero;
 
 
 /// Number of incoming particles
@@ -132,11 +130,6 @@ impl EventGenerator {
     /// The 4-momenta of output photons are sorted by decreasing energy.
     ///
     pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
-        // Prepare storage for the final event
-        let mut event = Event { p: ParticleVector::zero() };
-        event.p[INCOMING_E_M] = self.incoming_momenta[INCOMING_E_M];
-        event.p[INCOMING_E_P] = self.incoming_momenta[INCOMING_E_P];
-
         // TODO: There might be room for more vectorization or layout optims.
         //       Here is where I ended up the last time I looked at it:
         //
@@ -158,7 +151,7 @@ impl EventGenerator {
         const COS_PHI: usize = 1;
         const SIN_PHI: usize = 2;
         const EXP_MINUS_E: usize = 3;
-        let rand_params_arr = OutgoingVector::from_fn(|_, _| {
+        let rand_params_vec = OutgoingVector::from_fn(|_, _| {
             let cos_theta = 2. * rng.random() - 1.;
             let sincos_phi = Self::random_unit_2d(rng);
             let exp_minus_e = rng.random() * rng.random();
@@ -171,8 +164,8 @@ impl EventGenerator {
         //        it spends 25% of its time computing scalar logarithms. Using
         //        a vectorized ln() implementation should help there.
         //
-        let q_arr = OutgoingVector::from_iterator(
-            rand_params_arr.into_iter().map(|rand_params| {
+        let q_vec = OutgoingVector::from_iterator(
+            rand_params_vec.into_iter().map(|rand_params| {
                 let cos_theta = rand_params[COS_THETA];
                 let sin_theta = sqrt(1. - sqr(cos_theta));
                 let energy = -ln(rand_params[EXP_MINUS_E]);
@@ -184,22 +177,23 @@ impl EventGenerator {
         );
 
         // Calculate the parameters of the conformal transformation
-        let r: &Momentum = &q_arr.iter().sum();
+        let r: &Momentum = &q_vec.iter().sum();
         let r_norm_2 = r[E] * r[E] - xyz(r).norm_squared();
         let alpha = self.e_tot / r_norm_2;
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 
-        // Transform the Q's conformally into output 4-momenta
-        for (p, q) in event.outgoing_momenta_mut().iter_mut()
-                                                  .zip(q_arr.iter())
-        {
-            let rq = xyz(r).dot(&xyz(q));
-            let p_xyz = r_norm * xyz(q) + (beta * rq - q[E]) * xyz(r);
-            xyz_mut(p).copy_from(&p_xyz);
-            p[E] = r[E] * q[E] - rq;
-            *p *= alpha;
-        }
+        // Build the event, starting with the incoming momenta, then
+        // transforming the Q's conformally into the output 4-momenta
+        let mut event = Event(ParticleVector::from_iterator(
+            self.incoming_momenta.iter().cloned()
+                                 .chain(q_vec.into_iter().map(|q| {
+                let rq = xyz(r).dot(&xyz(q));
+                let p_xyz = r_norm * xyz(q) + (beta * rq - q[E]) * xyz(r);
+                let p_e = r[E] * q[E] - rq;
+                alpha * Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e)
+            }))
+        ));
 
         // Sort the output 4-momenta in order of decreasing energy
         if cfg!(not(feature = "no-photon-sorting")) {
@@ -288,51 +282,50 @@ impl EventGenerator {
 
 
 /// Storage for ee -> ppp event data
-pub struct Event {
-    /// Array of incoming and outgoing 4-momenta
-    ///
-    /// TODO: Should use a matrix here (and review row/column layout), but won't
-    ///       yet as nalgebra performance and ergonomics make it a bad trade-off
-    ///
-    p: ParticleVector<Momentum>,
-}
+///
+/// Encapsulates a vector of incoming and outgoing 4-momenta
+///
+/// TODO: Try making that a full-blown matrix
+///
+pub struct Event(ParticleVector<Momentum>);
 //
 impl Event {
     // ### ACCESSORS ###
 
     /// Access the full internal 4-momentum array by reference
     pub fn all_momenta(&self) -> &ParticleVector<Momentum> {
-        &self.p
+        &self.0
     }
 
     /// Access the electron 4-momentum only
     pub fn electron_momentum(&self) -> &Momentum {
-        &self.p[INCOMING_E_M]
+        &self.0[INCOMING_E_M]
     }
 
     /// Access the positron 4-momentum only
     #[allow(dead_code)]
     pub fn positron_momentum(&self) -> &Momentum {
-        &self.p[INCOMING_E_P]
+        &self.0[INCOMING_E_P]
     }
 
     /// Access the outgoing 4-momenta only
     pub fn outgoing_momenta(&self) -> OutgoingVectorSlice<Momentum> {
-        self.p.fixed_rows::<U3>(OUTGOING_SHIFT)
+        self.0.fixed_rows::<U3>(OUTGOING_SHIFT)
     }
 
     /// Mutable access to the outgoing 4-momenta (for internal use)
     fn outgoing_momenta_mut(&mut self) -> OutgoingVectorSliceMut<Momentum> {
-        self.p.fixed_rows_mut::<U3>(OUTGOING_SHIFT)
+        self.0.fixed_rows_mut::<U3>(OUTGOING_SHIFT)
     }
 
     /// Minimal outgoing photon energy
     pub fn min_photon_energy(&self) -> Real {
         if cfg!(feature = "no-photon-sorting") {
+            let first_out_e = self.outgoing_momenta()[0][E];
             self.outgoing_momenta()
                 .iter()
                 .map(|p| p[E])
-                .fold(self.p[0][E], |e1, e2| if e1 < e2 { e1 } else { e2 })
+                .fold(first_out_e, |e1, e2| if e1 < e2 { e1 } else { e2 })
         } else {
             // Use the fact that photons are sorted by decreasing energy
             self.outgoing_momenta()[OUTGOING_COUNT-1][E]

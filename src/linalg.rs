@@ -54,8 +54,3 @@ pub const E: usize = 3;
 pub fn xyz(m: &Momentum) -> VectorSlice<Real, U3, U4> {
     m.fixed_rows::<U3>(X)
 }
-
-/// Get a mutable view on the spatial part of a 4-momentum
-pub fn xyz_mut(m: &mut Momentum) -> VectorSliceMut<Real, U3, U4> {
-    m.fixed_rows_mut::<U3>(X)
-}
