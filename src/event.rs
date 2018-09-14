@@ -175,17 +175,19 @@ impl EventGenerator {
         }
 
         // Sort the output 4-momenta in order of decreasing energy
-        event.outgoing_momenta_mut()
-             .sort_unstable_by(|a, b| {
-                 // Treat NaNs as equal
-                 if a[E] > b[E] {
-                     Ordering::Less
-                 } else if a[E] < b[E] {
-                     Ordering::Greater
-                 } else {
-                     Ordering::Equal
-                 }
-             });
+        if !cfg!(feature = "no-photon-sorting") {
+            event.outgoing_momenta_mut()
+                 .sort_unstable_by(|a, b| {
+                     // Treat NaNs as equal
+                     if a[E] > b[E] {
+                         Ordering::Less
+                     } else if a[E] < b[E] {
+                         Ordering::Greater
+                     } else {
+                         Ordering::Equal
+                     }
+                 });
+        }
 
         // Hand off the generated event
         event
@@ -308,8 +310,15 @@ impl Event {
 
     /// Minimal outgoing photon energy
     pub fn min_photon_energy(&self) -> Real {
-        // Use the fact that photons are sorted in order of decreasing energy
-        self.p[OUTGOING_SHIFT+OUTGOING_COUNT-1][E]
+        if cfg!(feature = "no-photon-sorting") {
+            self.outgoing_momenta()
+                .iter()
+                .map(|p| p[E])
+                .fold(self.p[0][E], |e1, e2| if e1 < e2 { e1 } else { e2 })
+        } else {
+            // Use the fact that photons are sorted by decreasing energy
+            self.outgoing_momenta()[OUTGOING_COUNT-1][E]
+        }
     }
 
 

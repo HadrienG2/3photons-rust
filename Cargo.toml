@@ -14,6 +14,8 @@ fast-sincos = []
 faster-threading = []
 # Parallelize the computation via multi-threading
 multi-threading = ["rayon"]
+# Disable photon sorting
+no-photon-sorting = []
 # Use a standard algorithm for random number generation
 standard-random = ["rand", "xoshiro"]
 

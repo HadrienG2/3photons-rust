@@ -24,6 +24,8 @@ here are some features which you can enable:
   sequential version, but this has a performance, memory footprint and
   scalability cost. You can remove this constraint and allow the program to take
   more performance shortcuts by also enabling the `faster-threading` feature.
+- The `no-photon-sorting` feature disables the sorting of outgoing photons by
+  energy that used to be present in the original `3photons` code.
 - The `standard-random` uses standard Rust abstractions for random number
   generation. The current algorithm (`xoshiro256+`) is not faster than what
   3photons uses by default (`ranf`), but is more friendly to parallelization
