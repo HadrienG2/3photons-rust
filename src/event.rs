@@ -169,7 +169,7 @@ impl EventGenerator {
         //        a vectorized ln() implementation should help there.
         //
         let q_arr = OutgoingVector::from_iterator(
-            rand_params_arr.iter().map(|rand_params| {
+            rand_params_arr.into_iter().map(|rand_params| {
                 let cos_theta = rand_params[COS_THETA];
                 let sin_theta = sqrt(1. - sqr(cos_theta));
                 let energy = -ln(rand_params[EXP_MINUS_E]);
