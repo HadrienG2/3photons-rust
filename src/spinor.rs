@@ -42,9 +42,7 @@ impl SpinorProducts {
         let px = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let xx = ParticleVector::from_iterator(
-            px.iter().map(|p| sqrt(p[E] + p[Z]))
-        );
+        let xx = px.map(|p| sqrt(p[E] + p[Z]));
         let fx = ParticleVector::from_iterator(
             px.iter().zip(xx.iter())
                      .map(|(p, x)| Complex::new(p[X], p[Y]) / x)
