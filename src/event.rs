@@ -256,7 +256,7 @@ impl EventGenerator {
             // nondeterministic, so we must simulate events one by one.
             for _ in 0..num_events*OUTGOING_COUNT {
                 rng.skip(1);
-                Self::random_sincos(rng);
+                Self::random_unit_2d(rng);
                 rng.skip(2);
             }
         } else {
