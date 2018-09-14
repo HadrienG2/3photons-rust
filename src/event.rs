@@ -193,8 +193,10 @@ impl EventGenerator {
 
     /// Generate a (sin(x), cos(x)) pair where x is uniform in [0, 2*PI[
     ///
-    /// TODO: Make this a full-blown unit vector generator and explore if we can
-    ///       do better on the theta front.
+    /// NOTE: Similar techniques may be used to generate a vector on the unit
+    ///       sphere, but that benchmarked unfavorably, likely because it
+    ///       entails bringing more computations close to the RNG calls and
+    ///       because the 2D case fits available vector hardware more tightly.
     ///
     /// FIXME: I would like to use a vector type instead of an array here, but
     ///        nalgebra's operations cause an unacceptable performance hit.
