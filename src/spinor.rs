@@ -39,24 +39,21 @@ impl SpinorProducts {
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
         // Access the array of incoming and outgoing particle 4-momenta
-        let p = event.all_momenta();
+        let ps = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let xx =
-            ParticleVector::<Real>::from_fn(|i, _| {
-                sqrt(p[i][E] + p[i][Z])
-            });
-        let fx =
-            ParticleVector::<Complex>::from_fn(|i, _| {
-                Complex::new(p[i][X], p[i][Y]) / xx[i]
-            });
+        let xx = ParticleVector::<Real>::from_iterator(
+            ps.iter().map(|p| sqrt(p[E] + p[Z]))
+        );
+        let fx = ParticleVector::<Complex>::from_iterator(
+            ps.iter().zip(xx.iter())
+                     .map(|(p, x)| Complex::new(p[X], p[Y]) / x)
+        );
 
         // Fill up the Gram matrix
         // TODO: Can we leverage antisymmetry + zero diagonal better?
         let result = Self {
-            sx: ParticleMatrix::from_fn(|i, j| {
-                fx[i]*xx[j] - fx[j]*xx[i]
-            }),
+            sx: ParticleMatrix::from_fn(|i, j| { fx[i]*xx[j] - fx[j]*xx[i] }),
         };
 
         // Return the result
