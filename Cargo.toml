@@ -8,7 +8,7 @@ authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 default = []
 # Use single precision instead of double precision
 f32 = []
-# Use faster algorithm for random unit vector generation
+# Use a faster algorithm for random unit vector generation
 fast-sincos = []
 # Maximize multi-threaded performance at the expense of result reproducibility
 faster-threading = []
