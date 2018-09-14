@@ -58,6 +58,12 @@ pub struct EventGenerator {
 
     /// Weight of generated events
     ev_weight: Real,
+
+    /// Incoming electron and positron momenta
+    ///
+    /// FIXME: Should be a matrix
+    ///
+    incoming_momenta: Vector2<Momentum>,
 }
 //
 impl EventGenerator {
@@ -94,11 +100,19 @@ impl EventGenerator {
         let ln_weight = (2. * (OUTGOING_COUNT as Real) - 4.) * ln(e_tot) + z;
         assert!((ln_weight >= -180.) && (ln_weight <= 174.));
         let ev_weight = exp(ln_weight);
+
+        // Compute the incoming particle momenta
+        let half_e_tot = e_tot / 2.;
+        let incoming_momenta = Vector2::new(
+            Momentum::new(-half_e_tot, 0., 0., half_e_tot),
+            Momentum::new(half_e_tot, 0., 0., half_e_tot),
+        );
         
         // Construct and return the output data structure
         EventGenerator {
             e_tot,
             ev_weight,
+            incoming_momenta,
         }
     }
 
@@ -115,10 +129,9 @@ impl EventGenerator {
     ///
     pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
         // Prepare storage for the final event
-        let half_e_tot = self.e_tot / 2.;
         let mut event = Event { p: [Momentum::zero(); PARTICLE_COUNT] };
-        event.p[INCOMING_E_M] = Momentum::new(-half_e_tot, 0., 0., half_e_tot);
-        event.p[INCOMING_E_P] = Momentum::new(half_e_tot, 0., 0., half_e_tot);
+        event.p[INCOMING_E_M] = self.incoming_momenta[INCOMING_E_M];
+        event.p[INCOMING_E_P] = self.incoming_momenta[INCOMING_E_P];
 
         // TODO: There might be room for more vectorization or layout optims.
         //       Here is where I ended up the last time I looked at it:
