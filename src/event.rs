@@ -24,8 +24,8 @@ pub const INCOMING_COUNT: usize = 2;
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
 
-/// Total number of particles in an event
-pub const PARTICLE_COUNT: usize = INCOMING_COUNT+OUTGOING_COUNT;
+/// Total number of particles in an event (= sum of the above)
+pub const PARTICLE_COUNT: usize = 5;
 pub type ParticleVector<T> = Vector5<T>;
 pub type ParticleMatrix<T> = Matrix5<T>;
 
