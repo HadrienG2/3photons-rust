@@ -324,6 +324,7 @@ impl Event {
             let first_out_e = self.outgoing_momenta()[0][E];
             self.outgoing_momenta()
                 .iter()
+                .skip(1)
                 .map(|p| p[E])
                 .fold(first_out_e, |e1, e2| if e1 < e2 { e1 } else { e2 })
         } else {

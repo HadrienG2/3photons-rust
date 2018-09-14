@@ -4,6 +4,7 @@
 use ::{
     config::Configuration,
     event::{INCOMING_COUNT, OUTGOING_COUNT},
+    linalg::Vector2,
     numeric::{
         Complex,
         functions::{abs, powi, sqr, sqrt},
@@ -16,8 +17,9 @@ use ::{
 use num_traits::Zero;
 
 
-/// Number of spins
+/// Vector of per-spin data
 const NUM_SPINS: usize = 2;
+pub type SpinVector<T> = Vector2<T>;
 
 
 /// This struct will accumulate intermediary results during integration, and
@@ -151,8 +153,8 @@ impl<'a> ResultsBuilder<'a> {
         // Compute the final results
         let mut results = FinalResults {
             selected_events: self.selected_events,
-            spm2: [self.spm2, ResultVector::zero()],
-            vars: [self.vars, ResultVector::zero()],
+            spm2: SpinVector::repeat(self.spm2),
+            vars: SpinVector::repeat(self.vars),
             sigma: self.sigma,
             variance: self.variance,
             beta_min: 0.,
@@ -165,6 +167,7 @@ impl<'a> ResultsBuilder<'a> {
         };
         {
             // Borrow spm2 and var from them to avoid repetitive member access
+            assert_eq!(NUM_SPINS, 2, "This code is only valid for two spins");
             let spm2 = &mut results.spm2;
             let var = &mut results.vars;
 
@@ -251,10 +254,10 @@ pub struct FinalResults<'a> {
     pub selected_events: i32,
 
     /// Cross-section for each spin
-    pub spm2: [ResultVector<Real>; NUM_SPINS],
+    pub spm2: SpinVector<ResultVector<Real>>,
 
     /// Variance for each spin
-    pub vars: [ResultVector<Real>; NUM_SPINS],
+    pub vars: SpinVector<ResultVector<Real>>,
 
     /// Total cross-section
     pub sigma: Real,
