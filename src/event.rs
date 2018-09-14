@@ -5,9 +5,13 @@ use ::{
         Momentum,
         E,
         Matrix5,
+        U3,
+        U5,
         Vector2,
         Vector3,
         Vector5,
+        VectorSlice,
+        VectorSliceMut,
         X,
         xyz,
         xyz_mut,
@@ -26,8 +30,6 @@ use ::{
 
 use num_traits::identities::Zero;
 
-use std::cmp::Ordering;
-
 
 /// Number of incoming particles
 pub const INCOMING_COUNT: usize = 2;
@@ -36,9 +38,10 @@ type IncomingVector<T> = Vector2<T>;
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
 type OutgoingVector<T> = Vector3<T>;
+pub type OutgoingVectorSlice<'a, T> = VectorSlice<'a, T, U3, U5>;
+type OutgoingVectorSliceMut<'a, T> = VectorSliceMut<'a, T, U3, U5>;
 
 /// Total number of particles in an event (= sum of the above)
-pub const PARTICLE_COUNT: usize = 5;
 pub type ParticleVector<T> = Vector5<T>;
 pub type ParticleMatrix<T> = Matrix5<T>;
 
@@ -130,7 +133,7 @@ impl EventGenerator {
     ///
     pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
         // Prepare storage for the final event
-        let mut event = Event { p: [Momentum::zero(); PARTICLE_COUNT] };
+        let mut event = Event { p: ParticleVector::zero() };
         event.p[INCOMING_E_M] = self.incoming_momenta[INCOMING_E_M];
         event.p[INCOMING_E_P] = self.incoming_momenta[INCOMING_E_P];
 
@@ -199,18 +202,13 @@ impl EventGenerator {
         }
 
         // Sort the output 4-momenta in order of decreasing energy
-        if !cfg!(feature = "no-photon-sorting") {
-            event.outgoing_momenta_mut()
-                 .sort_unstable_by(|a, b| {
-                     // Treat NaNs as equal
-                     if a[E] > b[E] {
-                         Ordering::Less
-                     } else if a[E] < b[E] {
-                         Ordering::Greater
-                     } else {
-                         Ordering::Equal
-                     }
-                 });
+        if cfg!(not(feature = "no-photon-sorting")) {
+            assert_eq!(OUTGOING_COUNT, 3,
+                       "This code assumes that there are 3 outgoing particles");
+            let mut outgoing = event.outgoing_momenta_mut();
+            if outgoing[1][E] > outgoing[0][E] { outgoing.swap_rows(0, 1); }
+            if outgoing[2][E] > outgoing[0][E] { outgoing.swap_rows(0, 2); }
+            if outgoing[2][E] > outgoing[1][E] { outgoing.swap_rows(1, 2); }
         }
 
         // Hand off the generated event
@@ -296,14 +294,14 @@ pub struct Event {
     /// TODO: Should use a matrix here (and review row/column layout), but won't
     ///       yet as nalgebra performance and ergonomics make it a bad trade-off
     ///
-    p: [Momentum; PARTICLE_COUNT],
+    p: ParticleVector<Momentum>,
 }
 //
 impl Event {
     // ### ACCESSORS ###
 
     /// Access the full internal 4-momentum array by reference
-    pub fn all_momenta(&self) -> &[Momentum; PARTICLE_COUNT] {
+    pub fn all_momenta(&self) -> &ParticleVector<Momentum> {
         &self.p
     }
 
@@ -319,13 +317,13 @@ impl Event {
     }
 
     /// Access the outgoing 4-momenta only
-    pub fn outgoing_momenta(&self) -> &[Momentum; OUTGOING_COUNT] {
-        array_ref![self.p, OUTGOING_SHIFT, OUTGOING_COUNT]
+    pub fn outgoing_momenta(&self) -> OutgoingVectorSlice<Momentum> {
+        self.p.fixed_rows::<U3>(OUTGOING_SHIFT)
     }
 
     /// Mutable access to the outgoing 4-momenta (for internal use)
-    fn outgoing_momenta_mut(&mut self) -> &mut [Momentum; OUTGOING_COUNT] {
-        array_mut_ref![self.p, OUTGOING_SHIFT, OUTGOING_COUNT]
+    fn outgoing_momenta_mut(&mut self) -> OutgoingVectorSliceMut<Momentum> {
+        self.p.fixed_rows_mut::<U3>(OUTGOING_SHIFT)
     }
 
     /// Minimal outgoing photon energy

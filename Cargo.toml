@@ -21,7 +21,6 @@ standard-random = ["rand", "xoshiro"]
 
 
 [dependencies]
-arrayref = "0.3"
 chrono = "0.4"
 error-chain = "0.12"
 nalgebra = "0.15"

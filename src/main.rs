@@ -44,11 +44,10 @@
 //! The fact that we can plug each phase's output as the input of the next phase
 //! lend to a functionnal approach.
 
-#![warn(missing_docs)]
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
+#![warn(missing_docs)]
 
-#[macro_use] extern crate arrayref;
 #[macro_use] extern crate error_chain;
 
 #[cfg(feature = "multi-threading")] extern crate rayon;

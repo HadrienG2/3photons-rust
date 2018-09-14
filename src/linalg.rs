@@ -3,7 +3,6 @@
 use ::numeric::Real;
 
 use nalgebra::{
-    core::dimension::*,
     MatrixSlice,
     MatrixSliceMut,
     Vector4,
@@ -13,11 +12,22 @@ use nalgebra::{
 
 // ### BASIC VECTOR TYPES ###
 
+/// Re-export of nalgebra's type-level integers
+pub use nalgebra::core::dimension::*;
+
 /// Re-export of some nalgebra types
 pub use nalgebra::{Vector2, Vector3, Vector5, Matrix5};
 
 /// Re-export of nalgebra's 8-vector type
 pub type Vector8<T> = VectorN<T, U8>;
+
+/// Convenience shorthand for defining vector slices
+pub type VectorSlice<'a, T, SliceDim, ParentDim> =
+    MatrixSlice<'a, T, SliceDim, U1, U1, ParentDim>;
+
+/// Convenience shorthand for defining mutable vector slices
+pub type VectorSliceMut<'a, T, SliceDim, ParentDim> =
+    MatrixSliceMut<'a, T, SliceDim, U1, U1, ParentDim>;
 
 
 // ### RELATIVISTIC 4-MOMENTA ###
@@ -41,11 +51,11 @@ pub const Z: usize = 2;
 pub const E: usize = 3;
 
 /// Get a read-only view on the spatial part of a 4-momentum
-pub fn xyz(m: &Momentum) -> MatrixSlice<Real, U3, U1, U1, U4> {
+pub fn xyz(m: &Momentum) -> VectorSlice<Real, U3, U4> {
     m.fixed_rows::<U3>(X)
 }
 
 /// Get a mutable view on the spatial part of a 4-momentum
-pub fn xyz_mut(m: &mut Momentum) -> MatrixSliceMut<Real, U3, U1, U1, U4> {
+pub fn xyz_mut(m: &mut Momentum) -> VectorSliceMut<Real, U3, U4> {
     m.fixed_rows_mut::<U3>(X)
 }
