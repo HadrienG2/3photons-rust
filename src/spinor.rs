@@ -39,14 +39,14 @@ impl SpinorProducts {
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
         // Access the array of incoming and outgoing particle 4-momenta
-        let ps = event.all_momenta();
+        let px = event.all_momenta();
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let xx = ParticleVector::<Real>::from_iterator(
-            ps.iter().map(|p| sqrt(p[E] + p[Z]))
+        let xx = ParticleVector::from_iterator(
+            px.iter().map(|p| sqrt(p[E] + p[Z]))
         );
-        let fx = ParticleVector::<Complex>::from_iterator(
-            ps.iter().zip(xx.iter())
+        let fx = ParticleVector::from_iterator(
+            px.iter().zip(xx.iter())
                      .map(|(p, x)| Complex::new(p[X], p[Y]) / x)
         );
 
