@@ -158,15 +158,11 @@ impl EventGenerator {
         // FIXME: This temporarily uses a different RNG order than 3photons
         //
         let cos_theta = Vector3::from_fn(|_part, _| 2. * rng.random() - 1.);
-        let mut sincos_phi_buf = Vector2::zero();
-        let sincos_phi = Matrix2x3::from_fn(|coord, _part| {
-            match coord {
-                X => { sincos_phi_buf = Self::random_unit_2d(rng);
-                       sincos_phi_buf[X] },
-                Y => sincos_phi_buf[Y],
-                _ => unreachable!()
-            }
-        });
+        let mut sincos_phi = Matrix2x3::zero();
+        for part in 0..OUTGOING_COUNT {
+            sincos_phi.fixed_columns_mut::<U1>(part)
+                      .copy_from(&Self::random_unit_2d(rng))
+        }
         let exp_minus_e =
             Vector3::from_fn(|_part, _| rng.random() * rng.random());
 
@@ -180,10 +176,13 @@ impl EventGenerator {
         let energy = exp_minus_e.map(|e_m_e| -ln(e_m_e));
 
         // Generate massless outgoing 4-momenta in infinite phase space
+        //
+        // FIXME: Sincos coordinate order is reversed w.r.t. 3photons
+        //
         let q_mat = Matrix4x3::from_fn(|coord, part| {
             energy[part] * match coord {
-                X => sin_theta[part] * sincos_phi[(Y, part)],
-                Y => sin_theta[part] * sincos_phi[(X, part)],
+                X => sin_theta[part] * sincos_phi[(X, part)],
+                Y => sin_theta[part] * sincos_phi[(Y, part)],
                 Z => cos_theta[part],
                 E => 1.,
                 _ => unreachable!()
