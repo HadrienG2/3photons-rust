@@ -173,7 +173,7 @@ impl EventGenerator {
         //        a vectorized ln() implementation should help there.
         //
         let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
-        let energy = exp_minus_e.map(|e_m_e| -ln(e_m_e));
+        let energy = exp_minus_e.map(|e_me| -ln(e_me));
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
