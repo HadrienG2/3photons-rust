@@ -154,35 +154,25 @@ impl EventGenerator {
 
         // Pregenerate the random parameters to shield later computations from
         // the averse impact of RNG calls on the compiler's loop optimizations
-        const COS_THETA: usize = 0;
-        const COS_PHI: usize = 1;
-        const SIN_PHI: usize = 2;
-        const EXP_MINUS_E: usize = 3;
-        let mut sincos_phi = Matrix2x3::zero();
-        let rand_params = Matrix3x4::from_fn(|part, param| {
-            match param {
-                COS_THETA => 2. * rng.random() - 1.,
-                COS_PHI => {
-                    sincos_phi.fixed_columns_mut::<U1>(part)
-                              .copy_from(&Self::random_unit_2d(rng));
-                    sincos_phi[(X, part)]
-                },
-                SIN_PHI => sincos_phi[(Y, part)],
-                EXP_MINUS_E => rng.random() * rng.random(),
+        //
+        // FIXME: This temporarily uses a different RNG order than 3photons
+        //
+        let cos_theta = Vector3::from_fn(|_part, _| 2. * rng.random() - 1.);
+        let mut sincos_phi_buf = Vector2::zero();
+        let sincos_phi = Matrix2x3::from_fn(|coord, _part| {
+            match coord {
+                X => { sincos_phi_buf = Self::random_unit_2d(rng);
+                       sincos_phi_buf[X] },
+                Y => sincos_phi_buf[Y],
                 _ => unreachable!()
             }
         });
+        let exp_minus_e =
+            Vector3::from_fn(|_part, _| rng.random() * rng.random());
 
         // Derive some intermediary quantities from random parameters
-        const SIN_THETA: usize = 0;
-        const ENERGY: usize = 1;
-        let derived_params = Matrix3x2::from_fn(|part, param| {
-            match param {
-                SIN_THETA => sqrt(1. - sqr(rand_params[(part, COS_THETA)])),
-                ENERGY => -ln(rand_params[(part, EXP_MINUS_E)]),
-                _ => unreachable!()
-            }
-        });
+        let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+        let energy = exp_minus_e.map(|e_m_e| -ln(e_m_e));
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
@@ -191,13 +181,10 @@ impl EventGenerator {
         //        a vectorized ln() implementation should help there.
         //
         let q_mat = Matrix4x3::from_fn(|coord, part| {
-            derived_params[(part, ENERGY)] *
-            match coord {
-                X => derived_params[(part, SIN_THETA)] *
-                     rand_params[(part, SIN_PHI)],
-                Y => derived_params[(part, SIN_THETA)] *
-                     rand_params[(part, COS_PHI)],
-                Z => rand_params[(part, COS_THETA)],
+            energy[part] * match coord {
+                X => sin_theta[part] * sincos_phi[(Y, part)],
+                Y => sin_theta[part] * sincos_phi[(X, part)],
+                Z => cos_theta[part],
                 E => 1.,
                 _ => unreachable!()
             }
