@@ -23,13 +23,19 @@ standard-random = ["rand", "xoshiro"]
 [dependencies]
 chrono = "0.4"
 error-chain = "0.12"
-nalgebra = "0.15"
+nalgebra = "0.16"
 num-complex = "0.2"
 num-traits = "0.2"
 # These deps are only needed when some features are enabled
 rand = { version = "0.5", optional = true }
 rayon = { version = "1.0", optional = true }
 xoshiro = { version = "0.0.4", optional = true }
+
+
+[patch.crates-io]
+# The current version of alga uses the libm crate, which is in early development
+# and causes some major problems on some systems. This branch reverts that.
+alga = { git = "https://github.com/HadrienG2/alga.git", branch="bugfix" }
 
 
 [profile.release]

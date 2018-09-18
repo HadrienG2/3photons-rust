@@ -16,7 +16,7 @@ use nalgebra::{
 pub use nalgebra::core::dimension::*;
 
 /// Re-export of some nalgebra types
-pub use nalgebra::{Vector2, Vector3, Vector5, Matrix5};
+pub use nalgebra::{Vector2, Vector3, Vector5, Matrix2x3, Matrix4x3, Matrix5};
 
 /// Re-export of nalgebra's 8-vector type
 pub type Vector8<T> = VectorN<T, U8>;

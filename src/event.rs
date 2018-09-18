@@ -4,7 +4,10 @@ use ::{
     linalg::{
         Momentum,
         E,
+        Matrix2x3,
+        Matrix4x3,
         Matrix5,
+        U1,
         U3,
         U5,
         Vector2,
@@ -27,6 +30,8 @@ use ::{
     },
     random::RandomGenerator,
 };
+
+use num_traits::Zero;
 
 
 /// Number of incoming particles
@@ -151,11 +156,27 @@ impl EventGenerator {
         const COS_PHI: usize = 1;
         const SIN_PHI: usize = 2;
         const EXP_MINUS_E: usize = 3;
-        let rand_params_vec = OutgoingVector::from_fn(|_, _| {
-            let cos_theta = 2. * rng.random() - 1.;
-            let sincos_phi = Self::random_unit_2d(rng);
-            let exp_minus_e = rng.random() * rng.random();
-            [cos_theta, sincos_phi[X], sincos_phi[Y], exp_minus_e]
+        let mut sincos_phi = Vector2::zero();
+        let rand_params = Matrix4x3::from_fn(|param, _part| {
+            match param {
+                COS_THETA => 2. * rng.random() - 1.,
+                COS_PHI => { sincos_phi = Self::random_unit_2d(rng);
+                             sincos_phi[X] },
+                SIN_PHI => sincos_phi[Y],
+                EXP_MINUS_E => rng.random() * rng.random(),
+                _ => unreachable!()
+            }
+        });
+
+        // Derive some intermediary quantities from random parameters
+        const SIN_THETA: usize = 0;
+        const ENERGY: usize = 1;
+        let derived_params = Matrix2x3::from_fn(|param, part| {
+            match param {
+                SIN_THETA => sqrt(1. - sqr(rand_params[(COS_THETA, part)])),
+                ENERGY => -ln(rand_params[(EXP_MINUS_E, part)]),
+                _ => unreachable!()
+            }
         });
 
         // Generate massless outgoing 4-momenta in infinite phase space
@@ -164,18 +185,23 @@ impl EventGenerator {
         //        it spends 25% of its time computing scalar logarithms. Using
         //        a vectorized ln() implementation should help there.
         //
-        let q_vec = rand_params_vec.map(|rand_params| {
-            let cos_theta = rand_params[COS_THETA];
-            let sin_theta = sqrt(1. - sqr(cos_theta));
-            let energy = -ln(rand_params[EXP_MINUS_E]);
-            energy * Momentum::new(sin_theta * rand_params[SIN_PHI],
-                                   sin_theta * rand_params[COS_PHI],
-                                   cos_theta,
-                                   1.)
+        let q_mat = Matrix4x3::from_fn(|coord, part| {
+            derived_params[(ENERGY, part)] *
+            match coord {
+                X => derived_params[(SIN_THETA, part)] *
+                     rand_params[(SIN_PHI, part)],
+                Y => derived_params[(SIN_THETA, part)] *
+                     rand_params[(COS_PHI, part)],
+                Z => rand_params[(COS_THETA, part)],
+                E => 1.,
+                _ => unreachable!()
+            }
         });
 
         // Calculate the parameters of the conformal transformation
-        let r: &Momentum = &q_vec.iter().sum();
+        let r = &Momentum::from_fn(|coord, _| {
+            q_mat.fixed_rows::<U1>(coord).iter().sum()
+        });
         let r_norm_2 = r[E] * r[E] - xyz(r).norm_squared();
         let alpha = self.e_tot / r_norm_2;
         let r_norm = sqrt(r_norm_2);
@@ -185,10 +211,12 @@ impl EventGenerator {
         // transforming the Q's conformally into the output 4-momenta
         let mut event = Event(ParticleVector::from_iterator(
             self.incoming_momenta.iter().cloned()
-                                 .chain(q_vec.into_iter().map(|q| {
-                let rq = xyz(r).dot(&xyz(q));
-                let p_xyz = r_norm * xyz(q) + (beta * rq - q[E]) * xyz(r);
-                let p_e = r[E] * q[E] - rq;
+                                 .chain((0..OUTGOING_COUNT).map(|part| {
+                let q_xyz = &q_mat.fixed_slice::<U3, U1>(X, part);
+                let q_e = q_mat[(E, part)];
+                let rq = xyz(r).dot(&q_xyz);
+                let p_xyz = r_norm * q_xyz + (beta * rq - q_e) * xyz(r);
+                let p_e = r[E] * q_e - rq;
                 alpha * Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e)
             }))
         ));
