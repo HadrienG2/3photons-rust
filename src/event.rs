@@ -5,6 +5,8 @@ use ::{
         Momentum,
         E,
         Matrix2x3,
+        Matrix3x2,
+        Matrix3x4,
         Matrix4x3,
         Matrix5,
         U1,
@@ -156,13 +158,16 @@ impl EventGenerator {
         const COS_PHI: usize = 1;
         const SIN_PHI: usize = 2;
         const EXP_MINUS_E: usize = 3;
-        let mut sincos_phi = Vector2::zero();
-        let rand_params = Matrix4x3::from_fn(|param, _part| {
+        let mut sincos_phi = Matrix2x3::zero();
+        let rand_params = Matrix3x4::from_fn(|part, param| {
             match param {
                 COS_THETA => 2. * rng.random() - 1.,
-                COS_PHI => { sincos_phi = Self::random_unit_2d(rng);
-                             sincos_phi[X] },
-                SIN_PHI => sincos_phi[Y],
+                COS_PHI => {
+                    sincos_phi.fixed_columns_mut::<U1>(part)
+                              .copy_from(&Self::random_unit_2d(rng));
+                    sincos_phi[(X, part)]
+                },
+                SIN_PHI => sincos_phi[(Y, part)],
                 EXP_MINUS_E => rng.random() * rng.random(),
                 _ => unreachable!()
             }
@@ -171,10 +176,10 @@ impl EventGenerator {
         // Derive some intermediary quantities from random parameters
         const SIN_THETA: usize = 0;
         const ENERGY: usize = 1;
-        let derived_params = Matrix2x3::from_fn(|param, part| {
+        let derived_params = Matrix3x2::from_fn(|part, param| {
             match param {
-                SIN_THETA => sqrt(1. - sqr(rand_params[(COS_THETA, part)])),
-                ENERGY => -ln(rand_params[(EXP_MINUS_E, part)]),
+                SIN_THETA => sqrt(1. - sqr(rand_params[(part, COS_THETA)])),
+                ENERGY => -ln(rand_params[(part, EXP_MINUS_E)]),
                 _ => unreachable!()
             }
         });
@@ -186,13 +191,13 @@ impl EventGenerator {
         //        a vectorized ln() implementation should help there.
         //
         let q_mat = Matrix4x3::from_fn(|coord, part| {
-            derived_params[(ENERGY, part)] *
+            derived_params[(part, ENERGY)] *
             match coord {
-                X => derived_params[(SIN_THETA, part)] *
-                     rand_params[(SIN_PHI, part)],
-                Y => derived_params[(SIN_THETA, part)] *
-                     rand_params[(COS_PHI, part)],
-                Z => rand_params[(COS_THETA, part)],
+                X => derived_params[(part, SIN_THETA)] *
+                     rand_params[(part, SIN_PHI)],
+                Y => derived_params[(part, SIN_THETA)] *
+                     rand_params[(part, COS_PHI)],
+                Z => rand_params[(part, COS_THETA)],
                 E => 1.,
                 _ => unreachable!()
             }
