@@ -171,15 +171,15 @@ impl EventGenerator {
             Vector3::from_fn(|_part, _| rng.random() * rng.random());
 
         // Derive some intermediary quantities from random parameters
-        let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
-        let energy = exp_minus_e.map(|e_m_e| -ln(e_m_e));
-
-        // Generate massless outgoing 4-momenta in infinite phase space
         //
         // FIXME: The main obvious remaining bottleneck of this function is that
         //        it spends 25% of its time computing scalar logarithms. Using
         //        a vectorized ln() implementation should help there.
         //
+        let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+        let energy = exp_minus_e.map(|e_m_e| -ln(e_m_e));
+
+        // Generate massless outgoing 4-momenta in infinite phase space
         let q_mat = Matrix4x3::from_fn(|coord, part| {
             energy[part] * match coord {
                 X => sin_theta[part] * sincos_phi[(Y, part)],
