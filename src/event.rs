@@ -137,8 +137,8 @@ impl EventGenerator {
         // TODO: There might be room for more vectorization or layout optims.
         //       Here is where I ended up the last time I looked at it:
         //
-        //       - There is an obvious vectorization opportunity in energy
-        //         computations (see below).
+        //       - There is an obvious logarithm vectorization opportunity in
+        //         energy computations (see below).
         //       - The normalization in the middle is a sequential bottleneck.
         //       - A vectorized RNG would be useful here and there.
         //       - It's not that obvious what the layout of q_arr shoud be. I
@@ -196,6 +196,22 @@ impl EventGenerator {
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 
+        // Dot products between r and the q vectors
+        //
+        // Working with the transpose of Q allows this operation to be fully
+        // vectorized: if the compiler is smart enough, it will broadcast the
+        // components of r to SIMD vectors, multiply the X, Y & Z columns of the
+        // transposed Q matrix with that, then sum the columns.
+        //
+        // We cannot generate Q in this layout right away because computing R
+        // (sum of the Q vectors) is best performed in the other layout.
+        //
+        let tr_q_mat = q_mat.transpose();
+        let rq = Vector3::from_fn(|par, _| {
+            let tr_q_xyz = tr_q_mat.fixed_slice::<U1, U3>(par, X);
+            xyz(r).tr_dot(&tr_q_xyz)
+        });
+
         // Build the event, starting with the incoming momenta, then
         // transforming the Q's conformally into the output 4-momenta
         let mut event = Event(ParticleVector::from_iterator(
@@ -203,9 +219,8 @@ impl EventGenerator {
                                  .chain((0..OUTGOING_COUNT).map(|par| {
                 let q_xyz = &q_mat.fixed_slice::<U3, U1>(X, par);
                 let q_e = q_mat[(E, par)];
-                let rq = xyz(r).dot(&q_xyz);
-                let p_xyz = r_norm * q_xyz + (beta * rq - q_e) * xyz(r);
-                let p_e = r[E] * q_e - rq;
+                let p_xyz = r_norm * q_xyz + (beta * rq[par] - q_e) * xyz(r);
+                let p_e = r[E] * q_e - rq[par];
                 alpha * Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e)
             }))
         ));
