@@ -5,8 +5,6 @@ use ::{
         Momentum,
         E,
         Matrix2x3,
-        Matrix3x2,
-        Matrix3x4,
         Matrix4x3,
         Matrix5,
         U1,
@@ -42,7 +40,6 @@ type IncomingVector<T> = Vector2<T>;
 
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
-type OutgoingVector<T> = Vector3<T>;
 pub type OutgoingVectorSlice<'a, T> = VectorSlice<'a, T, U3, U5>;
 type OutgoingVectorSliceMut<'a, T> = VectorSliceMut<'a, T, U3, U5>;
 
@@ -157,6 +154,8 @@ impl EventGenerator {
         //
         // FIXME: This temporarily uses a different RNG order than 3photons
         //
+        // FIXME: Should vectorize the unit vector generation too
+        //
         let cos_theta = Vector3::from_fn(|_part, _| 2. * rng.random() - 1.);
         let mut sincos_phi = Matrix2x3::zero();
         for part in 0..OUTGOING_COUNT {
@@ -166,7 +165,9 @@ impl EventGenerator {
         let exp_minus_e =
             Vector3::from_fn(|_part, _| rng.random() * rng.random());
 
-        // Derive some intermediary quantities from random parameters
+        // Generate massless outgoing 4-momenta in infinite phase space
+        //
+        // FIXME: Sincos coordinate order is reversed w.r.t. 3photons
         //
         // FIXME: The main obvious remaining bottleneck of this function is that
         //        it spends 25% of its time computing scalar logarithms. Using
@@ -174,11 +175,6 @@ impl EventGenerator {
         //
         let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
         let energy = exp_minus_e.map(|e_me| -ln(e_me));
-
-        // Generate massless outgoing 4-momenta in infinite phase space
-        //
-        // FIXME: Sincos coordinate order is reversed w.r.t. 3photons
-        //
         let q_mat = Matrix4x3::from_fn(|coord, part| {
             energy[part] * match coord {
                 X => sin_theta[part] * sincos_phi[(X, part)],
