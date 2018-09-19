@@ -226,7 +226,6 @@ impl EventGenerator {
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different (faster) algorithm.
         if cfg!(feature = "fast-sincos") {
-            const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
             // Grab random points on the unit square
             let mut p_mat = Matrix3x2::from_iterator(
                 rng.random6().iter().map(|r| 2. * r - 1.)
@@ -238,6 +237,7 @@ impl EventGenerator {
                 p_mat.fixed_rows::<U1>(part).norm_squared()
             );
             for part in 0..OUTGOING_COUNT {
+                const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
                 while n2_vec[part] > 1. || n2_vec[part] < MIN_POSITIVE_2 {
                     let new_row = Vector2::from_iterator(
                         rng.random2().iter().map(|r| 2. * r - 1.)
