@@ -135,21 +135,6 @@ impl EventGenerator {
     /// The 4-momenta of output photons are sorted by decreasing energy.
     ///
     pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
-        // TODO: There might be room for more vectorization or layout optims.
-        //       Here is where I ended up the last time I looked at it:
-        //
-        //       - There is an obvious logarithm vectorization opportunity in
-        //         energy computations (see below).
-        //       - The normalization in the middle is a sequential bottleneck.
-        //       - A vectorized RNG would be useful here and there.
-        //       - It's not that obvious what the layout of q_arr shoud be. I
-        //         think the computation of r works much better with q_arr in
-        //         its current layout, but the computation of p at the end could
-        //         work better with q_arr in a transposed layout.
-        //       - The ideal layout for p is mostly determined from clients, but
-        //         there is also an incentive to compute p in the same
-        //         orientation as q.
-
         // Pregenerate the random parameters to shield later computations from
         // the averse impact of RNG calls on the compiler's loop optimizations
         //
