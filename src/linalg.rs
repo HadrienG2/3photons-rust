@@ -21,6 +21,7 @@ pub use nalgebra::{
     Vector3,
     Vector5,
     Matrix2x3,
+    Matrix3,
     Matrix3x2,
     Matrix3x4,
     Matrix4x3,

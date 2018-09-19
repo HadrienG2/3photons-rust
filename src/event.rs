@@ -4,7 +4,7 @@ use ::{
     linalg::{
         Momentum,
         E,
-        Matrix2x3,
+        Matrix3,
         Matrix3x2,
         Matrix4x3,
         Matrix5,
@@ -31,8 +31,6 @@ use ::{
     },
     random::RandomGenerator,
 };
-
-use num_traits::Zero;
 
 
 /// Number of incoming particles
@@ -142,13 +140,10 @@ impl EventGenerator {
         //        Should ultimately extract the fluctuation in a method.
         //
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
-        let params = rng.random9();
-        let cos_theta = Vector3::from_iterator(
-            params[..OUTGOING_COUNT].iter().map(|&param| 2. * param - 1.)
-        );
-        let exp_min_e = Vector3::<Real>::from_iterator(
-            params[OUTGOING_COUNT..].chunks(2).map(|pair| pair[0] * pair[1])
-        );
+        let params = Matrix3::from_column_slice(&rng.random9()[..]);
+        let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
+        let exp_min_e = params.fixed_columns::<U1>(1)
+                              .component_mul(&params.fixed_columns::<U1>(2));
         let sincos_phi_mat = Self::random_unit_2d_3x(rng);
 
         // Generate massless outgoing 4-momenta in infinite phase space
