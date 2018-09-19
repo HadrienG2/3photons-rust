@@ -154,18 +154,21 @@ impl EventGenerator {
         //
         // FIXME: This temporarily uses a different RNG order than 3photons
         //
-        // FIXME: Should provide a vectorized RNG interface
-        //
         // FIXME: Should vectorize the unit vector generation too
         //
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
-        let cos_theta = Vector3::from_fn(|_par, _| 2. * rng.random() - 1.);
+        let params = rng.random9();
+        let cos_theta = Vector3::from_iterator(
+            params[..OUTGOING_COUNT].iter().map(|&param| 2. * param - 1.)
+        );
         let mut sincos_phi = Matrix2x3::zero();
         for par in 0..OUTGOING_COUNT {
             sincos_phi.fixed_columns_mut::<U1>(par)
                       .copy_from(&Self::random_unit_2d(rng))
         }
-        let exp_min_e = Vector3::from_fn(|_par, _| rng.random() * rng.random());
+        let exp_min_e = Vector3::<Real>::from_iterator(
+            params[OUTGOING_COUNT..].chunks(2).map(|pair| pair[0] * pair[1])
+        );
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
@@ -251,7 +254,9 @@ impl EventGenerator {
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
             loop {
                 // Grab a random point on the unit square
-                let mut p = Vector2::from_fn(|_, _| 2. * rng.random() - 1.);
+                let mut p = Vector2::from_iterator(
+                    rng.random2().iter().map(|r| 2. * r - 1.)
+                );
 
                 // Compute (squared) distance from the origin
                 let n2 = p.norm_squared();

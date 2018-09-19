@@ -33,6 +33,22 @@ mod standard_random {
             self.rng.gen()
         }
 
+        /// Generate an array of 2 random numbers
+        ///
+        /// TODO: Clean up this API once Rust has const generics
+        ///
+        pub fn random2(&mut self) -> [Real; 2] {
+            self.rng.gen()
+        }
+
+        /// Generate an array of 9 random numbers
+        ///
+        /// TODO: Clean up this API once Rust has const generics
+        ///
+        pub fn random9(&mut self) -> [Real; 9] {
+            self.rng.gen()
+        }
+
         // Advance state as if "iterations" numbers had been generated
         #[cfg(all(feature = "multi-threading",
                   not(feature = "faster-threading")))]

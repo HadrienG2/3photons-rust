@@ -1,6 +1,8 @@
 //! Random number generation, from Knuth's ranf (in Seminumerical Algorithm)
 
-use numeric::Real;
+use ::numeric::Real;
+
+use std::cmp;
 
 
 // Generated random numbers will have a granularity of 1/MODULO
@@ -68,14 +70,63 @@ impl RanfGenerator {
     /// Generate a random number between 0 and 1, with INV_MODULO granularity
     /// Roughly maps to the RN() method in the original code.
     pub fn random(&mut self) -> Real {
-        // TODO: Consider flipping indices so that iteration goes forward
+        let mut buffer = [0.; 1];
+        self.random_slice(&mut buffer[..]);
+        buffer[0]
+    }
+
+    /// Generate an array of 2 random numbers
+    ///
+    /// TODO: Clean up this API once Rust has const generics
+    ///
+    pub fn random2(&mut self) -> [Real; 2] {
+        let mut buffer = [0.; 2];
+        self.random_slice(&mut buffer[..]);
+        buffer
+    }
+
+    /// Generate an array of 9 random numbers
+    ///
+    /// TODO: Clean up this API once Rust has const generics
+    ///
+    pub fn random9(&mut self) -> [Real; 9] {
+        let mut buffer = [0.; 9];
+        self.random_slice(&mut buffer[..]);
+        buffer
+    }
+
+    /// Fill a slice with random numbers
+    ///
+    /// TODO: Clean up this API once Rust has const generics
+    ///
+    #[inline(always)]
+    fn random_slice(&mut self, storage: &mut [Real]) {
+        // Track remaining work
+        let mut remaining = storage.len();
+        assert!(remaining <= 54,
+                "Current algorithm only supports 54 numbers at a time");
+
+        // Generate as much as possible without a reset
+        let first_chunk = cmp::min(self.index, remaining);
+        self.index -= first_chunk;
+        for i in 0..first_chunk {
+            storage[i] = self.numbers[self.index + i + 1] as Real;
+        }
+        remaining -= first_chunk;
+
+        // Reset the RNG (if needed) and generate remaining numbers (if any)
         if self.index == 0 {
             self.reset();
-            self.index = 55;
+            self.index = 55 - remaining;
+            for i in 0..remaining {
+                storage[first_chunk+i] = self.numbers[self.index + i + 1] as Real;
+            }
         }
-        self.index -= 1;
-        (self.numbers[self.index+1] as Real) * INV_MODULO
+
+        // Scale output into the desired [0, 1] range
+        storage.iter_mut().for_each(|x| *x *= INV_MODULO);
     }
+
 
     /// Generate 55 new random numbers between 0 and 1/FMODUL
     /// This roughly maps to the IRN55 method in the original code.
