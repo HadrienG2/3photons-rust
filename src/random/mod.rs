@@ -41,6 +41,22 @@ mod standard_random {
             self.rng.gen()
         }
 
+        /// Generate an array of 3 random numbers
+        ///
+        /// TODO: Clean up this API once Rust has const generics
+        ///
+        pub fn random3(&mut self) -> [Real; 3] {
+            self.rng.gen()
+        }
+
+        /// Generate an array of 6 random numbers
+        ///
+        /// TODO: Clean up this API once Rust has const generics
+        ///
+        pub fn random6(&mut self) -> [Real; 6] {
+            self.rng.gen()
+        }
+
         /// Generate an array of 9 random numbers
         ///
         /// TODO: Clean up this API once Rust has const generics

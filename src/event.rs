@@ -5,6 +5,7 @@ use ::{
         Momentum,
         E,
         Matrix2x3,
+        Matrix3x2,
         Matrix4x3,
         Matrix5,
         U1,
@@ -152,23 +153,18 @@ impl EventGenerator {
         // Pregenerate the random parameters to shield later computations from
         // the averse impact of RNG calls on the compiler's loop optimizations
         //
-        // FIXME: This temporarily uses a different RNG order than 3photons
-        //
-        // FIXME: Should vectorize the unit vector generation too
+        // FIXME: This temporarily uses a different RNG order than 3photons.
+        //        Should ultimately extract the fluctuation in a method.
         //
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
         let params = rng.random9();
         let cos_theta = Vector3::from_iterator(
             params[..OUTGOING_COUNT].iter().map(|&param| 2. * param - 1.)
         );
-        let mut sincos_phi = Matrix2x3::zero();
-        for par in 0..OUTGOING_COUNT {
-            sincos_phi.fixed_columns_mut::<U1>(par)
-                      .copy_from(&Self::random_unit_2d(rng))
-        }
         let exp_min_e = Vector3::<Real>::from_iterator(
             params[OUTGOING_COUNT..].chunks(2).map(|pair| pair[0] * pair[1])
         );
+        let sincos_phi_mat = Self::random_unit_2d_3x(rng);
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
@@ -182,8 +178,8 @@ impl EventGenerator {
         let energy = exp_min_e.map(|e_me| -ln(e_me));
         let q_mat = Matrix4x3::from_fn(|coord, par| {
             energy[par] * match coord {
-                X => sin_theta[par] * sincos_phi[(X, par)],
-                Y => sin_theta[par] * sincos_phi[(Y, par)],
+                X => sin_theta[par] * sincos_phi_mat[(par, X)],
+                Y => sin_theta[par] * sincos_phi_mat[(par, Y)],
                 Z => cos_theta[par],
                 E => 1.,
                 _ => unreachable!()
@@ -244,34 +240,52 @@ impl EventGenerator {
     ///       entails bringing more computations close to the RNG calls and
     ///       because the 2D case fits available vector hardware more tightly.
     ///
-    fn random_unit_2d(rng: &mut RandomGenerator) -> Vector2<Real> {
+    /// FIXME: Uses a different RNG order w.r.t. original 3photons
+    ///
+    fn random_unit_2d_3x(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different (faster) algorithm.
         if cfg!(feature = "fast-sincos") {
-            // In a nutshell, this path is faster because it favors cheap RNG
-            // calls over expensive trigonometric functions
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
-            loop {
-                // Grab a random point on the unit square
-                let mut p = Vector2::from_iterator(
-                    rng.random2().iter().map(|r| 2. * r - 1.)
-                );
+            // Grab random points on the unit square
+            let mut p_mat = Matrix3x2::from_iterator(
+                rng.random6().iter().map(|r| 2. * r - 1.)
+            );
 
-                // Compute (squared) distance from the origin
-                let n2 = p.norm_squared();
-
-                // Discard points outside the unit disc or whose norm is small
-                if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
-                    // Normalize and you get a point on the unit circle!
-                    p /= sqrt(n2);
-                    break p;
+            // Re-roll each point until it falls on the unit disc, and is not
+            // too close to the origin (the latter improves numerical stability)
+            let mut n2_vec = Vector3::from_fn(|part, _|
+                p_mat.fixed_rows::<U1>(part).norm_squared()
+            );
+            for part in 0..OUTGOING_COUNT {
+                while n2_vec[part] > 1. || n2_vec[part] < MIN_POSITIVE_2 {
+                    let new_row = Vector2::from_iterator(
+                        rng.random2().iter().map(|r| 2. * r - 1.)
+                    );
+                    p_mat.set_row(part, &new_row.transpose());
+                    n2_vec[part] = new_row.norm_squared();
                 }
             }
+
+            // Now you only need to normalize to get points on the unit circle
+            let norm = n2_vec.map(|n2| 1. / sqrt(n2));
+            for part in 0..OUTGOING_COUNT {
+                p_mat.fixed_rows_mut::<U1>(part).apply(|c| c * norm[part]);
+            }
+            p_mat
         } else {
             // This code path strictly follows the original 3photons algorithm
-            let phi = 2. * PI * rng.random();
-            Vector2::new(cos(phi), sin(phi))
+            let phi = Vector3::from_iterator(
+                rng.random3().iter().map(|r| 2. * PI * r)
+            );
+            Matrix3x2::from_fn(|par, coord| {
+                match coord {
+                    X => cos(phi[par]),
+                    Y => sin(phi[par]),
+                    _ => unreachable!()
+                }
+            })
         }
     }
 

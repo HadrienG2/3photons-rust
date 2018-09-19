@@ -82,6 +82,26 @@ impl RanfGenerator {
         buffer
     }
 
+    /// Generate an array of 3 random numbers
+    ///
+    /// TODO: Clean up this API once Rust has const generics
+    ///
+    pub fn random3(&mut self) -> [Real; 3] {
+        let mut buffer = [0.; 3];
+        self.random_slice(&mut buffer[..]);
+        buffer
+    }
+
+    /// Generate an array of 6 random numbers
+    ///
+    /// TODO: Clean up this API once Rust has const generics
+    ///
+    pub fn random6(&mut self) -> [Real; 6] {
+        let mut buffer = [0.; 6];
+        self.random_slice(&mut buffer[..]);
+        buffer
+    }
+
     /// Generate an array of 9 random numbers
     ///
     /// TODO: Clean up this API once Rust has const generics
