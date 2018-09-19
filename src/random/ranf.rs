@@ -2,9 +2,6 @@
 
 use ::numeric::Real;
 
-use std::cmp;
-
-
 // Generated random numbers will have a granularity of 1/MODULO
 type Integer = i32;
 const MODULO: Integer = 1_000_000_000;
@@ -101,23 +98,25 @@ impl RanfGenerator {
     ///
     #[inline(always)]
     fn random_slice(&mut self, storage: &mut [Real]) {
-        // Implementation simplification
-        assert!(storage.len() <= 54,
-                "Current algorithm only supports 54 numbers at a time");
+        // Assuming that we will never need more than a round of numbers at a
+        // time allows us to take implementation and performance shortcuts.
+        let request_len = storage.len();
+        let round_size = self.numbers.len() - 1;
+        assert!(request_len <= round_size,
+                "Current algorithm only supports a round of numbers at a time");
 
-        // Generate as much as possible without an RNG reset
-        let first_chunk = cmp::min(self.index, storage.len());
-        let (storage1, storage2) = storage.split_at_mut(first_chunk);
-        self.index -= storage1.len();
-        storage1.iter_mut().zip(&self.numbers[self.index+1..])
-                .for_each(|(dst, src)| *dst = (*src as Real) * INV_MODULO);
-
-        // Reset the RNG (if needed) and generate remaining numbers (if any)
-        if self.index == 0 {
+        // In principle, we could reuse the remaining numbers in the active
+        // round, in practice it costs more than it helps...
+        if self.index < request_len {
             self.reset();
-            self.index = 55 - storage2.len();
-            storage2.iter_mut().zip(&self.numbers[self.index+1..])
-                    .for_each(|(dst, src)| *dst = (*src as Real) * INV_MODULO);
+            self.index = round_size;
+        }
+
+        // ...so it's best to generate all the numbers in one go
+        self.index -= request_len;
+        let numbers = &self.numbers[self.index+1..self.index+request_len+1];
+        for (dst, src) in storage.iter_mut().zip(numbers) {
+            *dst = (*src as Real) * INV_MODULO;
         }
     }
 
