@@ -156,14 +156,14 @@ impl EventGenerator {
         //
         // FIXME: Should vectorize the unit vector generation too
         //
-        let cos_theta = Vector3::from_fn(|_part, _| 2. * rng.random() - 1.);
+        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+        let cos_theta = Vector3::from_fn(|_par, _| 2. * rng.random() - 1.);
         let mut sincos_phi = Matrix2x3::zero();
-        for part in 0..OUTGOING_COUNT {
-            sincos_phi.fixed_columns_mut::<U1>(part)
+        for par in 0..OUTGOING_COUNT {
+            sincos_phi.fixed_columns_mut::<U1>(par)
                       .copy_from(&Self::random_unit_2d(rng))
         }
-        let exp_minus_e =
-            Vector3::from_fn(|_part, _| rng.random() * rng.random());
+        let exp_min_e = Vector3::from_fn(|_par, _| rng.random() * rng.random());
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
@@ -174,12 +174,12 @@ impl EventGenerator {
         //        a vectorized ln() implementation should help there.
         //
         let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
-        let energy = exp_minus_e.map(|e_me| -ln(e_me));
-        let q_mat = Matrix4x3::from_fn(|coord, part| {
-            energy[part] * match coord {
-                X => sin_theta[part] * sincos_phi[(X, part)],
-                Y => sin_theta[part] * sincos_phi[(Y, part)],
-                Z => cos_theta[part],
+        let energy = exp_min_e.map(|e_me| -ln(e_me));
+        let q_mat = Matrix4x3::from_fn(|coord, par| {
+            energy[par] * match coord {
+                X => sin_theta[par] * sincos_phi[(X, par)],
+                Y => sin_theta[par] * sincos_phi[(Y, par)],
+                Z => cos_theta[par],
                 E => 1.,
                 _ => unreachable!()
             }
@@ -198,9 +198,9 @@ impl EventGenerator {
         // transforming the Q's conformally into the output 4-momenta
         let mut event = Event(ParticleVector::from_iterator(
             self.incoming_momenta.iter().cloned()
-                                 .chain((0..OUTGOING_COUNT).map(|part| {
-                let q_xyz = &q_mat.fixed_slice::<U3, U1>(X, part);
-                let q_e = q_mat[(E, part)];
+                                 .chain((0..OUTGOING_COUNT).map(|par| {
+                let q_xyz = &q_mat.fixed_slice::<U3, U1>(X, par);
+                let q_e = q_mat[(E, par)];
                 let rq = xyz(r).dot(&q_xyz);
                 let p_xyz = r_norm * q_xyz + (beta * rq - q_e) * xyz(r);
                 let p_e = r[E] * q_e - rq;
