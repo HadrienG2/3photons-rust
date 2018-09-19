@@ -222,6 +222,8 @@ impl EventGenerator {
     /// FIXME: Uses a different RNG order w.r.t. original 3photons
     ///
     fn random_unit_3x2d(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
+        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+
         // This function has two operating modes: a default mode which produces
         // bitwise identical results w.r.t. the original 3photons code, and a
         // mode which uses a different (faster) algorithm.
