@@ -180,7 +180,7 @@ impl EventGenerator {
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 
-        // Perform the conformal transformation
+        // Perform the conformal transformation from Q's to output 4-momenta
         let tr_q_mat = q_mat.transpose();
         let rq = tr_q_mat.fixed_columns::<U3>(X) * xyz(r);
         let q_e = tr_q_mat.fixed_columns::<U1>(E);
@@ -189,8 +189,7 @@ impl EventGenerator {
         let b_rq_e = beta * rq - q_e;
         let p_xyz = alpha * (r_norm * q_xyz + xyz(r) * b_rq_e.transpose());
 
-        // Build the event, starting with the incoming momenta, then
-        // transforming the Q's conformally into the output 4-momenta
+        // Build the final event: incoming momenta + output 4-momenta
         //
         // TODO: Review layout of result
         //
