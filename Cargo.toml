@@ -32,12 +32,6 @@ rayon = { version = "1.0", optional = true }
 xoshiro = { version = "0.0.4", optional = true }
 
 
-[patch.crates-io]
-# The current version of alga uses the libm crate, which is in early development
-# and causes some major problems on some systems. This branch reverts that.
-alga = { git = "https://github.com/HadrienG2/alga.git", branch="bugfix" }
-
-
 [profile.release]
 # Aborting panics mean no app cleanup when a panic is encountered, but better
 # compiler optimizations. For scientific computation, that's a good trade-off.
