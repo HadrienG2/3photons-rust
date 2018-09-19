@@ -154,6 +154,8 @@ impl EventGenerator {
         //
         // FIXME: This temporarily uses a different RNG order than 3photons
         //
+        // FIXME: Should provide a vectorized RNG interface
+        //
         // FIXME: Should vectorize the unit vector generation too
         //
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
