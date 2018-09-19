@@ -101,30 +101,24 @@ impl RanfGenerator {
     ///
     #[inline(always)]
     fn random_slice(&mut self, storage: &mut [Real]) {
-        // Track remaining work
-        let mut remaining = storage.len();
-        assert!(remaining <= 54,
+        // Implementation simplification
+        assert!(storage.len() <= 54,
                 "Current algorithm only supports 54 numbers at a time");
 
-        // Generate as much as possible without a reset
-        let first_chunk = cmp::min(self.index, remaining);
-        self.index -= first_chunk;
-        for i in 0..first_chunk {
-            storage[i] = self.numbers[self.index + i + 1] as Real;
-        }
-        remaining -= first_chunk;
+        // Generate as much as possible without an RNG reset
+        let first_chunk = cmp::min(self.index, storage.len());
+        let (storage1, storage2) = storage.split_at_mut(first_chunk);
+        self.index -= storage1.len();
+        storage1.iter_mut().zip(&self.numbers[self.index+1..])
+                .for_each(|(dst, src)| *dst = (*src as Real) * INV_MODULO);
 
         // Reset the RNG (if needed) and generate remaining numbers (if any)
         if self.index == 0 {
             self.reset();
-            self.index = 55 - remaining;
-            for i in 0..remaining {
-                storage[first_chunk+i] = self.numbers[self.index + i + 1] as Real;
-            }
+            self.index = 55 - storage2.len();
+            storage2.iter_mut().zip(&self.numbers[self.index+1..])
+                    .for_each(|(dst, src)| *dst = (*src as Real) * INV_MODULO);
         }
-
-        // Scale output into the desired [0, 1] range
-        storage.iter_mut().for_each(|x| *x *= INV_MODULO);
     }
 
 
