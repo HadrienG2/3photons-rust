@@ -196,32 +196,27 @@ impl EventGenerator {
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 
-        // Dot products between r and the q vectors
-        //
-        // Working with the transpose of Q allows this operation to be fully
-        // vectorized: if the compiler is smart enough, it will broadcast the
-        // components of r to SIMD vectors, multiply the X, Y & Z columns of the
-        // transposed Q matrix with that, then sum the columns.
-        //
-        // We cannot generate Q in this layout right away because computing R
-        // (sum of the Q vectors) is best performed in the other layout.
-        //
+        // Perform the conformal transformation
         let tr_q_mat = q_mat.transpose();
-        let rq = Vector3::from_fn(|par, _| {
-            let tr_q_xyz = tr_q_mat.fixed_slice::<U1, U3>(par, X);
-            xyz(r).tr_dot(&tr_q_xyz)
-        });
+        let rq = tr_q_mat.fixed_columns::<U3>(X) * xyz(r);
+        let q_e = tr_q_mat.fixed_columns::<U1>(E);
+        let p_e = alpha * (r[E] * q_e - rq);
+        let q_xyz = q_mat.fixed_rows::<U3>(X);
+        let b_rq_e = beta * rq - q_e;
+        let p_xyz = alpha * (r_norm * q_xyz + xyz(r) * b_rq_e.transpose());
 
         // Build the event, starting with the incoming momenta, then
         // transforming the Q's conformally into the output 4-momenta
+        //
+        // TODO: Review layout of result
+        //
         let mut event = Event(ParticleVector::from_iterator(
             self.incoming_momenta.iter().cloned()
                                  .chain((0..OUTGOING_COUNT).map(|par| {
-                let q_xyz = &q_mat.fixed_slice::<U3, U1>(X, par);
-                let q_e = q_mat[(E, par)];
-                let p_xyz = r_norm * q_xyz + (beta * rq[par] - q_e) * xyz(r);
-                let p_e = r[E] * q_e - rq[par];
-                alpha * Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e)
+                Momentum::new(p_xyz[(X, par)],
+                              p_xyz[(Y, par)],
+                              p_xyz[(Z, par)],
+                              p_e[par])
             }))
         ));
 
