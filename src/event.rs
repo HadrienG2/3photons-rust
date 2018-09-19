@@ -279,6 +279,9 @@ impl EventGenerator {
     /// random number generator. This code must be manually synchronized with
     /// the implementation of "generate()", but such is the price for perfect
     /// reproducibility between single-threaded and multi-threaded mode...
+    ///
+    /// FIXME: Update this if we stabilize the new RNG order
+    ///
     #[cfg(all(feature = "multi-threading",
               not(feature = "faster-threading")))]
     pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
