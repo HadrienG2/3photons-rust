@@ -32,7 +32,7 @@ impl SpinorProducts {
     // ### CONSTRUCTION ###
 
     /// Build spinor products from previously generated particle 4-momenta
-    pub fn new(event: &Event) -> Self {
+    pub fn new(event: Event) -> Self {
         // The underlying Gram matrix is not specific to the physics of
         // e+e- -> ppp collisions, but our methods are specific to it.
         debug_assert_eq!(INCOMING_COUNT, 2);

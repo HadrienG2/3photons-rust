@@ -132,7 +132,7 @@ fn main() -> Result<()> {
             // If the event passes the cut, compute the total weight (incl.
             // matrix elements) and integrate it into the final results.
             if cfg.event_cut.keep(&event) {
-                let res_contrib = ResultContribution::new(&couplings, &event);
+                let res_contrib = ResultContribution::new(&couplings, event);
                 // NOTE: The original code would display the result here
                 res_builder.integrate(res_contrib);
                 // NOTE: The FORTRAN code would fill histograms here
