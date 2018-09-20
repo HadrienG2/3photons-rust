@@ -4,18 +4,21 @@ use ::{
     linalg::{
         Momentum,
         E,
+        Matrix2x4,
         Matrix3,
         Matrix3x2,
         Matrix4x3,
         Matrix5,
+        Matrix5x4,
+        MatrixSlice,
+        MatrixSliceMut,
         U1,
         U3,
+        U4,
         U5,
         Vector2,
         Vector3,
         Vector5,
-        VectorSlice,
-        VectorSliceMut,
         X,
         xyz,
         Y,
@@ -35,18 +38,20 @@ use ::{
 
 /// Number of incoming particles
 pub const INCOMING_COUNT: usize = 2;
-type IncomingVector<T> = Vector2<T>;
 
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
-pub type OutgoingVectorSlice<'a, T> = VectorSlice<'a, T, U3, U5>;
-type OutgoingVectorSliceMut<'a, T> = VectorSliceMut<'a, T, U3, U5>;
 
-/// Total number of particles in an event (= sum of the above)
+/// Vectors and matrices sized to the amount of particles in an event (=5)
 pub type ParticleVector<T> = Vector5<T>;
 pub type ParticleMatrix<T> = Matrix5<T>;
 
-/// Index of the incoming electron in the 4-momentum array
+/// Event data matrix definitions (columns are coordinates, rows are momenta)
+type EventMatrix = Matrix5x4<Real>;
+type OutgoingMomentaSlice<'a> = MatrixSlice<'a, Real, U3, U4, U1, U5>;
+type OutgoingMomentaSliceMut<'a> = MatrixSliceMut<'a, Real, U3, U4, U1, U5>;
+
+/// Row of the incoming electron in the event data matrix
 pub const INCOMING_E_M: usize = 0;
 
 /// Index of the incoming positron in the 4-momentum array
@@ -65,10 +70,7 @@ pub struct EventGenerator {
     ev_weight: Real,
 
     /// Incoming electron and positron momenta
-    ///
-    /// FIXME: Should be a matrix
-    ///
-    incoming_momenta: IncomingVector<Momentum>,
+    incoming_momenta: Matrix2x4<Real>,
 }
 //
 impl EventGenerator {
@@ -108,9 +110,9 @@ impl EventGenerator {
 
         // Compute the incoming particle momenta
         let half_e_tot = e_tot / 2.;
-        let incoming_momenta = IncomingVector::new(
-            Momentum::new(-half_e_tot, 0., 0., half_e_tot),
-            Momentum::new(half_e_tot, 0., 0., half_e_tot),
+        let incoming_momenta = Matrix2x4::new(
+            -half_e_tot, 0., 0., half_e_tot,
+            half_e_tot, 0., 0., half_e_tot
         );
         
         // Construct and return the output data structure
@@ -180,32 +182,35 @@ impl EventGenerator {
         let rq = tr_q_mat.fixed_columns::<U3>(X) * xyz(r);
         let q_e = tr_q_mat.fixed_columns::<U1>(E);
         let p_e = alpha * (r[E] * q_e - rq);
-        let q_xyz = q_mat.fixed_rows::<U3>(X);
+        let tr_q_xyz = tr_q_mat.fixed_columns::<U3>(X);
         let b_rq_e = beta * rq - q_e;
-        let p_xyz = alpha * (r_norm * q_xyz + xyz(r) * b_rq_e.transpose());
+        let p_xyz = alpha * (r_norm * tr_q_xyz + b_rq_e * xyz(r).transpose());
 
         // Build the final event: incoming momenta + output 4-momenta
-        //
-        // TODO: Review layout of result
-        //
-        let mut event = Event(ParticleVector::from_iterator(
-            self.incoming_momenta.iter().cloned()
-                                 .chain((0..OUTGOING_COUNT).map(|par| {
-                Momentum::new(p_xyz[(X, par)],
-                              p_xyz[(Y, par)],
-                              p_xyz[(Z, par)],
-                              p_e[par])
-            }))
-        ));
+        let mut event = Event(Matrix5x4::from_fn(|par, coord| {
+            if par < INCOMING_COUNT {
+                self.incoming_momenta[(par, coord)]
+            } else if coord <= Z {
+                p_xyz[(coord, par-INCOMING_COUNT)]
+            } else if coord == E {
+                p_e[par-INCOMING_COUNT]
+            } else {
+                unreachable!()
+            }
+        }));
 
         // Sort the output 4-momenta in order of decreasing energy
         if cfg!(not(feature = "no-photon-sorting")) {
             assert_eq!(OUTGOING_COUNT, 3,
                        "This code assumes that there are 3 outgoing particles");
             let mut outgoing = event.outgoing_momenta_mut();
-            if outgoing[1][E] > outgoing[0][E] { outgoing.swap_rows(0, 1); }
-            if outgoing[2][E] > outgoing[0][E] { outgoing.swap_rows(0, 2); }
-            if outgoing[2][E] > outgoing[1][E] { outgoing.swap_rows(1, 2); }
+            for par1 in 0..OUTGOING_COUNT-1 {
+                for par2 in par1..OUTGOING_COUNT {
+                    if outgoing[(par2, E)] > outgoing[(par1, E)] {
+                        outgoing.swap_rows(par1, par2);
+                    }
+                }
+            }
         }
 
         // Hand off the generated event
@@ -311,51 +316,59 @@ impl EventGenerator {
 ///
 /// Encapsulates a vector of incoming and outgoing 4-momenta
 ///
-/// TODO: Try making that a full-blown matrix
-///
-pub struct Event(ParticleVector<Momentum>);
+pub struct Event(EventMatrix);
 //
 impl Event {
     // ### ACCESSORS ###
 
     /// Access the full internal 4-momentum array by reference
-    pub fn all_momenta(&self) -> &ParticleVector<Momentum> {
+    pub fn all_momenta(&self) -> &EventMatrix {
         &self.0
     }
 
+    /// Access the momentum of a single particle (internal for now)
+    fn momentum(&self, par: usize) -> Momentum {
+        Momentum::from_iterator(self.0.fixed_rows::<U1>(par).iter().cloned())
+    }
+
     /// Access the electron 4-momentum only
-    pub fn electron_momentum(&self) -> &Momentum {
-        &self.0[INCOMING_E_M]
+    pub fn electron_momentum(&self) -> Momentum {
+        self.momentum(INCOMING_E_M)
     }
 
     /// Access the positron 4-momentum only
     #[allow(dead_code)]
-    pub fn positron_momentum(&self) -> &Momentum {
-        &self.0[INCOMING_E_P]
+    pub fn positron_momentum(&self) -> Momentum {
+        self.momentum(INCOMING_E_P)
+    }
+
+    /// Access the momentum of a single outgoing photon
+    pub fn outgoing_momentum(&self, par: usize) -> Momentum {
+        self.momentum(OUTGOING_SHIFT + par)
     }
 
     /// Access the outgoing 4-momenta only
-    pub fn outgoing_momenta(&self) -> OutgoingVectorSlice<Momentum> {
+    pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
         self.0.fixed_rows::<U3>(OUTGOING_SHIFT)
     }
 
     /// Mutable access to the outgoing 4-momenta (for internal use)
-    fn outgoing_momenta_mut(&mut self) -> OutgoingVectorSliceMut<Momentum> {
+    fn outgoing_momenta_mut(&mut self) -> OutgoingMomentaSliceMut {
         self.0.fixed_rows_mut::<U3>(OUTGOING_SHIFT)
     }
 
     /// Minimal outgoing photon energy
     pub fn min_photon_energy(&self) -> Real {
         if cfg!(feature = "no-photon-sorting") {
-            let first_out_e = self.outgoing_momenta()[0][E];
+            let first_out_e = self.outgoing_momentum(0)[E];
             self.outgoing_momenta()
+                .fixed_columns::<U1>(E)
                 .iter()
                 .skip(1)
-                .map(|p| p[E])
-                .fold(first_out_e, |e1, e2| if e1 < e2 { e1 } else { e2 })
+                .fold(first_out_e, |e1, &e2| if e1 < e2 { e1 } else { e2 })
         } else {
             // Use the fact that photons are sorted by decreasing energy
-            self.outgoing_momenta()[OUTGOING_COUNT-1][E]
+            self.outgoing_momentum(OUTGOING_COUNT-1)[E]
         }
     }
 

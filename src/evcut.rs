@@ -2,7 +2,7 @@
 
 use ::{
     event::{Event, OUTGOING_COUNT},
-    linalg::{E, xyz},
+    linalg::{E, U1, U3, X, xyz},
     numeric::{
         functions::abs,
         Real
@@ -45,30 +45,44 @@ impl EventCut {
         // Get the incoming electron 4-momentum and outgoing photon 4-momenta
         let p_el = event.electron_momentum();
         let p_out = event.outgoing_momenta();
+        let p_out_xyz = p_out.fixed_columns::<U3>(X);
+        let p_out_e = p_out.fixed_columns::<U1>(E);
 
         // Check if the (beam, photon) angles pass the cut
-        for p_ph in p_out.iter() {
-            let cos_num = xyz(p_el).dot(&xyz(p_ph));
-            let cos_denom = p_el[E] * p_ph[E];
-            if abs(cos_num) > self.a_cut * cos_denom { return false; }
+        {
+            let cos_num = p_out_xyz * xyz(&p_el);
+            let cos_denom = p_out_e * p_el[E];
+            for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
+                if abs(num) > self.a_cut * denom { return false; }
+            }
         }
 
         // Check if the (photon, photon) angles pass the cut
-        for (i, p_ph1) in p_out.rows(1, OUTGOING_COUNT-1).iter().enumerate() {
-            for p_ph2 in &p_out.rows(0, i+1) {
-                let cos_num = xyz(p_ph1).dot(&xyz(p_ph2));
-                let cos_denom = p_ph1[E] * p_ph2[E];
-                if cos_num > self.b_cut * cos_denom { return false; }
+        for par1 in 0..OUTGOING_COUNT-1 {
+            // Pick one photon
+            let p_ph = event.outgoing_momentum(par1);
+
+            // Pick the other photons coming after it (we want to study pairs)
+            let other_p_ph = p_out.rows(par1+1, OUTGOING_COUNT-par1-1);
+            let other_p_ph_xyz = other_p_ph.fixed_columns::<U3>(X);
+            let other_p_ph_e = other_p_ph.fixed_columns::<U1>(E);
+
+            // Do the same thing as for (beam, photon) angles
+            let cos_num = other_p_ph_xyz * xyz(&p_ph);
+            let cos_denom = other_p_ph_e * p_ph[E];
+            for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
+                if abs(num) > self.b_cut * denom { return false; }
             }
         }
 
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
         debug_assert_eq!(OUTGOING_COUNT, 3);
-        let n_ppp = xyz(&p_out[0]).cross(&xyz(&p_out[1]));
+        let n_ppp = xyz(&event.outgoing_momentum(0))
+                        .cross(&xyz(&event.outgoing_momentum(1)));
 
         // Compute the cosine of the angle between the beam and this vector
-        let cos_num = xyz(p_el).dot(&n_ppp);
+        let cos_num = xyz(&p_el).dot(&n_ppp);
         let cos_denom = p_el[E] * n_ppp.norm();
 
         // Check if the (beam, normal to photon plane) angle passes the cut

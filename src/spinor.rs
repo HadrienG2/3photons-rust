@@ -8,7 +8,7 @@ use ::{
         ParticleVector,
         ParticleMatrix,
     },
-    linalg::{X, Y, Z, E},
+    linalg::{E, U1, X, Y, Z},
     numeric::{
         Complex,
         functions::{sqr, sqrt},
@@ -40,12 +40,17 @@ impl SpinorProducts {
 
         // Access the array of incoming and outgoing particle 4-momenta
         let px = event.all_momenta();
+        let px_x = px.fixed_columns::<U1>(X);
+        let px_y = px.fixed_columns::<U1>(Y);
+        let px_z = px.fixed_columns::<U1>(Z);
+        let px_e = px.fixed_columns::<U1>(E);
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let xx = px.map(|p| sqrt(p[E] + p[Z]));
+        let xx = (px_e + px_z).map(sqrt);
         let fx = ParticleVector::from_iterator(
-            px.iter().zip(xx.iter())
-                     .map(|(p, x)| Complex::new(p[X], p[Y]) / x)
+            px_x.iter().zip(px_y.iter())
+                       .zip(xx.iter())
+                       .map(|((&p_x, &p_y), x)| Complex::new(p_x, p_y) / x)
         );
 
         // Fill up the Gram matrix
