@@ -324,28 +324,28 @@ impl Event {
         &self.0
     }
 
-    /// Access the momentum of a single particle (internal for now)
+    /// Extract the 4-momentum of a single particle (internal for now)
     fn momentum(&self, par: usize) -> Momentum {
         Momentum::from_iterator(self.0.fixed_rows::<U1>(par).iter().cloned())
     }
 
-    /// Access the electron 4-momentum only
+    /// Extract the electron 4-momentum
     pub fn electron_momentum(&self) -> Momentum {
         self.momentum(INCOMING_E_M)
     }
 
-    /// Access the positron 4-momentum only
+    /// Extract the positron 4-momentum
     #[allow(dead_code)]
     pub fn positron_momentum(&self) -> Momentum {
         self.momentum(INCOMING_E_P)
     }
 
-    /// Access the momentum of a single outgoing photon
+    /// Extract a photon's 4-momentum
     pub fn outgoing_momentum(&self, par: usize) -> Momentum {
         self.momentum(OUTGOING_SHIFT + par)
     }
 
-    /// Access the outgoing 4-momenta only
+    /// Access the outgoing 4-momenta
     pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
         self.0.fixed_rows::<U3>(OUTGOING_SHIFT)
     }
