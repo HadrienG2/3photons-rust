@@ -191,7 +191,7 @@ impl EventGenerator {
             if par < INCOMING_COUNT {
                 self.incoming_momenta[(par, coord)]
             } else if coord <= Z {
-                p_xyz[(coord, par-INCOMING_COUNT)]
+                p_xyz[(par-INCOMING_COUNT, coord)]
             } else if coord == E {
                 p_e[par-INCOMING_COUNT]
             } else {
