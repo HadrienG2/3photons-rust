@@ -358,7 +358,7 @@ impl Event {
     /// Minimal outgoing photon energy
     pub fn min_photon_energy(&self) -> Real {
         if cfg!(feature = "no-photon-sorting") {
-            let first_out_e = self.outgoing_momentum(0)[E];
+            let first_out_e = self.outgoing_momenta()[(0, E)];
             self.outgoing_momenta()
                 .fixed_columns::<U1>(E)
                 .iter()
@@ -366,7 +366,7 @@ impl Event {
                 .fold(first_out_e, |e1, &e2| if e1 < e2 { e1 } else { e2 })
         } else {
             // Use the fact that photons are sorted by decreasing energy
-            self.outgoing_momentum(OUTGOING_COUNT-1)[E]
+            self.outgoing_momenta()[(OUTGOING_COUNT-1, E)]
         }
     }
 
