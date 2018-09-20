@@ -71,7 +71,7 @@ impl EventCut {
             let cos_num = other_p_ph_xyz * xyz(&p_ph);
             let cos_denom = other_p_ph_e * p_ph[E];
             for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
-                if abs(num) > self.b_cut * denom { return false; }
+                if num > self.b_cut * denom { return false; }
             }
         }
 
