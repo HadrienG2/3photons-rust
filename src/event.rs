@@ -201,11 +201,9 @@ impl EventGenerator {
 
         // Sort the output 4-momenta in order of decreasing energy
         if cfg!(not(feature = "no-photon-sorting")) {
-            assert_eq!(OUTGOING_COUNT, 3,
-                       "This code assumes that there are 3 outgoing particles");
             let mut outgoing = event.outgoing_momenta_mut();
             for par1 in 0..OUTGOING_COUNT-1 {
-                for par2 in par1..OUTGOING_COUNT {
+                for par2 in par1+1..OUTGOING_COUNT {
                     if outgoing[(par2, E)] > outgoing[(par1, E)] {
                         outgoing.swap_rows(par1, par2);
                     }
