@@ -43,7 +43,7 @@ pub const OUTGOING_COUNT: usize = 3;
 /// Square matrix dimensioned to the amount of particles in an event (=5)
 pub type ParticleMatrix<T> = Matrix5<T>;
 
-/// Event data matrix definitions (columns are coordinates, rows are momenta)
+/// Event data matrix definitions (columns are coordinates, rows are particles)
 type EventMatrix = Matrix5x4<Real>;
 type OutgoingMomentaSlice<'a> = MatrixSlice<'a, Real, U3, U4, U1, U5>;
 
@@ -133,16 +133,7 @@ impl EventGenerator {
     pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
         // Pregenerate the random parameters to shield later computations from
         // the averse impact of RNG calls on the compiler's loop optimizations
-        //
-        // FIXME: This temporarily uses a different RNG order than 3photons.
-        //        Should ultimately extract the fluctuation in a method.
-        //
-        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
-        let params = Matrix3::from_column_slice(&rng.random9()[..]);
-        let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
-        let exp_min_e = params.fixed_columns::<U1>(1)
-                              .component_mul(&params.fixed_columns::<U1>(2));
-        let sincos_phi_mat = Self::random_unit_3x2d(rng);
+        let params = RandomParameters::new(rng);
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
@@ -152,13 +143,14 @@ impl EventGenerator {
         //        it spends 25% of its time computing scalar logarithms. Using
         //        a vectorized ln() implementation should help there.
         //
-        let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
-        let energy = exp_min_e.map(|e_me| -ln(e_me));
-        let q_mat = Matrix4x3::from_fn(|coord, par| {
+        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+        let sin_theta = params.cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+        let energy = params.exp_min_e.map(|e_me| -ln(e_me));
+        let q = Matrix4x3::from_fn(|coord, par| {
             energy[par] * match coord {
-                X => sin_theta[par] * sincos_phi_mat[(par, X)],
-                Y => sin_theta[par] * sincos_phi_mat[(par, Y)],
-                Z => cos_theta[par],
+                X => sin_theta[par] * params.sincos_phi[(par, X)],
+                Y => sin_theta[par] * params.sincos_phi[(par, Y)],
+                Z => params.cos_theta[par],
                 E => 1.,
                 _ => unreachable!()
             }
@@ -166,7 +158,7 @@ impl EventGenerator {
 
         // Calculate the parameters of the conformal transformation
         let r = &Momentum::from_fn(|coord, _| {
-            q_mat.fixed_rows::<U1>(coord).iter().sum()
+            q.fixed_rows::<U1>(coord).iter().sum()
         });
         let r_norm_2 = r[E] * r[E] - xyz(r).norm_squared();
         let alpha = self.e_tot / r_norm_2;
@@ -174,11 +166,11 @@ impl EventGenerator {
         let beta = 1. / (r_norm + r[E]);
 
         // Perform the conformal transformation from Q's to output 4-momenta
-        let tr_q_mat = q_mat.transpose();
-        let rq = tr_q_mat.fixed_columns::<U3>(X) * xyz(r);
-        let q_e = tr_q_mat.fixed_columns::<U1>(E);
+        let tr_q = q.transpose();
+        let rq = tr_q.fixed_columns::<U3>(X) * xyz(r);
+        let q_e = tr_q.fixed_columns::<U1>(E);
         let mut p_e = alpha * (r[E]*q_e - rq);
-        let tr_q_xyz = tr_q_mat.fixed_columns::<U3>(X);
+        let tr_q_xyz = tr_q.fixed_columns::<U3>(X);
         let b_rq_e = beta * rq - q_e;
         let mut p_xyz = alpha * (r_norm*tr_q_xyz + b_rq_e*xyz(r).transpose());
 
@@ -215,89 +207,12 @@ impl EventGenerator {
         event
     }
 
-    /// Generate a vector on the unit circle with uniform angle distribution
-    ///
-    /// NOTE: Similar techniques may be used to generate a vector on the unit
-    ///       sphere, but that benchmarked unfavorably, likely because it
-    ///       entails bringing more computations close to the RNG calls and
-    ///       because the 2D case fits available vector hardware more tightly.
-    ///
-    /// FIXME: Uses a different RNG order w.r.t. original 3photons
-    ///
-    fn random_unit_3x2d(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
-        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
-
-        // This function has two operating modes: a default mode which produces
-        // bitwise identical results w.r.t. the original 3photons code, and a
-        // mode which uses a different (faster) algorithm.
-        if cfg!(feature = "fast-sincos") {
-            // Grab random points on the unit square
-            let mut p_mat = Matrix3x2::from_iterator(
-                rng.random6().iter().map(|r| 2. * r - 1.)
-            );
-
-            // Re-roll each point until it falls on the unit disc, and is not
-            // too close to the origin (the latter improves numerical stability)
-            let mut n2_vec = Vector3::from_fn(|part, _|
-                p_mat.fixed_rows::<U1>(part).norm_squared()
-            );
-            for part in 0..OUTGOING_COUNT {
-                const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
-                while n2_vec[part] > 1. || n2_vec[part] < MIN_POSITIVE_2 {
-                    let new_row = Vector2::from_iterator(
-                        rng.random2().iter().map(|r| 2. * r - 1.)
-                    );
-                    p_mat.set_row(part, &new_row.transpose());
-                    n2_vec[part] = new_row.norm_squared();
-                }
-            }
-
-            // Now you only need to normalize to get points on the unit circle
-            let norm = n2_vec.map(|n2| 1. / sqrt(n2));
-            for part in 0..OUTGOING_COUNT {
-                p_mat.fixed_rows_mut::<U1>(part).apply(|c| c * norm[part]);
-            }
-            p_mat
-        } else {
-            // This code path strictly follows the original 3photons algorithm
-            let phi = Vector3::from_iterator(
-                rng.random3().iter().map(|r| 2. * PI * r)
-            );
-            Matrix3x2::from_fn(|par, coord| {
-                match coord {
-                    X => cos(phi[par]),
-                    Y => sin(phi[par]),
-                    _ => unreachable!()
-                }
-            })
-        }
-    }
-
-    /// Simulate the impact of a certain number of calls to "generate()" on a
-    /// random number generator. This code must be manually synchronized with
-    /// the implementation of "generate()", but such is the price for perfect
-    /// reproducibility between single-threaded and multi-threaded mode...
-    ///
-    /// FIXME: Update this if we stabilize the new RNG order
-    ///
+    /// Simulate the impact of N calls to "generate()" on an RNG
     #[cfg(all(feature = "multi-threading",
               not(feature = "faster-threading")))]
     pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
                                        num_events: usize) {
-        if cfg!(feature = "fast-sincos") {
-            // If fast-sincos is enabled, the number of RNG calls per event is
-            // nondeterministic, so we must simulate events one by one.
-            for _ in 0..num_events*OUTGOING_COUNT {
-                rng.skip(1);
-                Self::random_unit_2d(rng);
-                rng.skip(2);
-            }
-        } else {
-            // If fast-sincos is not enabled, we know exactly how many RNG calls
-            // will be made per event, and we can let the RNG skip through the
-            // events as quickly as it can.
-            rng.skip(num_events*OUTGOING_COUNT*4);
-        }
+        RandomParameters::simulate_event_batch(rng, num_events);
     }
 
 
@@ -377,5 +292,118 @@ impl Event {
             println!("p{}: {}", i+1, p);
         }
         println!();
+    }
+}
+
+
+/// Base random parameters used for event generation
+struct RandomParameters {
+    cos_theta: Vector3<Real>,
+    exp_min_e: Vector3<Real>,
+    sincos_phi: Matrix3x2<Real>,
+}
+//
+impl RandomParameters {
+    /// Generate the required parameters for building one event
+    ///
+    /// FIXME: This temporarily uses a different RNG order than 3photons.
+    ///        Should ultimately provide a compatibility mode.
+    ///
+    fn new(rng: &mut RandomGenerator) -> Self {
+        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+
+        let params = Matrix3::from_column_slice(&rng.random9()[..]);
+        let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
+        let exp_min_e = params.fixed_columns::<U1>(1)
+                              .component_mul(&params.fixed_columns::<U1>(2));
+        let sincos_phi = Self::random_unit_3x2d(rng);
+
+        Self { cos_theta, sincos_phi, exp_min_e }
+    }
+
+    /// Generate a vector on the unit circle with uniform angle distribution
+    ///
+    /// NOTE: Similar techniques may be used to generate a vector on the unit
+    ///       sphere, but that benchmarked unfavorably, likely because it
+    ///       entails bringing more computations close to the RNG calls and
+    ///       because the 2D case fits available vector hardware more tightly.
+    ///
+    /// FIXME: Uses a different RNG order w.r.t. original 3photons
+    ///
+    fn random_unit_3x2d(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
+        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+
+        // This function has two operating modes: a default mode which produces
+        // bitwise identical results w.r.t. the original 3photons code, and a
+        // mode which uses a different (faster) algorithm.
+        if cfg!(feature = "fast-sincos") {
+            // Grab random points on the unit square
+            let mut p_mat = Matrix3x2::from_iterator(
+                rng.random6().iter().map(|r| 2. * r - 1.)
+            );
+
+            // Re-roll each point until it falls on the unit disc, and is not
+            // too close to the origin (the latter improves numerical stability)
+            let mut n2_vec = Vector3::from_fn(|part, _|
+                p_mat.fixed_rows::<U1>(part).norm_squared()
+            );
+            for part in 0..OUTGOING_COUNT {
+                const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
+                while n2_vec[part] > 1. || n2_vec[part] < MIN_POSITIVE_2 {
+                    let new_row = Vector2::from_iterator(
+                        rng.random2().iter().map(|r| 2. * r - 1.)
+                    );
+                    p_mat.set_row(part, &new_row.transpose());
+                    n2_vec[part] = new_row.norm_squared();
+                }
+            }
+
+            // Now you only need to normalize to get points on the unit circle
+            let norm = n2_vec.map(|n2| 1. / sqrt(n2));
+            for part in 0..OUTGOING_COUNT {
+                p_mat.fixed_rows_mut::<U1>(part).apply(|c| c * norm[part]);
+            }
+            p_mat
+        } else {
+            // This code path strictly follows the original 3photons algorithm
+            let phi = Vector3::from_iterator(
+                rng.random3().iter().map(|r| 2. * PI * r)
+            );
+            Matrix3x2::from_fn(|par, coord| {
+                match coord {
+                    X => cos(phi[par]),
+                    Y => sin(phi[par]),
+                    _ => unreachable!()
+                }
+            })
+        }
+    }
+
+    /// Simulate the impact of N calls to "generate()" on an RNG
+    ///
+    /// This code must be manually synchronized with the constructor, but such
+    /// is the price for perfect reproducibility between single-threaded and
+    /// multi-threaded mode...
+    ///
+    /// FIXME: Update this if we stabilize the new RNG order
+    ///
+    #[cfg(all(feature = "multi-threading",
+              not(feature = "faster-threading")))]
+    pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
+                                       num_events: usize) {
+        if cfg!(feature = "fast-sincos") {
+            // If fast-sincos is enabled, the number of RNG calls per event is
+            // nondeterministic, so we must simulate events one by one.
+            for _ in 0..num_events*OUTGOING_COUNT {
+                rng.skip(1);
+                Self::random_unit_2d(rng);
+                rng.skip(2);
+            }
+        } else {
+            // If fast-sincos is not enabled, we know exactly how many RNG calls
+            // will be made per event, and we can let the RNG skip through the
+            // events as quickly as it can.
+            rng.skip(num_events*OUTGOING_COUNT*4);
+        }
     }
 }
