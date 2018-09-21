@@ -5,7 +5,6 @@ use ::{
         Event,
         INCOMING_COUNT,
         OUTGOING_COUNT,
-        ParticleVector,
         ParticleMatrix,
     },
     linalg::{E, U1, X, Y, Z},
@@ -39,24 +38,25 @@ impl SpinorProducts {
         debug_assert_eq!(OUTGOING_COUNT, 3);
 
         // Access the array of incoming and outgoing particle 4-momenta
-        let px = event.all_momenta();
-        let px_x = px.fixed_columns::<U1>(X);
-        let px_y = px.fixed_columns::<U1>(Y);
-        let px_z = px.fixed_columns::<U1>(Z);
-        let px_e = px.fixed_columns::<U1>(E);
+        let p = event.all_momenta();
+        let p_x = p.fixed_columns::<U1>(X);
+        let p_y = p.fixed_columns::<U1>(Y);
+        let p_z = p.fixed_columns::<U1>(Z);
+        let p_e = p.fixed_columns::<U1>(E);
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let xx = (px_e + px_z).map(sqrt);
-        let fx = ParticleVector::from_iterator(
-            px_x.iter().zip(px_y.iter())
-                       .zip(xx.iter())
-                       .map(|((&p_x, &p_y), x)| Complex::new(p_x, p_y) / x)
-        );
+        let xx = (p_e + p_z).map(sqrt);
+        let inv_xx = xx.map(|x| 1. / x);
+        let re_fx = p_x.component_mul(&inv_xx);
+        let im_fx = p_y.component_mul(&inv_xx);
 
         // Fill up the Gram matrix
         // TODO: Can we leverage antisymmetry + zero diagonal better?
         let result = Self {
-            sx: ParticleMatrix::from_fn(|i, j| { fx[i]*xx[j] - fx[j]*xx[i] }),
+            sx: ParticleMatrix::from_fn(|i, j| {
+                Complex::new(re_fx[i]*xx[j] - re_fx[j]*xx[i],
+                             im_fx[i]*xx[j] - im_fx[j]*xx[i])
+            }),
         };
 
         // Return the result

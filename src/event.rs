@@ -17,7 +17,6 @@ use ::{
         U5,
         Vector2,
         Vector3,
-        Vector5,
         X,
         xyz,
         Y,
@@ -41,8 +40,7 @@ pub const INCOMING_COUNT: usize = 2;
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
 
-/// Vectors and matrices sized to the amount of particles in an event (=5)
-pub type ParticleVector<T> = Vector5<T>;
+/// Square matrix dimensioned to the amount of particles in an event (=5)
 pub type ParticleMatrix<T> = Matrix5<T>;
 
 /// Event data matrix definitions (columns are coordinates, rows are momenta)
