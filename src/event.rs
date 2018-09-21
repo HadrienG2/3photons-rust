@@ -11,7 +11,6 @@ use ::{
         Matrix5,
         Matrix5x4,
         MatrixSlice,
-        MatrixSliceMut,
         U1,
         U3,
         U4,
@@ -49,7 +48,6 @@ pub type ParticleMatrix<T> = Matrix5<T>;
 /// Event data matrix definitions (columns are coordinates, rows are momenta)
 type EventMatrix = Matrix5x4<Real>;
 type OutgoingMomentaSlice<'a> = MatrixSlice<'a, Real, U3, U4, U1, U5>;
-type OutgoingMomentaSliceMut<'a> = MatrixSliceMut<'a, Real, U3, U4, U1, U5>;
 
 /// Row of the incoming electron in the event data matrix
 pub const INCOMING_E_M: usize = 0;
@@ -181,13 +179,25 @@ impl EventGenerator {
         let tr_q_mat = q_mat.transpose();
         let rq = tr_q_mat.fixed_columns::<U3>(X) * xyz(r);
         let q_e = tr_q_mat.fixed_columns::<U1>(E);
-        let p_e = alpha * (r[E] * q_e - rq);
+        let mut p_e = alpha * (r[E]*q_e - rq);
         let tr_q_xyz = tr_q_mat.fixed_columns::<U3>(X);
         let b_rq_e = beta * rq - q_e;
-        let p_xyz = alpha * (r_norm * tr_q_xyz + b_rq_e * xyz(r).transpose());
+        let mut p_xyz = alpha * (r_norm*tr_q_xyz + b_rq_e*xyz(r).transpose());
+
+        // Sort the output 4-momenta in order of decreasing energy (if enabled)
+        if cfg!(not(feature = "no-photon-sorting")) {
+            for par1 in 0..OUTGOING_COUNT-1 {
+                for par2 in par1+1..OUTGOING_COUNT {
+                    if p_e[par2] > p_e[par1] {
+                        p_e.swap_rows(par1, par2);
+                        p_xyz.swap_rows(par1, par2);
+                    }
+                }
+            }
+        }
 
         // Build the final event: incoming momenta + output 4-momenta
-        let mut event = Event(Matrix5x4::from_fn(|par, coord| {
+        let event = Event(Matrix5x4::from_fn(|par, coord| {
             if par < INCOMING_COUNT {
                 self.incoming_momenta[(par, coord)]
             } else if coord <= Z {
@@ -198,18 +208,6 @@ impl EventGenerator {
                 unreachable!()
             }
         }));
-
-        // Sort the output 4-momenta in order of decreasing energy
-        if cfg!(not(feature = "no-photon-sorting")) {
-            let mut outgoing = event.outgoing_momenta_mut();
-            for par1 in 0..OUTGOING_COUNT-1 {
-                for par2 in par1+1..OUTGOING_COUNT {
-                    if outgoing[(par2, E)] > outgoing[(par1, E)] {
-                        outgoing.swap_rows(par1, par2);
-                    }
-                }
-            }
-        }
 
         // Hand off the generated event
         event
@@ -348,11 +346,6 @@ impl Event {
     /// Access the outgoing 4-momenta
     pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
         self.0.fixed_rows::<U3>(OUTGOING_SHIFT)
-    }
-
-    /// Mutable access to the outgoing 4-momenta (for internal use)
-    fn outgoing_momenta_mut(&mut self) -> OutgoingMomentaSliceMut {
-        self.0.fixed_rows_mut::<U3>(OUTGOING_SHIFT)
     }
 
     /// Minimal outgoing photon energy

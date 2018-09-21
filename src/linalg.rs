@@ -27,7 +27,6 @@ pub use nalgebra::{
     Matrix5,
     Matrix5x4,
     MatrixSlice,
-    MatrixSliceMut,
 };
 
 /// Re-export of nalgebra's 8-vector type
