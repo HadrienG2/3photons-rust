@@ -189,8 +189,8 @@ impl EventGenerator {
 
     /// Generate massless outgoing 4-momenta in infinite phase space
     ///
-    /// The output momenta are provided as a matrix where rows are momentum
-    /// components and columns are particles.
+    /// The output momenta are provided as a matrix where rows are 4-momentum
+    /// components (Px, Py, Pz, E) and columns are particles.
     ///
     /// FIXME: The main obvious remaining bottleneck of this function is that
     ///        it spends 25% of its time computing scalar logarithms. Using
