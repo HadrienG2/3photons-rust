@@ -139,8 +139,6 @@ impl EventGenerator {
 
         // Generate massless outgoing 4-momenta in infinite phase space
         //
-        // FIXME: Sincos coordinate order is reversed w.r.t. 3photons
-        //
         // FIXME: The main obvious remaining bottleneck of this function is that
         //        it spends 25% of its time computing scalar logarithms. Using
         //        a vectorized ln() implementation should help there.
@@ -330,8 +328,8 @@ impl RandomParameters {
             for par in 0..OUTGOING_COUNT {
                 cos_theta[par] = 2. * rng.random() - 1.;
                 let phi = 2. * PI * rng.random();
-                sincos_phi[(par, X)] = cos(phi);
-                sincos_phi[(par, Y)] = sin(phi);
+                sincos_phi[(par, X)] = sin(phi);
+                sincos_phi[(par, Y)] = cos(phi);
                 exp_min_e[par] = rng.random() * rng.random();
             }
             Self { cos_theta, sincos_phi, exp_min_e }
@@ -386,8 +384,8 @@ impl RandomParameters {
             );
             Matrix3x2::from_fn(|par, coord| {
                 match coord {
-                    X => cos(phi[par]),
-                    Y => sin(phi[par]),
+                    X => sin(phi[par]),
+                    Y => cos(phi[par]),
                     _ => unreachable!()
                 }
             })
