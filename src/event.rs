@@ -231,7 +231,7 @@ impl EventGenerator {
                 }
             })
         } else {
-            // This mode targets for maximal reproducibility with respect to the
+            // This mode targets maximal reproducibility with respect to the
             // original 3photons program, at the expense of performance.
 
             // Generate the basic random parameters of the particles
@@ -307,12 +307,17 @@ impl EventGenerator {
     }
 
     /// Simulate the impact of N calls to "generate()" on an RNG
+    ///
+    /// This function must be kept in sync with the `genrate_raw()`
+    /// implementation. Such is the price to pay for perfect reproducibility
+    /// between single-threaded and multi-threaded runs...
+    ///
     #[cfg(all(feature = "multi-threading",
               not(feature = "faster-threading")))]
     pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
                                        num_events: usize) {
         if cfg!(feature = "faster-evgen") {
-            for _ in 0..num_events*OUTGOING_COUNT {
+            for _ in 0..num_events {
                 rng.skip(9);
                 Self::random_unit_3x2d(rng);
             }
