@@ -33,8 +33,6 @@ use ::{
     random::RandomGenerator,
 };
 
-use num_traits::Zero;
-
 
 /// Number of incoming particles
 pub const INCOMING_COUNT: usize = 2;
@@ -199,44 +197,71 @@ impl EventGenerator {
     fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Real> {
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
 
-        // Pregenerate the random parameters to shield later computations from
-        // the averse impact of RNG calls on the compiler's loop optimizations
-        let mut cos_theta;
-        let mut exp_min_e;
-        let mut sincos_phi;
+        // This function can either use a performance-oriented design or aim for
+        // mewimal reproducibility with the original 3photons program.
+        //
+        // In both cases, random number generation is kept separated from
+        // computations, as it was observed that it has a harmful interaction
+        // with the compiler's loop optimizations, including auto-vectorization.
+        //
         if cfg!(feature = "simd-friendly-rng") {
-            // Performance-oriented version
+            // Generate the basic random parameters of the particles
             let params = Matrix3::from_column_slice(&rng.random9()[..]);
-            cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
-            exp_min_e = params.fixed_columns::<U1>(1)
-                              .component_mul(&params.fixed_columns::<U1>(2));
-            sincos_phi = Self::random_unit_3x2d(rng);
-        } else {
-            // Compatibility-oriented version
-            cos_theta = Vector3::zero();
-            exp_min_e = Vector3::zero();
-            sincos_phi = Matrix3x2::zero();
-            for par in 0..OUTGOING_COUNT {
-                cos_theta[par] = 2. * rng.random() - 1.;
-                let phi = 2. * PI * rng.random();
-                sincos_phi[(par, X)] = sin(phi);
-                sincos_phi[(par, Y)] = cos(phi);
-                exp_min_e[par] = rng.random() * rng.random();
-            }
-        }
+            let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
+            let exp_min_e = params.fixed_columns::<U1>(1)
+                                  .component_mul(&params.fixed_columns::<U1>(2));
+            let sincos_phi = Self::random_unit_3x2d(rng);
 
-        // Compute the momenta
-        let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
-        let energy = exp_min_e.map(|e_me| -ln(e_me));
-        Matrix4x3::from_fn(|coord, par| {
-            energy[par] * match coord {
-                X => sin_theta[par] * sincos_phi[(par, X)],
-                Y => sin_theta[par] * sincos_phi[(par, Y)],
-                Z => cos_theta[par],
-                E => 1.,
-                _ => unreachable!()
-            }
-        })
+            // Compute the outgoing momenta
+            //
+            // FIXME: The main obvious remaining bottleneck of this version is
+            //        that it spends ~40% of its time computing scalar
+            //        logarithms. Using a vectorized ln() implementation in the
+            //        computation of the energy vector should help.
+            //
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+            let energy = exp_min_e.map(|e_me| -ln(e_me));
+            Matrix4x3::from_fn(|coord, par| {
+                energy[par] * match coord {
+                    X => sin_theta[par] * sincos_phi[(par, X)],
+                    Y => sin_theta[par] * sincos_phi[(par, Y)],
+                    Z => cos_theta[par],
+                    E => 1.,
+                    _ => unreachable!()
+                }
+            })
+        } else {
+            // Generate the basic random parameters of the particles
+            const COS_THETA: usize = 0;
+            const PHI: usize = 1;
+            const EXP_MIN_E: usize = 2;
+            let params = Matrix3::from_fn(|coord, _par| {
+                match coord {
+                    COS_THETA => 2. * rng.random() - 1.,
+                    PHI => 2. * PI * rng.random(),
+                    EXP_MIN_E => rng.random() * rng.random(),
+                    _ => unreachable!()
+                }
+            });
+            let cos_theta = params.fixed_rows::<U1>(COS_THETA);
+            let phi = params.fixed_rows::<U1>(PHI);
+            let exp_min_e = params.fixed_rows::<U1>(EXP_MIN_E);
+
+            // Compute the outgoing momenta
+            let cos_phi = phi.map(cos);
+            let sin_phi = phi.map(sin);
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+            let energy = exp_min_e.map(|e_me| -ln(e_me));
+            Matrix4x3::from_fn(|coord, par| {
+                energy[par] * match coord {
+                    X => sin_theta[par] * sin_phi[par],
+                    Y => sin_theta[par] * cos_phi[par],
+                    Z => cos_theta[par],
+                    E => 1.,
+                    _ => unreachable!()
+                }
+            })
+        }
     }
 
     /// Generate vectors on the unit circle with uniform angle distribution
