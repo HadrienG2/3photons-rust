@@ -190,7 +190,11 @@ impl EventGenerator {
                 for par2 in par1+1..OUTGOING_COUNT {
                     if p_e[par2] > p_e[par1] {
                         p_e.swap_rows(par1, par2);
-                        p_xyz.swap_rows(par1, par2);
+                        // FIXME: swap_rows triggers UB here, figure out why
+                        let mom1 = p_xyz.fixed_rows::<U1>(par1).into_owned();
+                        let mom2 = p_xyz.fixed_rows::<U1>(par2).into_owned();
+                        p_xyz.fixed_rows_mut::<U1>(par1).copy_from(&mom2);
+                        p_xyz.fixed_rows_mut::<U1>(par2).copy_from(&mom1);
                     }
                 }
             }
