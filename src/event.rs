@@ -133,28 +133,8 @@ impl EventGenerator {
     /// The 4-momenta of output photons are sorted by decreasing energy.
     ///
     pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
-        // Pregenerate the random parameters to shield later computations from
-        // the averse impact of RNG calls on the compiler's loop optimizations
-        let params = RandomParameters::new(rng);
-
         // Generate massless outgoing 4-momenta in infinite phase space
-        //
-        // FIXME: The main obvious remaining bottleneck of this function is that
-        //        it spends 25% of its time computing scalar logarithms. Using
-        //        a vectorized ln() implementation should help there.
-        //
-        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
-        let sin_theta = params.cos_theta.map(|cos| sqrt(1. - sqr(cos)));
-        let energy = params.exp_min_e.map(|e_me| -ln(e_me));
-        let q = Matrix4x3::from_fn(|coord, par| {
-            energy[par] * match coord {
-                X => sin_theta[par] * params.sincos_phi[(par, X)],
-                Y => sin_theta[par] * params.sincos_phi[(par, Y)],
-                Z => params.cos_theta[par],
-                E => 1.,
-                _ => unreachable!()
-            }
-        });
+        let q = Self::generate_raw(rng);
 
         // Calculate the parameters of the conformal transformation
         let r = &Momentum::from_fn(|coord, _| {
@@ -205,6 +185,35 @@ impl EventGenerator {
 
         // Hand off the generated event
         event
+    }
+
+    /// Generate massless outgoing 4-momenta in infinite phase space
+    ///
+    /// The output momenta are provided as a matrix where rows are momentum
+    /// components and columns are particles.
+    ///
+    /// FIXME: The main obvious remaining bottleneck of this function is that
+    ///        it spends 25% of its time computing scalar logarithms. Using
+    ///        a vectorized ln() implementation should help there.
+    ///
+    fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Real> {
+        // Pregenerate the random parameters to shield later computations from
+        // the averse impact of RNG calls on the compiler's loop optimizations
+        let params = RandomParameters::new(rng);
+
+        // Compute the momenta
+        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+        let sin_theta = params.cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+        let energy = params.exp_min_e.map(|e_me| -ln(e_me));
+        Matrix4x3::from_fn(|coord, par| {
+            energy[par] * match coord {
+                X => sin_theta[par] * params.sincos_phi[(par, X)],
+                Y => sin_theta[par] * params.sincos_phi[(par, Y)],
+                Z => params.cos_theta[par],
+                E => 1.,
+                _ => unreachable!()
+            }
+        })
     }
 
     /// Simulate the impact of N calls to "generate()" on an RNG
