@@ -8,16 +8,14 @@ authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 default = []
 # Use single precision instead of double precision
 f32 = []
-# Use a faster algorithm for random unit vector generation
-fast-sincos = []
+# Use different event generation algorithms to improve performance
+faster-evgen = []
 # Maximize multi-threaded performance at the expense of result reproducibility
 faster-threading = []
 # Parallelize the computation via multi-threading
 multi-threading = ["rayon"]
 # Disable photon sorting
 no-photon-sorting = []
-# Generate random numbers in a vectorization-friendly way
-simd-friendly-rng = []
 # Use a standard algorithm for random number generation
 standard-random = ["rand", "xoshiro"]
 

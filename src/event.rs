@@ -197,14 +197,14 @@ impl EventGenerator {
     fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Real> {
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
 
-        // This function can either use a performance-oriented design or aim for
-        // mewimal reproducibility with the original 3photons program.
-        //
-        // In both cases, random number generation is kept separated from
-        // computations, as it was observed that it has a harmful interaction
-        // with the compiler's loop optimizations, including auto-vectorization.
-        //
-        if cfg!(feature = "simd-friendly-rng") {
+        // In all operating modes, random number generation is kept
+        // well-separated from computations, as it was observed that it has a
+        // harmful interaction with the compiler's loop optimizations.
+        if cfg!(feature = "faster-evgen") {
+            // This mode allows random number generation to be carried out in a
+            // different order, and using different algorithms than what the
+            // original 3photons did. This enables greater performance.
+
             // Generate the basic random parameters of the particles
             let params = Matrix3::from_column_slice(&rng.random9()[..]);
             let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
@@ -231,6 +231,9 @@ impl EventGenerator {
                 }
             })
         } else {
+            // This mode targets for maximal reproducibility with respect to the
+            // original 3photons program, at the expense of performance.
+
             // Generate the basic random parameters of the particles
             const COS_THETA: usize = 0;
             const PHI: usize = 1;
@@ -264,7 +267,7 @@ impl EventGenerator {
         }
     }
 
-    /// Generate vectors on the unit circle with uniform angle distribution
+    /// Generate 3 vectors on the unit circle with uniform angle distribution
     ///
     /// NOTE: Similar techniques may be used to generate a vector on the unit
     ///       sphere, but that benchmarked unfavorably, likely because it
@@ -274,50 +277,33 @@ impl EventGenerator {
     fn random_unit_3x2d(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
 
-        // This function has two operating modes: a default mode which produces
-        // bitwise identical results w.r.t. the original 3photons code, and a
-        // mode which uses a different (faster) algorithm.
-        if cfg!(feature = "fast-sincos") {
-            // Grab random points on the unit square
-            let mut p_mat = Matrix3x2::from_iterator(
-                rng.random6().iter().map(|r| 2. * r - 1.)
-            );
+        // Grab three random points on the unit square
+        let mut points = Matrix3x2::from_iterator(
+            rng.random6().iter().map(|r| 2. * r - 1.)
+        );
 
-            // Re-roll each point until it falls on the unit disc, and is not
-            // too close to the origin (the latter improves numerical stability)
-            let mut n2_vec = Vector3::from_fn(|part, _|
-                p_mat.fixed_rows::<U1>(part).norm_squared()
-            );
-            for part in 0..OUTGOING_COUNT {
-                const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
-                while n2_vec[part] > 1. || n2_vec[part] < MIN_POSITIVE_2 {
-                    let new_row = Vector2::from_iterator(
-                        rng.random2().iter().map(|r| 2. * r - 1.)
-                    );
-                    p_mat.set_row(part, &new_row.transpose());
-                    n2_vec[part] = new_row.norm_squared();
-                }
+        // Re-roll each point until it falls on the unit disc, and is not
+        // too close to the origin (otherwise we'll get floating-point issues)
+        let mut radius2 = Vector3::from_fn(|par, _|
+            points.fixed_rows::<U1>(par).norm_squared()
+        );
+        for par in 0..OUTGOING_COUNT {
+            const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
+            while radius2[par] > 1. || radius2[par] < MIN_POSITIVE_2 {
+                let new_point = Vector2::from_iterator(
+                    rng.random2().iter().map(|r| 2. * r - 1.)
+                );
+                points.set_row(par, &new_point.transpose());
+                radius2[par] = new_point.norm_squared();
             }
-
-            // Now you only need to normalize to get points on the unit circle
-            let norm = n2_vec.map(|n2| 1. / sqrt(n2));
-            for part in 0..OUTGOING_COUNT {
-                p_mat.fixed_rows_mut::<U1>(part).apply(|c| c * norm[part]);
-            }
-            p_mat
-        } else {
-            // This code path strictly follows the original 3photons algorithm
-            let phi = Vector3::from_iterator(
-                rng.random3().iter().map(|r| 2. * PI * r)
-            );
-            Matrix3x2::from_fn(|par, coord| {
-                match coord {
-                    X => sin(phi[par]),
-                    Y => cos(phi[par]),
-                    _ => unreachable!()
-                }
-            })
         }
+
+        // Now you only need to normalize to get points on the unit circle
+        let norm = radius2.map(|r2| 1. / sqrt(r2));
+        for par in 0..OUTGOING_COUNT {
+            points.fixed_rows_mut::<U1>(par).apply(|c| c * norm[par]);
+        }
+        points
     }
 
     /// Simulate the impact of N calls to "generate()" on an RNG
@@ -325,15 +311,12 @@ impl EventGenerator {
               not(feature = "faster-threading")))]
     pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
                                        num_events: usize) {
-        if cfg!(all(feature = "simd-friendly-rng", feature = "fast-sincos")) {
-            // If fast-sincos is enabled, the number of RNG calls per event is
-            // nondeterministic, so we must simulate events one by one.
+        if cfg!(feature = "faster-evgen") {
             for _ in 0..num_events*OUTGOING_COUNT {
                 rng.skip(9);
                 Self::random_unit_3x2d(rng);
             }
         } else {
-            // Otherwise, we know how many RNG calls will be made per event
             rng.skip(num_events*OUTGOING_COUNT*4);
         }
     }
