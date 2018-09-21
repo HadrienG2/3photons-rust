@@ -318,7 +318,7 @@ impl EventGenerator {
                                        num_events: usize) {
         if cfg!(feature = "faster-evgen") {
             for _ in 0..num_events {
-                rng.skip(9);
+                rng.skip9();
                 Self::random_unit_3x2d(rng);
             }
         } else {
