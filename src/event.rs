@@ -40,7 +40,8 @@ pub const INCOMING_COUNT: usize = 2;
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
 
-/// Square matrix dimensioned to the amount of particles in an event (=5)
+/// Number of particles in an event, and square matrix type with that dimension
+const PARTICLE_COUNT: usize = INCOMING_COUNT + OUTGOING_COUNT;
 pub type ParticleMatrix<T> = Matrix5<T>;
 
 /// Event data matrix definitions (columns are coordinates, rows are particles)
@@ -169,6 +170,7 @@ impl EventGenerator {
         }
 
         // Build the final event: incoming momenta + output 4-momenta
+        assert_eq!(PARTICLE_COUNT, 5, "This part assumes 5-particle events");
         let event = Event(Matrix5x4::from_fn(|par, coord| {
             if par < INCOMING_COUNT {
                 self.incoming_momenta[(par, coord)]
@@ -195,7 +197,7 @@ impl EventGenerator {
     ///        a vectorized ln() implementation should help there.
     ///
     fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Real> {
-        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
 
         // In all operating modes, random number generation is kept
         // well-separated from computations, as it was observed that it has a
@@ -210,7 +212,7 @@ impl EventGenerator {
             let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
             let exp_min_e = params.fixed_columns::<U1>(1)
                                   .component_mul(&params.fixed_columns::<U1>(2));
-            let sincos_phi = Self::random_unit_3x2d(rng);
+            let sincos_phi = Self::random_unit_2d_outgoing(rng);
 
             // Compute the outgoing momenta
             //
@@ -274,8 +276,8 @@ impl EventGenerator {
     ///       entails bringing more computations close to the RNG calls and
     ///       because the 2D case fits available vector hardware more tightly.
     ///
-    fn random_unit_3x2d(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
-        assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
+    fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
+        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
 
         // Grab three random points on the unit square
         let mut points = Matrix3x2::from_iterator(
@@ -319,7 +321,7 @@ impl EventGenerator {
         if cfg!(feature = "faster-evgen") {
             for _ in 0..num_events {
                 rng.skip9();
-                Self::random_unit_3x2d(rng);
+                Self::random_unit_2d_outgoing(rng);
             }
         } else {
             rng.skip(num_events*OUTGOING_COUNT*4);
