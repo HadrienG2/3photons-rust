@@ -33,6 +33,8 @@ use ::{
     random::RandomGenerator,
 };
 
+use num_traits::Zero;
+
 
 /// Number of incoming particles
 pub const INCOMING_COUNT: usize = 2;
@@ -312,23 +314,36 @@ impl RandomParameters {
     fn new(rng: &mut RandomGenerator) -> Self {
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
 
-        let params = Matrix3::from_column_slice(&rng.random9()[..]);
-        let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
-        let exp_min_e = params.fixed_columns::<U1>(1)
-                              .component_mul(&params.fixed_columns::<U1>(2));
-        let sincos_phi = Self::random_unit_3x2d(rng);
-
-        Self { cos_theta, sincos_phi, exp_min_e }
+        // This function can operate in two modes, one which maximizes
+        // performance and one which faithfully reproduces 3photons results
+        if cfg!(feature = "simd-friendly-rng") {
+            let params = Matrix3::from_column_slice(&rng.random9()[..]);
+            let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
+            let exp_min_e = params.fixed_columns::<U1>(1)
+                                  .component_mul(&params.fixed_columns::<U1>(2));
+            let sincos_phi = Self::random_unit_3x2d(rng);
+            Self { cos_theta, sincos_phi, exp_min_e }
+        } else {
+            let mut cos_theta = Vector3::zero();
+            let mut exp_min_e = Vector3::zero();
+            let mut sincos_phi = Matrix3x2::zero();
+            for par in 0..OUTGOING_COUNT {
+                cos_theta[par] = 2. * rng.random() - 1.;
+                let phi = 2. * PI * rng.random();
+                sincos_phi[(par, X)] = cos(phi);
+                sincos_phi[(par, Y)] = sin(phi);
+                exp_min_e[par] = rng.random() * rng.random();
+            }
+            Self { cos_theta, sincos_phi, exp_min_e }
+        }
     }
 
-    /// Generate a vector on the unit circle with uniform angle distribution
+    /// Generate vectors on the unit circle with uniform angle distribution
     ///
     /// NOTE: Similar techniques may be used to generate a vector on the unit
     ///       sphere, but that benchmarked unfavorably, likely because it
     ///       entails bringing more computations close to the RNG calls and
     ///       because the 2D case fits available vector hardware more tightly.
-    ///
-    /// FIXME: Uses a different RNG order w.r.t. original 3photons
     ///
     fn random_unit_3x2d(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
@@ -381,28 +396,23 @@ impl RandomParameters {
 
     /// Simulate the impact of N calls to "generate()" on an RNG
     ///
-    /// This code must be manually synchronized with the constructor, but such
-    /// is the price for perfect reproducibility between single-threaded and
-    /// multi-threaded mode...
-    ///
-    /// FIXME: Update this if we stabilize the new RNG order
+    /// This code must be manually synchronized with the rest of
+    /// RandomParameters. Alas, such is the price for perfect reproducibility
+    /// between single-threaded and multi-threaded runs!
     ///
     #[cfg(all(feature = "multi-threading",
               not(feature = "faster-threading")))]
     pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
                                        num_events: usize) {
-        if cfg!(feature = "fast-sincos") {
+        if cfg!(all(feature = "simd-friendly-rng", feature = "fast-sincos")) {
             // If fast-sincos is enabled, the number of RNG calls per event is
             // nondeterministic, so we must simulate events one by one.
             for _ in 0..num_events*OUTGOING_COUNT {
-                rng.skip(1);
-                Self::random_unit_2d(rng);
-                rng.skip(2);
+                rng.skip(9);
+                Self::random_unit_3x2d(rng);
             }
         } else {
-            // If fast-sincos is not enabled, we know exactly how many RNG calls
-            // will be made per event, and we can let the RNG skip through the
-            // events as quickly as it can.
+            // Otherwise, we know how many RNG calls will be made per event
             rng.skip(num_events*OUTGOING_COUNT*4);
         }
     }

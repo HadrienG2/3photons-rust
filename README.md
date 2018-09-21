@@ -16,9 +16,7 @@ to the original `3photons` program. However, if you feel like going beyond that,
 here are some features which you can enable:
 
 - The `f32` feature moves all computations to single precision.
-- The `fast-sincos` feature uses a different algorithm for computing points on
-  the unit circle, which provides a great computational speedup at the cost of
-  making reproducible parallelization more challenging.
+- 
 - The `multi-threading` feature parallelizes the computation using multi-
   threading. By default, it generates results which are identical to the
   sequential version, but this has a performance, memory footprint and
@@ -26,6 +24,11 @@ here are some features which you can enable:
   more performance shortcuts by also enabling the `faster-threading` feature.
 - The `no-photon-sorting` feature disables the sorting of outgoing photons by
   energy that used to be present in the original `3photons` code.
+- The `simd-friendly-rng` feature generates random event parameters in an order
+  which is more friendly to vectorization. The `fast-sincos` sub-feature uses a
+  different algorithm for computing points on the unit circle, which provides a
+  great computational speedup at the cost of making reproducible parallelization
+  more challenging.
 - The `standard-random` uses standard Rust abstractions for random number
   generation. The current algorithm (`xoshiro256+`) is not faster than what
   3photons uses by default (`ranf`), but is more friendly to parallelization

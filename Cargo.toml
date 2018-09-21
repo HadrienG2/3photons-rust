@@ -16,6 +16,8 @@ faster-threading = []
 multi-threading = ["rayon"]
 # Disable photon sorting
 no-photon-sorting = []
+# Generate random numbers in a vectorization-friendly way
+simd-friendly-rng = []
 # Use a standard algorithm for random number generation
 standard-random = ["rand", "xoshiro"]
 
