@@ -305,10 +305,6 @@ struct RandomParameters {
 //
 impl RandomParameters {
     /// Generate the required parameters for building one event
-    ///
-    /// FIXME: This temporarily uses a different RNG order than 3photons.
-    ///        Should ultimately provide a compatibility mode.
-    ///
     fn new(rng: &mut RandomGenerator) -> Self {
         assert_eq!(OUTGOING_COUNT, 3, "This code assumes 3 outgoing particles");
 
