@@ -2,7 +2,7 @@
 
 use ::{
     event::{Event, OUTGOING_COUNT},
-    linalg::{E, U1, U3, X, xyz},
+    linalg::{E, U1, U2, U3, X, xyz},
     numeric::{
         functions::abs,
         Real
@@ -57,23 +57,28 @@ impl EventCut {
             }
         }
 
-        // Check if the (photon, photon) angles pass the cut
-        for par1 in 0..OUTGOING_COUNT-1 {
-            // Pick one photon
-            let p_ph = event.outgoing_momentum(par1);
-
-            // Pick the other photons coming after it (we want to study pairs)
-            let other_p_ph = p_out.rows(par1+1, OUTGOING_COUNT-par1-1);
-            let other_p_ph_xyz = other_p_ph.fixed_columns::<U3>(X);
-            let other_p_ph_e = other_p_ph.fixed_columns::<U1>(E);
-
-            // Do the same thing as for (beam, photon) angles
-            let cos_num = other_p_ph_xyz * xyz(&p_ph);
-            let cos_denom = other_p_ph_e * p_ph[E];
-            for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
-                if num > self.b_cut * denom { return false; }
-            }
+        // Check if the (photon1, photon{2, 3}) angles pass the cut
+        // FIXME: Turn this back into a loop once const generics allow for it
+        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
+        let p_ph1 = event.outgoing_momentum(0);
+        let p_ph23 = p_out.fixed_rows::<U2>(1);
+        let p_ph23_xyz = p_ph23.fixed_columns::<U3>(X);
+        let p_ph23_e = p_ph23.fixed_columns::<U1>(E);
+        let cos_num_1x23 = p_ph23_xyz * xyz(&p_ph1);
+        let cos_denom_1x23 = p_ph23_e * p_ph1[E];
+        for (&num, denom) in cos_num_1x23.iter().zip(cos_denom_1x23.iter()) {
+            if num > self.b_cut * denom { return false; }
         }
+
+        // Check if the (photon2, photon3) angle passes the cut
+        // FIXME: Merge with the above loop once we can have it
+        let p_ph2 = p_ph23.fixed_rows::<U1>(0);
+        let p_ph3 = p_ph23.fixed_rows::<U1>(1);
+        let p_ph2_xyz = p_ph2.fixed_columns::<U3>(X);
+        let p_ph3_xyz = p_ph3.fixed_columns::<U3>(X);
+        let cos_num_2x3 = p_ph2_xyz.dot(&p_ph3_xyz);
+        let cos_denom_2x3 = p_ph2[E] * p_ph3[E];
+        if cos_num_2x3 > self.b_cut * cos_denom_2x3 { return false; }
 
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
