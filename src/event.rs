@@ -154,12 +154,16 @@ impl EventGenerator {
         let mut p_xyz = alpha * (r_norm*tr_q_xyz + b_rq_e*xyz(r).transpose());
 
         // Sort the output 4-momenta in order of decreasing energy (if enabled)
+        //
+        // FIXME: A bug in either nalgebra, rustc or LLVM corrupts the output of
+        //        the obvious p_xyz.swap_rows(i, j)-based implementation.
+        //        Reported @ https://github.com/rustsim/nalgebra/issues/396 .
+        //
         if cfg!(not(feature = "no-photon-sorting")) {
             for par1 in 0..OUTGOING_COUNT-1 {
                 for par2 in par1+1..OUTGOING_COUNT {
                     if p_e[par2] > p_e[par1] {
                         p_e.swap_rows(par1, par2);
-                        // FIXME: swap_rows triggers UB here, figure out why
                         let mom1 = p_xyz.fixed_rows::<U1>(par1).into_owned();
                         let mom2 = p_xyz.fixed_rows::<U1>(par2).into_owned();
                         p_xyz.fixed_rows_mut::<U1>(par1).copy_from(&mom2);
