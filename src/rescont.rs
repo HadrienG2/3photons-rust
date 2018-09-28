@@ -57,28 +57,28 @@ impl ResultContribution {
         let zero = Complex::new(0., 0.);
         let helicity_amps = [
             // ---
-            (zero,                 zero,                 spinor.b_mmm(2,3,4)),
+            [zero,                 zero,                 spinor.b_mmm(2,3,4)],
             // --+
-            (spinor.a_pmm(4,2,3),  spinor.b_pmm(4,2,3),  zero),
+            [spinor.a_pmm(4,2,3),  spinor.b_pmm(4,2,3),  zero],
             // -+-
-            (spinor.a_pmm(3,2,4),  spinor.b_pmm(3,2,4),  zero),
+            [spinor.a_pmm(3,2,4),  spinor.b_pmm(3,2,4),  zero],
             // -++
-            (spinor.a_ppm(3,4,2),  spinor.b_ppm(3,4,2),  zero),
+            [spinor.a_ppm(3,4,2),  spinor.b_ppm(3,4,2),  zero],
             // +--
-            (spinor.a_pmm(2,3,4),  spinor.b_pmm(2,3,4),  zero),
+            [spinor.a_pmm(2,3,4),  spinor.b_pmm(2,3,4),  zero],
             // +-+
-            (spinor.a_ppm(4,2,3),  spinor.b_ppm(4,2,3),  zero),
+            [spinor.a_ppm(4,2,3),  spinor.b_ppm(4,2,3),  zero],
             // ++-
-            (spinor.a_ppm(2,3,4),  spinor.b_ppm(2,3,4),  zero),
+            [spinor.a_ppm(2,3,4),  spinor.b_ppm(2,3,4),  zero],
             // +++
-            (zero,                 zero,                 spinor.b_ppp(2,3,4)),
+            [zero,                 zero,                 spinor.b_ppp(2,3,4)],
         ];
 
         // Compute the matrix elements
         let mut result = ResultContribution {
             m2x: unsafe{ mem::uninitialized() },
         };
-        for (index, &(ha, hb_p, hb_m)) in helicity_amps.iter().enumerate() {
+        for (index, &[ha, hb_p, hb_m]) in helicity_amps.iter().enumerate() {
             // Take couplings into account
             //
             // TODO: Instead of multiplying by couplings every contribution, try
