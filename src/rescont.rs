@@ -67,7 +67,7 @@ impl ResultContribution {
         let a_amps = helicities.map(|hel| spinor.a(hel) * couplings.g_a);
         let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_bp);
         let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_bm);
-        let mixed_amp = a_amps.zip_map(&bp_amps, |a, b_p| 2. * a * conj(b_p));
+        let mixed_amps = a_amps.zip_map(&bp_amps, |a, b_p| 2. * a * conj(b_p));
 
         // Compute the matrix elements
         ResultContribution {
@@ -76,8 +76,8 @@ impl ResultContribution {
                     A => a_amps[hel].norm_sqr(),
                     B_P => bp_amps[hel].norm_sqr(),
                     B_M => bm_amps[hel].norm_sqr(),
-                    R_MX => mixed_amp[hel].re,
-                    I_MX => mixed_amp[hel].im,
+                    R_MX => mixed_amps[hel].re,
+                    I_MX => mixed_amps[hel].im,
                     _ => unreachable!(),
                 }
             }),
