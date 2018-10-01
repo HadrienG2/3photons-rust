@@ -20,6 +20,31 @@ use std::{
 };
 
 
+// Write a floating-point number using "engineering" notation
+//
+// Analogous to the %g format of the C printf function, this method switches
+// between naive and scientific notation for floating-point numbers when the
+// number being printed becomes very small or very large.
+//
+pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
+    let abs_x = x.abs();
+    let log_x = abs_x.log10();
+    if (log_x >= 0. && log_x < (sig_digits as Real)) || x == 0. {
+        // Print using naive notation
+        write!(writer,
+               "{:.prec$}",
+               x,
+               prec=if x != 0. { sig_digits-(log_x.trunc() as usize)-1 } else { sig_digits-1 });
+    } else {
+        // Print using scientific notation
+        write!(writer,
+               "{:.prec$E}",
+               x,
+               prec=sig_digits-1);
+    }
+}
+
+
 // Output the simulation results to the console and to disk
 pub fn dump_results(cfg: &Configuration,
                     res_fin: FinalResults,
@@ -49,8 +74,9 @@ pub fn dump_results(cfg: &Configuration,
           writeln!(*file, " {:<31}: {:<16}", title, value)
         };
         let write_f = |file: &mut File, title: &str, value: Real| {
-          // TODO: Use engineering notation here
-          writeln!(*file, " {:<31}: {:<16}", title, value)
+          write!(*file, " {:<31}: ", title);
+          write_engineering(file, value, 8);
+          writeln!(file)
         };
 
         // Write the results to the file
