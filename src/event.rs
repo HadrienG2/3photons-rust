@@ -155,9 +155,9 @@ impl EventGenerator {
 
         // Sort the output 4-momenta in order of decreasing energy (if enabled)
         //
-        // FIXME: A bug in either nalgebra, rustc or LLVM corrupts the output of
-        //        the obvious p_xyz.swap_rows(i, j)-based implementation.
-        //        Reported @ https://github.com/rustsim/nalgebra/issues/396 .
+        // FIXME: A bug in either rustc or LLVM corrupts the output of the
+        //        obvious p_xyz.swap_rows(i, j)-based implementation.
+        //        A workaround will land in Rust 1.30.
         //
         if cfg!(not(feature = "no-photon-sorting")) {
             for par1 in 0..OUTGOING_COUNT-1 {
