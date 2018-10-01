@@ -71,21 +71,21 @@ impl ResultContribution {
         let zero = Complex::new(0., 0.);
         let helicity_amps = [
             // ---
-            [zero,                 zero,                 spinor.b_mmm(0,1,2)],
+            [zero,                 zero,                  spinor.bm_mmm(0,1,2)],
             // --+
-            [spinor.a_pmm(2,0,1),  spinor.b_pmm(2,0,1),  zero],
+            [spinor.a_pmm(2,0,1),  spinor.bp_pmm(2,0,1),  zero],
             // -+-
-            [spinor.a_pmm(1,0,2),  spinor.b_pmm(1,0,2),  zero],
+            [spinor.a_pmm(1,0,2),  spinor.bp_pmm(1,0,2),  zero],
             // -++
-            [spinor.a_ppm(1,2,0),  spinor.b_ppm(1,2,0),  zero],
+            [spinor.a_ppm(1,2,0),  spinor.bp_ppm(1,2,0),  zero],
             // +--
-            [spinor.a_pmm(0,1,2),  spinor.b_pmm(0,1,2),  zero],
+            [spinor.a_pmm(0,1,2),  spinor.bp_pmm(0,1,2),  zero],
             // +-+
-            [spinor.a_ppm(2,0,1),  spinor.b_ppm(2,0,1),  zero],
+            [spinor.a_ppm(2,0,1),  spinor.bp_ppm(2,0,1),  zero],
             // ++-
-            [spinor.a_ppm(0,1,2),  spinor.b_ppm(0,1,2),  zero],
+            [spinor.a_ppm(0,1,2),  spinor.bp_ppm(0,1,2),  zero],
             // +++
-            [zero,                 zero,                 spinor.b_ppp(0,1,2)],
+            [zero,                 zero,                  spinor.bm_ppp(0,1,2)],
         ];
 
         // Compute the matrix elements
