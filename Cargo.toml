@@ -5,7 +5,6 @@ authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 
 
 [features]
-default = []
 # Use single precision instead of double precision
 f32 = []
 # Use different event generation algorithms to improve performance
