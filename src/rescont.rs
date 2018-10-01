@@ -73,9 +73,7 @@ impl ResultContribution {
         let a_amps = helicities.map(|hel| spinor.a(hel) * couplings.g_a);
         let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_bp);
         let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_bm);
-        let mixed_amp = Vector8::from_fn(|hel, _| {
-            2. * a_amps[hel] * conj(bp_amps[hel])
-        });
+        let mixed_amp = a_amps.zip_map(&bp_amps, |a, b_p| 2. * a * conj(b_p));
 
         // Compute the matrix elements
         ResultContribution {
