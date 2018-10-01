@@ -36,16 +36,10 @@ pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
             prec -= log_x.trunc() as usize;
             if log_x < 0. { prec += 1 }
         }
-        write!(writer,
-               "{:.prec$}",
-               x,
-               prec=prec);
+        write!(writer, "{:.prec$}", x, prec=prec);
     } else {
         // Print using scientific notation
-        write!(writer,
-               "{:.prec$e}",
-               x,
-               prec=sig_digits-1);
+        write!(writer, "{:.prec$e}", x, prec=sig_digits-1);
     }
 }
 
