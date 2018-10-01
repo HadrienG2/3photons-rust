@@ -57,7 +57,6 @@ impl ResultContribution {
     /// Construct the matrix element from the spinor products
     pub fn new(couplings: &Couplings, event: Event) -> Self {
         // This code is very specific to the current problem definition
-        debug_assert_eq!(INCOMING_COUNT, 2);
         debug_assert_eq!(OUTGOING_COUNT, 3);
         debug_assert_eq!(NUM_RESULTS, 5);
 
@@ -75,21 +74,21 @@ impl ResultContribution {
         let zero = Complex::new(0., 0.);
         let helicity_amps = [
             // ---
-            [zero,                 zero,                 spinor.b_mmm(2,3,4)],
+            [zero,                 zero,                 spinor.b_mmm(0,1,2)],
             // --+
-            [spinor.a_pmm(4,2,3),  spinor.b_pmm(4,2,3),  zero],
+            [spinor.a_pmm(2,0,1),  spinor.b_pmm(2,0,1),  zero],
             // -+-
-            [spinor.a_pmm(3,2,4),  spinor.b_pmm(3,2,4),  zero],
+            [spinor.a_pmm(1,0,2),  spinor.b_pmm(1,0,2),  zero],
             // -++
-            [spinor.a_ppm(3,4,2),  spinor.b_ppm(3,4,2),  zero],
+            [spinor.a_ppm(1,2,0),  spinor.b_ppm(1,2,0),  zero],
             // +--
-            [spinor.a_pmm(2,3,4),  spinor.b_pmm(2,3,4),  zero],
+            [spinor.a_pmm(0,1,2),  spinor.b_pmm(0,1,2),  zero],
             // +-+
-            [spinor.a_ppm(4,2,3),  spinor.b_ppm(4,2,3),  zero],
+            [spinor.a_ppm(2,0,1),  spinor.b_ppm(2,0,1),  zero],
             // ++-
-            [spinor.a_ppm(2,3,4),  spinor.b_ppm(2,3,4),  zero],
+            [spinor.a_ppm(0,1,2),  spinor.b_ppm(0,1,2),  zero],
             // +++
-            [zero,                 zero,                 spinor.b_ppp(2,3,4)],
+            [zero,                 zero,                 spinor.b_ppp(0,1,2)],
         ];
 
         // Compute the matrix elements
