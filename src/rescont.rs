@@ -15,16 +15,6 @@ use ::{
 use std::mem;
 
 
-/// Contributions to the squared matrix elements
-///
-/// The rows are the same as in ResultVector, the columns map to spin
-/// configurations encoded as a binary number:
-///     - Configuration 0 (0b000) is ---
-///     - Configuration 1 (0b001) is --+
-///     - And so on...
-///
-type MEContributions = Matrix5x8<Real>;
-
 /// Number of results (matrix elements)
 pub const NUM_RESULTS: usize = 5;
 
@@ -51,7 +41,14 @@ pub const I_MX: usize = 4;
 pub struct ResultContribution {
     /// Array of squared matrix elements, featuring five contributions with the
     /// detail of outgoing helicities configuration
-    m2x: MEContributions,
+    ///
+    /// The rows are the same as in ResultVector, the columns map to spin
+    /// configurations encoded as a binary number:
+    ///     - Configuration 0 (0b000) is ---
+    ///     - Configuration 1 (0b001) is --+
+    ///     - And so on...
+    ///
+    m2x: Matrix5x8<Real>,
 }
 //
 impl ResultContribution {
@@ -107,10 +104,6 @@ impl ResultContribution {
             let b_m = hb_m * couplings.g_bm;
 
             // Compute the squared matrix element terms
-            //
-            // TODO: This matrix write pattern is inefficient, but maybe that's
-            //       the price to pay for an efficient final m2_sums reduction?
-            //
             let mixed = 2. * a * conj(b_p);
             result.m2x[(A, index)] = a.norm_sqr();
             result.m2x[(B_P, index)] = b_p.norm_sqr();
