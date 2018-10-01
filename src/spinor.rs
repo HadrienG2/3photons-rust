@@ -4,6 +4,8 @@ use ::{
     event::{
         Event,
         INCOMING_COUNT,
+        INCOMING_E_M as E_M,
+        INCOMING_E_P as E_P,
         OUTGOING_COUNT,
         ParticleMatrix,
     },
@@ -90,42 +92,42 @@ impl SpinorProducts {
     /// Standard amplitude for helicities ++-
     #[inline]
     pub fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(0, 1) * sqr(self.s(0, k3)) /
-            (self.s(0, k1) * self.s(0, k2) * self.s(1, k1) * self.s(1, k2))
+        -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3)) /
+            (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
     }
 
     /// Standard amplitude for helicities +--
     #[inline]
     pub fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(0, 1) * sqr(self.t(1, k1)) /
-            (self.t(1, k2) * self.t(1, k3) * self.t(0, k2) * self.t(0, k3))
+        -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1)) /
+            (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
     }
 
     /// Anomalous amplitude for helicities ++-
     #[inline]
     pub fn b_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(0, 1) * sqr(self.t(k1, k2) * self.s(k3, 0))
+        -RAC8 * self.t(E_M, E_P) * sqr(self.t(k1, k2) * self.s(k3, E_M))
     }
 
     /// Anomalous amplitude for helicities +--
     #[inline]
     pub fn b_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(0, 1) * sqr(self.t(k1, 1) * self.s(k2, k3))
+        -RAC8 * self.s(E_M, E_P) * sqr(self.t(k1, E_P) * self.s(k2, k3))
     }
 
     /// Anomalous amplitude for helicities +++
     #[inline]
     pub fn b_ppp(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(0, 1) * (sqr(self.t(k1, k2) * self.t(k3, 1)) +
-                                sqr(self.t(k1, k3) * self.t(k2, 1)) +
-                                sqr(self.t(k2, k3) * self.t(k1, 1)))
+        -RAC8 * self.s(E_M, E_P) * (sqr(self.t(k1, k2) * self.t(k3, E_P)) +
+                                    sqr(self.t(k1, k3) * self.t(k2, E_P)) +
+                                    sqr(self.t(k2, k3) * self.t(k1, E_P)))
     }
 
     /// Anomalous amplitude for helicities ---
     #[inline]
     pub fn b_mmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(0, 1) * (sqr(self.s(k1, 0) * self.s(k2, k3)) +
-                                sqr(self.s(k2, 0) * self.s(k1, k3)) +
-                                sqr(self.s(k3, 0) * self.s(k1, k2)))
+        -RAC8 * self.t(E_M, E_P) * (sqr(self.s(k1, E_M) * self.s(k2, k3)) +
+                                    sqr(self.s(k2, E_M) * self.s(k1, k3)) +
+                                    sqr(self.s(k3, E_M) * self.s(k1, k2)))
     }
 }
