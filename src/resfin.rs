@@ -48,7 +48,7 @@ pub struct ResultsBuilder<'a> {
     // ### RESULT ACCUMULATORS ###
 
     /// Number of integrated events
-    selected_events: i32,
+    selected_events: usize,
 
     /// Accumulated cross-section for each contribution
     spm2: ResultVector<Real>,
@@ -256,7 +256,7 @@ impl<'a> ResultsBuilder<'a> {
 /// This struct will hold the final results of the simulation
 pub struct FinalResults<'a> {
     /// Number of integrated events
-    pub selected_events: i32,
+    pub selected_events: usize,
 
     /// Cross-section for each spin
     pub spm2: PerSpinResults,

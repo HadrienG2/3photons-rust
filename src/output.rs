@@ -71,25 +71,28 @@ pub fn dump_results(cfg: &Configuration,
         let mut res_file = File::create("res.dat")?;
 
         // TODO: Use a writer struct instead of closures
+        // NOTE: In principle, everything can be brought together by an
+        //       intermediary string.
 
         // Create a few closure shorthands for common writing operations
-        let write_i32 = |file: &mut File, title: &str, value: i32| {
-          writeln!(*file, " {:<31}: {:<16}", title, value)
+        let write_label = |file: &mut File, label: &str| {
+            write!(*file, " {:<31}: ", label);
         };
-        let write_usize = |file: &mut File, title: &str, value: usize| {
-          writeln!(*file, " {:<31}: {:<16}", title, value)
+        let write_usize = |file: &mut File, label: &str, value: usize| {
+            write_label(file, label);
+            writeln!(*file, "{:<12}", value)
         };
-        let write_f = |file: &mut File, title: &str, value: Real| {
-          write!(*file, " {:<31}: ", title);
-          write_engineering(file, value, 8);
-          writeln!(file)
+        let write_f = |file: &mut File, label: &str, value: Real| {
+            write_label(file, label);
+            write_engineering(file, value, 8);
+            writeln!(file)
         };
 
         // Write the results to the file
         writeln!(res_file, " {}", timestamp.as_str())?;
         writeln!(res_file)?;
         write_usize(&mut res_file, "Nombre d'evenements", cfg.num_events)?;
-        write_i32(&mut res_file, "... apres coupure", res_fin.selected_events)?;
+        write_usize(&mut res_file, "... apres coupure", res_fin.selected_events)?;
         write_f(&mut res_file, "energie dans le CdM (GeV)", cfg.e_tot)?;
         write_f(&mut res_file,
                 "coupure / cos(photon,faisceau)",
