@@ -7,8 +7,8 @@ use ::{
         functions::{abs, sqr, sqrt},
         Real,
     },
-    rescont::NUM_RESULTS,
-    resfin::FinalResults,
+    rescont::{A, B_M, B_P, NUM_RESULTS, R_MX},
+    resfin::{FinalResults, SP_M, SP_P},
 };
 
 use chrono;
@@ -123,9 +123,9 @@ pub fn dump_results(cfg: &Configuration,
             writeln!(res_file)?;
         }
         for k in 0..NUM_RESULTS {
-            let tmp1 = spm2[0][k] + spm2[1][k];
-            let tmp2 = sqrt(sqr(spm2[0][k]*vars[0][k])
-                              + sqr(spm2[1][k]*vars[1][k]));
+            let tmp1 = spm2[SP_M][k] + spm2[SP_P][k];
+            let tmp2 = sqrt(sqr(spm2[SP_M][k]*vars[SP_M][k])
+                              + sqr(spm2[SP_P][k]*vars[SP_P][k]));
             writeln!(res_file,
                      "   {:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
                      k+1,
@@ -148,12 +148,12 @@ pub fn dump_results(cfg: &Configuration,
                                                  .create(true)
                                                  .open("pil.mc")?;
         writeln!(cum_res_file, "{}", timestamp.as_str())?;
-        let res1 = res_fin.spm2[0][0] + res_fin.spm2[1][0];
-        let res2 = (res_fin.spm2[0][1] + res_fin.spm2[1][1]) *
+        let res1 = res_fin.spm2[SP_M][A] + res_fin.spm2[SP_P][A];
+        let res2 = (res_fin.spm2[SP_M][B_P] + res_fin.spm2[SP_P][B_P]) *
                        sqr(cfg.beta_plus);
-        let res3 = (res_fin.spm2[0][2] + res_fin.spm2[1][2]) *
+        let res3 = (res_fin.spm2[SP_M][B_M] + res_fin.spm2[SP_P][B_M]) *
                        sqr(cfg.beta_minus);
-        let res4 = (res_fin.spm2[0][3] + res_fin.spm2[1][3]) * cfg.beta_plus;
+        let res4 = (res_fin.spm2[SP_P][R_MX] + res_fin.spm2[SP_P][R_MX]) * cfg.beta_plus;
         writeln!(cum_res_file,
                  "{} {} {} {} {} {} {}",
                  cfg.e_tot,
