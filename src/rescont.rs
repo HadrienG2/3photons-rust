@@ -3,7 +3,7 @@
 use ::{
     coupling::Couplings,
     event::{Event, OUTGOING_COUNT},
-    linalg::{Matrix3x8, Matrix5x8, U1, Vector5, Vector8},
+    linalg::{Matrix5x8, U1, Vector5, Vector8},
     numeric::{
         functions::conj,
         Real
@@ -67,26 +67,23 @@ impl ResultContribution {
         // TODO: Review data layout (e.g. tuples vs array, row- vs col-major...)
         //
         use spinor::PhotonHelicities::*;
-        let helicities = [MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP];
-        let helicity_amps = Matrix3x8::from_fn(|contrib, hel| {
-            match contrib {
-                A => couplings.g_a * spinor.a(helicities[hel]),
-                B_P => couplings.g_bp * spinor.b_p(helicities[hel]),
-                B_M => couplings.g_bm * spinor.b_m(helicities[hel]),
-                _ => unreachable!(),
-            }
-        });
+        let helicities = Vector8::from_column_slice(
+            &[MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP]
+        );
+        let a_amps = helicities.map(|hel| spinor.a(hel) * couplings.g_a);
+        let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_bp);
+        let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_bm);
         let mixed_amp = Vector8::from_fn(|hel, _| {
-            2. * helicity_amps[(A, hel)] * conj(helicity_amps[(B_P, hel)])
+            2. * a_amps[hel] * conj(bp_amps[hel])
         });
 
         // Compute the matrix elements
         ResultContribution {
             m2x: Matrix5x8::from_fn(|contrib, hel| {
                 match contrib {
-                    A => helicity_amps[(A, hel)].norm_sqr(),
-                    B_P => helicity_amps[(B_P, hel)].norm_sqr(),
-                    B_M => helicity_amps[(B_M, hel)].norm_sqr(),
+                    A => a_amps[hel].norm_sqr(),
+                    B_P => bp_amps[hel].norm_sqr(),
+                    B_M => bm_amps[hel].norm_sqr(),
                     R_MX => mixed_amp[hel].re,
                     I_MX => mixed_amp[hel].im,
                     _ => unreachable!(),
