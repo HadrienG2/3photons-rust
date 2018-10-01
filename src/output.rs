@@ -29,13 +29,13 @@ use std::{
 pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
     let abs_x = x.abs();
     let log_x = abs_x.log10();
-    if (x >= 1. && log_x < (sig_digits as Real)) || x == 0. {
+    if (log_x >= -3. && log_x <= (sig_digits as Real)) || x == 0. {
         // Print using naive notation
         let prec = if x != 0. {
             sig_digits-(log_x.trunc() as usize)-1
         } else {
             sig_digits-1
-        };
+        } + if log_x < 0. { 1 } else { 0 };
         write!(writer,
                "{:.prec$}",
                x,
