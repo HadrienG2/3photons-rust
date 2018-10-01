@@ -112,11 +112,11 @@ impl ResultContribution {
             //       the price to pay for an efficient final m2_sums reduction?
             //
             let mixed = 2. * a * b_p.conj();
-            result.m2x[0][index] = a.norm_sqr();
-            result.m2x[1][index] = b_p.norm_sqr();
-            result.m2x[2][index] = b_m.norm_sqr();
-            result.m2x[3][index] = mixed.re;
-            result.m2x[4][index] = mixed.im;
+            result.m2x[A][index] = a.norm_sqr();
+            result.m2x[B_P][index] = b_p.norm_sqr();
+            result.m2x[B_M][index] = b_m.norm_sqr();
+            result.m2x[R_MX][index] = mixed.re;
+            result.m2x[I_MX][index] = mixed.im;
         }
 
         // Output the results
