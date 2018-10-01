@@ -29,19 +29,24 @@ use std::{
 // to print more significant digits than requested.
 //
 pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
-    let abs_x = x.abs();
-    let log_x = abs_x.log10();
+    let mut precision = sig_digits - 1;
+    let log_x = x.abs().log10();
     if (log_x >= -3. && log_x <= (sig_digits as Real)) || x == 0. {
         // Print using naive notation
-        let mut prec = sig_digits - 1;
         if x != 0. {
-            prec -= log_x.trunc() as usize;
-            if log_x < 0. { prec += 1 }
+            // Since Rust's precision controls number of digits after the
+            // decimal point, we must adjust it depending on magnitude in order
+            // to operate at a constant number of significant digits.
+            precision -= log_x.trunc() as usize;
+
+            // Numbers smaller than 1 must get one extra digit since the leading
+            // zero does not count as a significant digit.
+            if log_x < 0. { precision += 1 }
         }
-        write!(writer, "{:.prec$}", x, prec=prec);
+        write!(writer, "{:.1$}", x, precision);
     } else {
         // Print using scientific notation
-        write!(writer, "{:.prec$e}", x, prec=sig_digits-1);
+        write!(writer, "{:.1$e}", x, precision);
     }
 }
 
