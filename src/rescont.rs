@@ -5,7 +5,6 @@ use ::{
     event::{Event, OUTGOING_COUNT},
     linalg::{Matrix5x8, U1, Vector5},
     numeric::{
-        Complex,
         functions::conj,
         Real
     },
@@ -69,24 +68,16 @@ impl ResultContribution {
         //
         // TODO: Review data layout (e.g. tuples vs array, row- vs col-major...)
         //
-        let zero = Complex::new(0., 0.);
+        use spinor::PhotonHelicities::*;
         let helicity_amps = [
-            // ---
-            [zero,                 zero,                  spinor.bm_mmm(0,1,2)],
-            // --+
-            [spinor.a_pmm(2,0,1),  spinor.bp_pmm(2,0,1),  zero],
-            // -+-
-            [spinor.a_pmm(1,0,2),  spinor.bp_pmm(1,0,2),  zero],
-            // -++
-            [spinor.a_ppm(1,2,0),  spinor.bp_ppm(1,2,0),  zero],
-            // +--
-            [spinor.a_pmm(0,1,2),  spinor.bp_pmm(0,1,2),  zero],
-            // +-+
-            [spinor.a_ppm(2,0,1),  spinor.bp_ppm(2,0,1),  zero],
-            // ++-
-            [spinor.a_ppm(0,1,2),  spinor.bp_ppm(0,1,2),  zero],
-            // +++
-            [zero,                 zero,                  spinor.bm_ppp(0,1,2)],
+            [spinor.a(MMM), spinor.b_p(MMM), spinor.b_m(MMM)],
+            [spinor.a(MMP), spinor.b_p(MMP), spinor.b_m(MMP)],
+            [spinor.a(MPM), spinor.b_p(MPM), spinor.b_m(MPM)],
+            [spinor.a(MPP), spinor.b_p(MPP), spinor.b_m(MPP)],
+            [spinor.a(PMM), spinor.b_p(PMM), spinor.b_m(PMM)],
+            [spinor.a(PMP), spinor.b_p(PMP), spinor.b_m(PMP)],
+            [spinor.a(PPM), spinor.b_p(PPM), spinor.b_m(PPM)],
+            [spinor.a(PPP), spinor.b_p(PPP), spinor.b_m(PPP)],
         ];
 
         // Compute the matrix elements

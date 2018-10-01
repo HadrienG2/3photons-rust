@@ -18,6 +18,8 @@ use ::{
     },
 };
 
+use num_traits::Zero;
+
 
 /// Square root of eight
 const RAC8: Real = 2. * SQRT_2;
@@ -89,9 +91,25 @@ impl SpinorProducts {
     // TODO: Also, the RAC8 prefactor should be applied to the final result, not
     //       to every contribution thereof.
 
+    /// Standard amplitude for given photon helicities
+    #[inline]
+    pub fn a(&self, helicities: PhotonHelicities) -> Complex {
+        use self::PhotonHelicities::*;
+        match helicities {
+            MMM => Complex::zero(),
+            MMP => self.a_pmm(2, 0, 1),
+            MPM => self.a_pmm(1, 0, 2),
+            MPP => self.a_ppm(1, 2, 0),
+            PMM => self.a_pmm(0, 1, 2),
+            PMP => self.a_ppm(0, 2, 1),
+            PPM => self.a_ppm(0, 1, 2),
+            PPP => Complex::zero(),
+        }
+    }
+
     /// Standard amplitude for helicities ++-
     #[inline]
-    pub fn a_ppm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
+    fn a_ppm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
         let [k1, k2, k3] = Self::photon_to_particle([p1, p2, p3]);
         -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3)) /
             (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
@@ -99,38 +117,70 @@ impl SpinorProducts {
 
     /// Standard amplitude for helicities +--
     #[inline]
-    pub fn a_pmm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
+    fn a_pmm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
         let [k1, k2, k3] = Self::photon_to_particle([p1, p2, p3]);
         -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1)) /
             (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
     }
 
-    /// Anomalous amplitude for helicities ++-
+    /// Anomalous amplitude 𝛽₊ for given photon helicities
     #[inline]
-    pub fn bp_ppm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
+    pub fn b_p(&self, helicities: PhotonHelicities) -> Complex {
+        use self::PhotonHelicities::*;
+        match helicities {
+            MMM => Complex::zero(),
+            MMP => self.bp_pmm(2, 0, 1),
+            MPM => self.bp_pmm(1, 0, 2),
+            MPP => self.bp_ppm(1, 2, 0),
+            PMM => self.bp_pmm(0, 1, 2),
+            PMP => self.bp_ppm(0, 2, 1),
+            PPM => self.bp_ppm(0, 1, 2),
+            PPP => Complex::zero(),
+        }
+    }
+
+    /// Anomalous amplitude 𝛽₊ for helicities ++-
+    #[inline]
+    fn bp_ppm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
         let [k1, k2, k3] = Self::photon_to_particle([p1, p2, p3]);
         -RAC8 * self.t(E_M, E_P) * sqr(self.t(k1, k2) * self.s(k3, E_M))
     }
 
-    /// Anomalous amplitude for helicities +--
+    /// Anomalous amplitude 𝛽₊ for helicities +--
     #[inline]
-    pub fn bp_pmm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
+    fn bp_pmm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
         let [k1, k2, k3] = Self::photon_to_particle([p1, p2, p3]);
         -RAC8 * self.s(E_M, E_P) * sqr(self.t(k1, E_P) * self.s(k2, k3))
     }
 
-    /// Anomalous amplitude for helicities +++
+    /// Anomalous amplitude 𝛽₋ for given photon helicities
     #[inline]
-    pub fn bm_ppp(&self, p1: usize, p2: usize, p3: usize) -> Complex {
+    pub fn b_m(&self, helicities: PhotonHelicities) -> Complex {
+        use self::PhotonHelicities::*;
+        match helicities {
+            MMM => self.bm_mmm(0, 1, 2),
+            MMP => Complex::zero(),
+            MPM => Complex::zero(),
+            MPP => Complex::zero(),
+            PMM => Complex::zero(),
+            PMP => Complex::zero(),
+            PPM => Complex::zero(),
+            PPP => self.bm_ppp(0, 1, 2),
+        }
+    }
+
+    /// Anomalous amplitude 𝛽₋ for helicities +++
+    #[inline]
+    fn bm_ppp(&self, p1: usize, p2: usize, p3: usize) -> Complex {
         let [k1, k2, k3] = Self::photon_to_particle([p1, p2, p3]);
         -RAC8 * self.s(E_M, E_P) * (sqr(self.t(k1, k2) * self.t(k3, E_P)) +
                                     sqr(self.t(k1, k3) * self.t(k2, E_P)) +
                                     sqr(self.t(k2, k3) * self.t(k1, E_P)))
     }
 
-    /// Anomalous amplitude for helicities ---
+    /// Anomalous amplitude 𝛽₋ for helicities ---
     #[inline]
-    pub fn bm_mmm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
+    fn bm_mmm(&self, p1: usize, p2: usize, p3: usize) -> Complex {
         let [k1, k2, k3] = Self::photon_to_particle([p1, p2, p3]);
         -RAC8 * self.t(E_M, E_P) * (sqr(self.s(k1, E_M) * self.s(k2, k3)) +
                                     sqr(self.s(k2, E_M) * self.s(k1, k3)) +
@@ -144,4 +194,17 @@ impl SpinorProducts {
          photon_indices[1] + INCOMING_COUNT,
          photon_indices[2] + INCOMING_COUNT]
     }
+}
+
+
+/// Output photon helicities (spin configurations)
+pub enum PhotonHelicities {
+    MMM,
+    MMP,
+    MPM,
+    MPP,
+    PMM,
+    PMP,
+    PPM,
+    PPP,
 }
