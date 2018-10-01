@@ -4,7 +4,11 @@ use ::{
     coupling::Couplings,
     event::{Event, OUTGOING_COUNT},
     linalg::{Matrix5x8, U1, Vector5},
-    numeric::{Complex, Real},
+    numeric::{
+        Complex,
+        functions::conj,
+        Real
+    },
     spinor::SpinorProducts,
 };
 
@@ -107,7 +111,7 @@ impl ResultContribution {
             // TODO: This matrix write pattern is inefficient, but maybe that's
             //       the price to pay for an efficient final m2_sums reduction?
             //
-            let mixed = 2. * a * b_p.conj();
+            let mixed = 2. * a * conj(b_p);
             result.m2x[(A, index)] = a.norm_sqr();
             result.m2x[(B_P, index)] = b_p.norm_sqr();
             result.m2x[(B_M, index)] = b_m.norm_sqr();

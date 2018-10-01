@@ -12,7 +12,7 @@ use ::{
     linalg::{E, U1, X, Y, Z},
     numeric::{
         Complex,
-        functions::{sqr, sqrt},
+        functions::{conj, sqr, sqrt},
         Real,
         reals::consts::SQRT_2,
     },
@@ -76,7 +76,7 @@ impl SpinorProducts {
 
     #[inline]
     fn t(&self, i: usize, j: usize) -> Complex {
-        -self.s(i, j).conj()
+        -conj(self.s(i, j))
     }
 
 
