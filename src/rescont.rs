@@ -13,16 +13,34 @@ use std::mem;
 
 /// Contributions to the squared matrix elements
 ///
-/// The indices of this array map to binary-encoded spin configurations:
+/// The rows are the same as in ResultVector, the columns map to spin
+/// configurations encoded as a binary number:
 ///     - Configuration 0 (0b000) is ---
 ///     - Configuration 1 (0b001) is --+
 ///     - And so on...
 ///
 type MEContributions = Vector8<Real>;
 
-/// Number of results, and associated storage type
+/// Number of results (matrix elements)
 pub const NUM_RESULTS: usize = 5;
+
+/// Storage for matrix elements
 pub type ResultVector<T> = Vector5<T>;
+
+/// Index of the electromagnetic matrix element
+pub const A: usize = 0;
+
+/// Index of the positive electroweak matrix element
+pub const B_P: usize = 1;
+
+/// Index of the negative electroweak matrix element
+pub const B_M: usize = 2;
+
+/// Index of the real part of the mixed matrix element
+pub const R_MX: usize = 3;
+
+/// Index of the imaginary part of the mixed matrix element
+pub const I_MX: usize = 4;
 
 
 /// Array of square matrix elements contribution with detail of helicities

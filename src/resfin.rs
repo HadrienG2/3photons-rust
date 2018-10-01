@@ -11,15 +11,23 @@ use ::{
         Real,
         reals::consts::PI,
     },
-    rescont::{ResultContribution, ResultVector},
+    rescont::{A, B_P, B_M, I_MX, R_MX, ResultContribution, ResultVector},
 };
 
 use num_traits::Zero;
 
 
-/// Vector of per-spin data
+/// Number of spins
 const NUM_SPINS: usize = 2;
+
+/// Vector of per-spin data
 pub type SpinVector<T> = Vector2<T>;
+
+/// Index of negative spin data
+pub const SP_M: usize = 0;
+
+/// Index of positive spin data
+pub const SP_P: usize = 1;
 
 
 /// This struct will accumulate intermediary results during integration, and
@@ -175,14 +183,15 @@ impl<'a> ResultsBuilder<'a> {
             let n_ev = cfg.num_events as Real;
 
             // Compute the relative uncertainties for one spin
-            for (&v_spm2, v_var) in spm2[0].iter().zip(var[0].iter_mut()) {
+            for (&v_spm2, v_var) in spm2[SP_M].iter()
+                                              .zip(var[SP_M].iter_mut()) {
                 *v_var = (*v_var - sqr(v_spm2)/n_ev) / (n_ev - 1.);
                 *v_var = sqrt(*v_var/n_ev) / abs(v_spm2/n_ev);
             }
 
             // Copy for the opposite spin
-            spm2[1] = spm2[0];
-            var[1] = var[0];
+            spm2[SP_P] = spm2[SP_M];
+            var[SP_P] = var[SP_M];
 
             // Electroweak polarisations factors for the 𝛽₊/𝛽₋ anomalous
             // contribution
@@ -190,13 +199,13 @@ impl<'a> ResultsBuilder<'a> {
             let pol_m = 1. + pol_p;
 
             // Take polarisations into account
-            for k in 1..3 {
-                spm2[0][k] *= sqr(pol_m);
-                spm2[1][k] *= sqr(pol_p);
+            for k in B_P..=B_M {
+                spm2[SP_M][k] *= sqr(pol_m);
+                spm2[SP_P][k] *= sqr(pol_p);
             }
-            for k in 3..5 {
-                spm2[0][k] *= pol_m;
-                spm2[1][k] *= pol_p;
+            for k in R_MX..=I_MX {
+                spm2[SP_M][k] *= pol_m;
+                spm2[SP_P][k] *= pol_p;
             }
 
             // Flux factor (=1/2s for 2 initial massless particles)
@@ -208,32 +217,33 @@ impl<'a> ResultsBuilder<'a> {
                 for v_spm2 in s_spm2.iter_mut() {
                     *v_spm2 *= self.fact_com * flux * self.norm_weight;
                 }
-                s_spm2[0] *= 1.;
-                s_spm2[1] *= self.propag / sqr(gz0_mz0);
-                s_spm2[2] *= self.propag / sqr(gz0_mz0);
-                s_spm2[3] *= self.propag * self.ecart_pic / gz0_mz0;
-                s_spm2[4] *= self.propag / gz0_mz0;
+                s_spm2[A] *= 1.;
+                s_spm2[B_P] *= self.propag / sqr(gz0_mz0);
+                s_spm2[B_M] *= self.propag / sqr(gz0_mz0);
+                s_spm2[R_MX] *= self.propag * self.ecart_pic / gz0_mz0;
+                s_spm2[I_MX] *= self.propag / gz0_mz0;
             }
 
-            results.beta_min = sqrt((spm2[0][0]+spm2[1][0]) /
-                                        (spm2[0][1]+spm2[1][1]));
+            results.beta_min = sqrt((spm2[SP_M][A]+spm2[SP_P][A]) /
+                                        (spm2[SP_M][B_P]+spm2[SP_P][B_P]));
 
-            let ss_denom = spm2[0][0] + spm2[1][0];
+            let ss_denom = spm2[SP_M][A] + spm2[SP_P][A];
+            let ss_norm = 1. / (2. * sqrt(ss_denom));
 
-            results.ss_p = (spm2[0][1] + spm2[1][1]) / (2. * sqrt(ss_denom));
-            results.ss_m = (spm2[0][2] + spm2[1][2]) / (2. * sqrt(ss_denom));
+            results.ss_p = (spm2[SP_M][B_P] + spm2[SP_P][B_P]) * ss_norm;
+            results.ss_m = (spm2[SP_M][B_M] + spm2[SP_P][B_M]) * ss_norm;
 
-            let inc_ss_common = sqrt(sqr(spm2[0][0]*var[0][0])
-                                     + sqr(spm2[1][0]*var[1][0])) /
+            let inc_ss_common = sqrt(sqr(spm2[SP_M][A]*var[SP_M][A])
+                                     + sqr(spm2[SP_P][A]*var[SP_P][A])) /
                                 (2. * abs(ss_denom));
 
-            results.inc_ss_p = sqrt(sqr(spm2[0][1]*var[0][1])
-                                    + sqr(spm2[1][1]*var[1][1])) /
-                               abs(spm2[0][1] + spm2[1][1])
+            results.inc_ss_p = sqrt(sqr(spm2[SP_M][B_P]*var[SP_M][B_P])
+                                    + sqr(spm2[SP_P][B_P]*var[SP_P][B_P])) /
+                               abs(spm2[SP_M][B_P] + spm2[SP_P][B_P])
                              + inc_ss_common;
-            results.inc_ss_m = sqrt(sqr(spm2[0][2]*var[0][2])
-                                    + sqr(spm2[1][2]*var[1][2])) /
-                               abs(spm2[0][2] + spm2[1][2])
+            results.inc_ss_m = sqrt(sqr(spm2[SP_M][B_M]*var[SP_M][B_M])
+                                    + sqr(spm2[SP_P][B_M]*var[SP_P][B_M])) /
+                               abs(spm2[SP_M][B_M] + spm2[SP_P][B_M])
                              + inc_ss_common;
 
             results.variance = (self.variance - sqr(self.sigma)/n_ev) /
