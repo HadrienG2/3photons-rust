@@ -129,10 +129,10 @@ impl ResultContribution {
     pub fn display(&self) {
         assert_eq!(OUTGOING_COUNT, 3);
         
-        for result in 0..NUM_RESULTS {
-            println!("Contribution {}", result);
+        for index in 0..NUM_RESULTS {
+            println!("Contribution {}", index);
             println!("---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++");
-            let contribution = self.m2x.fixed_rows::<U1>(result);
+            let contribution = self.m2x.fixed_rows::<U1>(index);
             for &matrix_elem in contribution.iter() {
                 print!("{}  \t", matrix_elem);
             }
