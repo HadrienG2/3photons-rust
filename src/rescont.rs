@@ -3,15 +3,13 @@
 use ::{
     coupling::Couplings,
     event::{Event, OUTGOING_COUNT},
-    linalg::{Matrix5x8, U1, Vector5},
+    linalg::{Matrix3x8, Matrix5x8, U1, Vector5, Vector8},
     numeric::{
         functions::conj,
         Real
     },
     spinor::SpinorProducts,
 };
-
-use std::mem;
 
 
 /// Number of results (matrix elements)
@@ -69,38 +67,32 @@ impl ResultContribution {
         // TODO: Review data layout (e.g. tuples vs array, row- vs col-major...)
         //
         use spinor::PhotonHelicities::*;
-        let helicity_amps = [
-            [spinor.a(MMM), spinor.b_p(MMM), spinor.b_m(MMM)],
-            [spinor.a(MMP), spinor.b_p(MMP), spinor.b_m(MMP)],
-            [spinor.a(MPM), spinor.b_p(MPM), spinor.b_m(MPM)],
-            [spinor.a(MPP), spinor.b_p(MPP), spinor.b_m(MPP)],
-            [spinor.a(PMM), spinor.b_p(PMM), spinor.b_m(PMM)],
-            [spinor.a(PMP), spinor.b_p(PMP), spinor.b_m(PMP)],
-            [spinor.a(PPM), spinor.b_p(PPM), spinor.b_m(PPM)],
-            [spinor.a(PPP), spinor.b_p(PPP), spinor.b_m(PPP)],
-        ];
+        let helicities = [MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP];
+        let helicity_amps = Matrix3x8::from_fn(|contrib, hel| {
+            match contrib {
+                A => couplings.g_a * spinor.a(helicities[hel]),
+                B_P => couplings.g_bp * spinor.b_p(helicities[hel]),
+                B_M => couplings.g_bm * spinor.b_m(helicities[hel]),
+                _ => unreachable!(),
+            }
+        });
+        let mixed_amp = Vector8::from_fn(|hel, _| {
+            2. * helicity_amps[(A, hel)] * conj(helicity_amps[(B_P, hel)])
+        });
 
         // Compute the matrix elements
-        let mut result = ResultContribution {
-            m2x: unsafe{ mem::uninitialized() },
-        };
-        for (index, &[ha, hb_p, hb_m]) in helicity_amps.iter().enumerate() {
-            // Take couplings into account
-            let a = ha * couplings.g_a;
-            let b_p = hb_p * couplings.g_bp;
-            let b_m = hb_m * couplings.g_bm;
-
-            // Compute the squared matrix element terms
-            let mixed = 2. * a * conj(b_p);
-            result.m2x[(A, index)] = a.norm_sqr();
-            result.m2x[(B_P, index)] = b_p.norm_sqr();
-            result.m2x[(B_M, index)] = b_m.norm_sqr();
-            result.m2x[(R_MX, index)] = mixed.re;
-            result.m2x[(I_MX, index)] = mixed.im;
+        ResultContribution {
+            m2x: Matrix5x8::from_fn(|contrib, hel| {
+                match contrib {
+                    A => helicity_amps[(A, hel)].norm_sqr(),
+                    B_P => helicity_amps[(B_P, hel)].norm_sqr(),
+                    B_M => helicity_amps[(B_M, hel)].norm_sqr(),
+                    R_MX => mixed_amp[hel].re,
+                    I_MX => mixed_amp[hel].im,
+                    _ => unreachable!(),
+                }
+            }),
         }
-
-        // Output the results
-        result
     }
 
     /// Compute the sums of the squared matrix elements for each contribution

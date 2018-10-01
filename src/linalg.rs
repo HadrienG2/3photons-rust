@@ -2,7 +2,7 @@
 
 use ::numeric::Real;
 
-use nalgebra::{MatrixMN, Vector4};
+use nalgebra::{MatrixMN, Vector4, VectorN};
 
 
 // ### BASIC VECTOR TYPES ###
@@ -25,6 +25,12 @@ pub use nalgebra::{
     Matrix5x4,
     MatrixSlice,
 };
+
+/// Re-export of nalgebra's 8-vector type
+pub type Vector8<T> = VectorN<T, U8>;
+
+/// Re-export of nalgebra's 3x8 matrix type
+pub type Matrix3x8<T> = MatrixMN<T, U3, U8>;
 
 /// Re-export of nalgebra's 5x8 matrix type
 pub type Matrix5x8<T> = MatrixMN<T, U5, U8>;

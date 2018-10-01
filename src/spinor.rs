@@ -197,7 +197,9 @@ impl SpinorProducts {
 }
 
 
-/// Output photon helicities (spin configurations)
+/// Output photon helicities (M is - and P is +)
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PhotonHelicities {
     MMM,
     MMP,
