@@ -138,6 +138,7 @@ impl SpinorProducts {
     }
 
     /// Translate photon indices into particle indices
+    #[inline]
     fn photon_to_particle(photon_indices: [usize; 3]) -> [usize; 3] {
         [photon_indices[0] + INCOMING_COUNT,
          photon_indices[1] + INCOMING_COUNT,
