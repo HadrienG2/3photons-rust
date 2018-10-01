@@ -95,10 +95,6 @@ impl ResultContribution {
         };
         for (index, &[ha, hb_p, hb_m]) in helicity_amps.iter().enumerate() {
             // Take couplings into account
-            //
-            // TODO: Instead of multiplying by couplings every contribution, try
-            //       only applying the couplings to the final result
-            //
             let a = ha * couplings.g_a;
             let b_p = hb_p * couplings.g_bp;
             let b_m = hb_m * couplings.g_bm;
