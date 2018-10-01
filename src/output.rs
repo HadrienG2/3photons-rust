@@ -24,7 +24,9 @@ use std::{
 //
 // Analogous to the %g format of the C printf function, this method switches
 // between naive and scientific notation for floating-point numbers when the
-// number being printed becomes very small or very large.
+// number being printed becomes so small that printing leading zeroes could end
+// up larger than the scientific notation, or so large that we would be forced
+// to print more significant digits than requested.
 //
 pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
     let abs_x = x.abs();
