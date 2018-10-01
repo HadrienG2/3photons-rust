@@ -60,12 +60,6 @@ impl ResultContribution {
 
         // Compute the helicity amplitudes, formerly known as a, b_p and b_m,
         // for each possible output spin configuration
-        //
-        // TODO: These zeroes might be wasted computations, try doing without
-        //       them and see if it helps.
-        //
-        // TODO: Review data layout (e.g. tuples vs array, row- vs col-major...)
-        //
         use spinor::PhotonHelicities::*;
         let helicities = Vector8::from_column_slice(
             &[MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP]
