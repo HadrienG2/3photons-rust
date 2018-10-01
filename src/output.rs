@@ -80,7 +80,7 @@ pub fn dump_results(cfg: &Configuration,
         };
         let write_usize = |file: &mut File, label: &str, value: usize| {
             write_label(file, label);
-            writeln!(*file, "{:<12}", value)
+            writeln!(*file, "{}", value)
         };
         let write_f = |file: &mut File, label: &str, value: Real| {
             write_label(file, label);
