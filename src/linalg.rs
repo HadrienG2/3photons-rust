@@ -17,6 +17,7 @@ pub use nalgebra::{
     Vector5,
     Matrix2x3,
     Matrix2x4,
+    Matrix2x5,
     Matrix3,
     Matrix3x2,
     Matrix3x4,

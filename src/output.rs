@@ -116,16 +116,16 @@ pub fn dump_results(cfg: &Configuration,
                          "{:>3}{:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
                          sp+1,
                          k+1,
-                         spm2[sp][k],
-                         spm2[sp][k]*vars[sp][k],
-                         vars[sp][k])?;
+                         spm2[(sp, k)],
+                         spm2[(sp, k)]*vars[(sp, k)],
+                         vars[(sp, k)])?;
             }
             writeln!(res_file)?;
         }
         for k in 0..NUM_RESULTS {
-            let tmp1 = spm2[SP_M][k] + spm2[SP_P][k];
-            let tmp2 = sqrt(sqr(spm2[SP_M][k]*vars[SP_M][k])
-                              + sqr(spm2[SP_P][k]*vars[SP_P][k]));
+            let tmp1 = spm2[(SP_M, k)] + spm2[(SP_P, k)];
+            let tmp2 = sqrt(sqr(spm2[(SP_M, k)]*vars[(SP_M, k)])
+                              + sqr(spm2[(SP_P, k)]*vars[(SP_P, k)]));
             writeln!(res_file,
                      "   {:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
                      k+1,
@@ -149,12 +149,13 @@ pub fn dump_results(cfg: &Configuration,
                                                  .create(true)
                                                  .open("pil.mc")?;
         writeln!(cum_res_file, "{}", timestamp.as_str())?;
-        let res1 = res_fin.spm2[SP_M][A] + res_fin.spm2[SP_P][A];
-        let res2 = (res_fin.spm2[SP_M][B_P] + res_fin.spm2[SP_P][B_P]) *
+        let res1 = res_fin.spm2[(SP_M, A)] + res_fin.spm2[(SP_P, A)];
+        let res2 = (res_fin.spm2[(SP_M, B_P)] + res_fin.spm2[(SP_P, B_P)]) *
                        sqr(cfg.beta_plus);
-        let res3 = (res_fin.spm2[SP_M][B_M] + res_fin.spm2[SP_P][B_M]) *
+        let res3 = (res_fin.spm2[(SP_M, B_M)] + res_fin.spm2[(SP_P, B_M)]) *
                        sqr(cfg.beta_minus);
-        let res4 = (res_fin.spm2[SP_P][R_MX] + res_fin.spm2[SP_P][R_MX]) * cfg.beta_plus;
+        let res4 = (res_fin.spm2[(SP_P, R_MX)] + res_fin.spm2[(SP_P, R_MX)]) *
+                       cfg.beta_plus;
         writeln!(cum_res_file,
                  "{} {} {} {} {} {} {}",
                  cfg.e_tot,
