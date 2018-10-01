@@ -8,7 +8,7 @@ use ::{
         Real,
     },
     rescont::{A, B_M, B_P, NUM_RESULTS, R_MX},
-    resfin::{FinalResults, SP_M, SP_P},
+    resfin::{FinalResults, NUM_SPINS, SP_M, SP_P},
 };
 
 use chrono;
@@ -110,7 +110,7 @@ pub fn dump_results(cfg: &Configuration,
 
         // Write more results (nature and purpose unclear in C++ code...)
         writeln!(res_file)?;
-        for sp in 0..2 {
+        for sp in 0..NUM_SPINS {
             for k in 0..NUM_RESULTS {
                 writeln!(res_file,
                          "{:>3}{:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
@@ -144,6 +144,7 @@ pub fn dump_results(cfg: &Configuration,
     // NOTE: This part is completely broken in the C++ version, I did my best
     //       to fix it in this version.
     {
+        assert_eq!(NUM_RESULTS, 5);
         let mut cum_res_file = OpenOptions::new().append(true)
                                                  .create(true)
                                                  .open("pil.mc")?;

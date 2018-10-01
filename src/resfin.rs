@@ -3,7 +3,7 @@
 
 use ::{
     config::Configuration,
-    event::{INCOMING_COUNT, OUTGOING_COUNT},
+    event::OUTGOING_COUNT,
     linalg::Vector2,
     numeric::{
         Complex,
@@ -11,14 +11,23 @@ use ::{
         Real,
         reals::consts::PI,
     },
-    rescont::{A, B_P, B_M, I_MX, R_MX, ResultContribution, ResultVector},
+    rescont::{
+        A,
+        B_P,
+        B_M,
+        I_MX,
+        NUM_RESULTS,
+        R_MX,
+        ResultContribution,
+        ResultVector
+    },
 };
 
 use num_traits::Zero;
 
 
 /// Number of spins
-const NUM_SPINS: usize = 2;
+pub const NUM_SPINS: usize = 2;
 
 /// Vector of per-spin data
 pub type SpinVector<T> = Vector2<T>;
@@ -156,6 +165,8 @@ impl<'a> ResultsBuilder<'a> {
     // After integration is done, build final simulations results
     pub fn finalize(self) -> FinalResults<'a> {
         // Extract whatever our needs from the results builder
+        assert_eq!(NUM_SPINS, 2, "This code is only valid for two spins");
+        assert_eq!(NUM_RESULTS, 5, "This code is only valid for two spins");
         let cfg = self.cfg;
 
         // Compute the final results
@@ -175,7 +186,6 @@ impl<'a> ResultsBuilder<'a> {
         };
         {
             // Borrow spm2 and var from them to avoid repetitive member access
-            assert_eq!(NUM_SPINS, 2, "This code is only valid for two spins");
             let spm2 = &mut results.spm2;
             let var = &mut results.vars;
 
@@ -296,8 +306,8 @@ pub struct FinalResults<'a> {
 impl<'a> FinalResults<'a> {
     /// Display results using Eric's (???) parametrization
     pub fn eric(&self) {
-        assert_eq!(INCOMING_COUNT, 2);
-        assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_SPINS, 2);
+        assert_eq!(NUM_RESULTS, 5);
 
         let cfg = self.config;
 
@@ -334,8 +344,8 @@ impl<'a> FinalResults<'a> {
     /// Display Fawzi's (???) analytical results and compare them to the Monte
     /// Carlo results that we have computed
     pub fn fawzi(&self) {
-        assert_eq!(INCOMING_COUNT, 2);
-        assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_SPINS, 2);
+        assert_eq!(NUM_RESULTS, 5);
 
         let cfg = self.config;
         let ref ev_cut = cfg.event_cut;

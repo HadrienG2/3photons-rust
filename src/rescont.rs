@@ -2,7 +2,7 @@
 
 use ::{
     coupling::Couplings,
-    event::{Event, INCOMING_COUNT, OUTGOING_COUNT},
+    event::{Event, OUTGOING_COUNT},
     linalg::{Vector5, Vector8},
     numeric::{Complex, Real},
     spinor::SpinorProducts,
