@@ -303,26 +303,26 @@ impl<'a> FinalResults<'a> {
 
         let mu_th = cfg.br_ep_em * cfg.convers /
             (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
-        let lambda0_m = (-self.spm2[0][1] + self.spm2[0][2]) / 2.;
-        let lambda0_p = (-self.spm2[1][1] + self.spm2[1][2]) / 2.;
-        let mu0_m = (self.spm2[0][1] + self.spm2[0][2]) / 2.;
-        let mu0_p = (self.spm2[1][1] + self.spm2[1][2]) / 2.;
-        let mu_num = (self.spm2[0][1] +
-                      self.spm2[0][2] +
-                      self.spm2[1][1] +
-                      self.spm2[1][2]) / 4.;
+        let lambda0_m = (-self.spm2[SP_M][B_P] + self.spm2[SP_M][B_M]) / 2.;
+        let lambda0_p = (-self.spm2[SP_P][B_P] + self.spm2[SP_P][B_M]) / 2.;
+        let mu0_m = (self.spm2[SP_M][B_P] + self.spm2[SP_M][B_M]) / 2.;
+        let mu0_p = (self.spm2[SP_P][B_P] + self.spm2[SP_P][B_M]) / 2.;
+        let mu_num = (self.spm2[SP_M][B_P] +
+                      self.spm2[SP_M][B_M] +
+                      self.spm2[SP_P][B_P] +
+                      self.spm2[SP_P][B_M]) / 4.;
 
         println!();
         println!("       :        -          +");
         println!("sigma0  : {:.6} | {:.6}",
-                 self.spm2[0][0]/2.,
-                 self.spm2[1][0]/2.);
+                 self.spm2[SP_M][A]/2.,
+                 self.spm2[SP_P][A]/2.);
         println!("alpha0  : {:.5e} | {:.4e}",
-                 self.spm2[0][4]/2.,
-                 self.spm2[1][4]/2.);
+                 self.spm2[SP_M][I_MX]/2.,
+                 self.spm2[SP_P][I_MX]/2.);
         println!("beta0   : {:} | {:}",
-                 -self.spm2[0][3]/2.,
-                 -self.spm2[1][3]/2.);
+                 -self.spm2[SP_M][R_MX]/2.,
+                 -self.spm2[SP_P][R_MX]/2.);
         println!("lambda0 : {:.4} | {:.4}", lambda0_m, lambda0_p);
         println!("mu0     : {:.4} | {:.5}", mu0_m, mu0_p);
         println!("mu/lamb : {:.5} | {:.5}", mu0_m/lambda0_m, mu0_p/lambda0_p);
@@ -378,14 +378,14 @@ impl<'a> FinalResults<'a> {
         let sig_p = sig*(ff+2.*gg);
         let sig_m = sig_p + 2.*sig*gg;
 
-        let mc_p = (self.spm2[0][1] + self.spm2[1][1]) / 4.;
-        let mc_m = (self.spm2[0][2] + self.spm2[1][2]) / 4.;
-        let incr_p = sqrt(sqr(self.spm2[0][1] * self.vars[0][1]) +
-                            sqr(self.spm2[1][1] * self.vars[1][1]))
-                     / abs(self.spm2[0][1] + self.spm2[1][1]);
-        let incr_m = sqrt(sqr(self.spm2[0][2] * self.vars[0][2]) +
-                            sqr(self.spm2[1][2] * self.vars[1][2]))
-                     / abs(self.spm2[0][2] + self.spm2[1][2]);
+        let mc_p = (self.spm2[SP_M][B_P] + self.spm2[SP_P][B_P]) / 4.;
+        let mc_m = (self.spm2[SP_M][B_M] + self.spm2[SP_P][B_M]) / 4.;
+        let incr_p = sqrt(sqr(self.spm2[SP_M][B_P] * self.vars[SP_M][B_P]) +
+                            sqr(self.spm2[SP_P][B_P] * self.vars[SP_P][B_P]))
+                     / abs(self.spm2[SP_M][B_P] + self.spm2[SP_P][B_P]);
+        let incr_m = sqrt(sqr(self.spm2[SP_M][B_M] * self.vars[SP_M][B_M]) +
+                            sqr(self.spm2[SP_P][B_M] * self.vars[SP_P][B_M]))
+                     / abs(self.spm2[SP_M][B_M] + self.spm2[SP_P][B_M]);
 
         println!();
         println!("s (pb) :   Sig_cut_Th    Sig_Th      Rapport");
