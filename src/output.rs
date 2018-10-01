@@ -43,7 +43,7 @@ pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
     } else {
         // Print using scientific notation
         write!(writer,
-               "{:.prec$E}",
+               "{:.prec$e}",
                x,
                prec=sig_digits-1);
     }
