@@ -33,11 +33,42 @@ mod standard_random {
             self.rng.gen()
         }
 
-        // Advance state as if "iterations" numbers had been generated
+        /// Generate an array of 2 random numbers
+        ///
+        /// TODO: Clean up this API once Rust has const generics
+        ///
+        pub fn random2(&mut self) -> [Real; 2] {
+            self.rng.gen()
+        }
+
+        /// Generate an array of 6 random numbers
+        ///
+        /// TODO: Clean up this API once Rust has const generics
+        ///
+        pub fn random6(&mut self) -> [Real; 6] {
+            self.rng.gen()
+        }
+
+        /// Generate an array of 9 random numbers
+        ///
+        /// TODO: Clean up this API once Rust has const generics
+        ///
+        pub fn random9(&mut self) -> [Real; 9] {
+            self.rng.gen()
+        }
+
+        // Advance state as if random() had been called "iteration" times
         #[cfg(all(feature = "multi-threading",
                   not(feature = "faster-threading")))]
         pub fn skip(&mut self, iterations: usize) {
             for _ in 0..iterations { self.random(); }
+        }
+
+        // Advance state as if random9() had been called
+        #[cfg(all(feature = "multi-threading",
+                  not(feature = "faster-threading")))]
+        pub fn skip9(&mut self) {
+            self.random9();
         }
 
         // Advance state in an arbitrary but maximally fast way

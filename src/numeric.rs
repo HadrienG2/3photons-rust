@@ -28,7 +28,13 @@ pub mod functions {
             }
         )* )
     }
+    //
     prefix_unary_funcs!{ abs, cos, exp, ln, sin, sqrt }
+
+    /// Compute the conjugate of a Complex number
+    pub fn conj(z: super::Complex) -> super::Complex {
+        z.conj()
+    }
 
     /// Compute the square of a number
     #[inline]

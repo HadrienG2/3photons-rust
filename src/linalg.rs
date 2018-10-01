@@ -2,12 +2,7 @@
 
 use ::numeric::Real;
 
-use nalgebra::{
-    MatrixSlice,
-    MatrixSliceMut,
-    Vector4,
-    VectorN,
-};
+use nalgebra::{MatrixMN, Vector4, VectorN};
 
 
 // ### BASIC VECTOR TYPES ###
@@ -16,27 +11,37 @@ use nalgebra::{
 pub use nalgebra::core::dimension::*;
 
 /// Re-export of some nalgebra types
-pub use nalgebra::{Vector2, Vector3, Vector5, Matrix5};
+pub use nalgebra::{
+    Vector2,
+    Vector3,
+    Vector5,
+    Matrix2x3,
+    Matrix2x4,
+    Matrix2x5,
+    Matrix3,
+    Matrix3x2,
+    Matrix3x4,
+    Matrix4x3,
+    Matrix5,
+    Matrix5x4,
+    MatrixSlice,
+};
 
 /// Re-export of nalgebra's 8-vector type
 pub type Vector8<T> = VectorN<T, U8>;
+
+/// Re-export of nalgebra's 5x8 matrix type
+pub type Matrix5x8<T> = MatrixMN<T, U5, U8>;
 
 /// Convenience shorthand for defining vector slices
 pub type VectorSlice<'a, T, SliceDim, ParentDim> =
     MatrixSlice<'a, T, SliceDim, U1, U1, ParentDim>;
 
-/// Convenience shorthand for defining mutable vector slices
-pub type VectorSliceMut<'a, T, SliceDim, ParentDim> =
-    MatrixSliceMut<'a, T, SliceDim, U1, U1, ParentDim>;
-
 
 // ### RELATIVISTIC 4-MOMENTA ###
 
-/// 4-vectors of real numbers, as used by special relativity
-type Vector4R = Vector4<Real>;
-
 /// Relativistic 4-momentum
-pub type Momentum = Vector4R;
+pub type Momentum = Vector4<Real>;
 
 /// Convenience const for accessing the X coordinate of a 4-vector
 pub const X: usize = 0;

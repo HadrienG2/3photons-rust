@@ -4,14 +4,19 @@ use ::{
     linalg::{
         Momentum,
         E,
+        Matrix2x4,
+        Matrix3,
+        Matrix3x2,
+        Matrix4x3,
         Matrix5,
+        Matrix5x4,
+        MatrixSlice,
+        U1,
         U3,
+        U4,
         U5,
         Vector2,
         Vector3,
-        Vector5,
-        VectorSlice,
-        VectorSliceMut,
         X,
         xyz,
         Y,
@@ -31,19 +36,19 @@ use ::{
 
 /// Number of incoming particles
 pub const INCOMING_COUNT: usize = 2;
-type IncomingVector<T> = Vector2<T>;
 
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
-type OutgoingVector<T> = Vector3<T>;
-pub type OutgoingVectorSlice<'a, T> = VectorSlice<'a, T, U3, U5>;
-type OutgoingVectorSliceMut<'a, T> = VectorSliceMut<'a, T, U3, U5>;
 
-/// Total number of particles in an event (= sum of the above)
-pub type ParticleVector<T> = Vector5<T>;
+/// Number of particles in an event, and square matrix type with that dimension
+const PARTICLE_COUNT: usize = INCOMING_COUNT + OUTGOING_COUNT;
 pub type ParticleMatrix<T> = Matrix5<T>;
 
-/// Index of the incoming electron in the 4-momentum array
+/// Event data matrix definitions (columns are coordinates, rows are particles)
+type EventMatrix = Matrix5x4<Real>;
+type OutgoingMomentaSlice<'a> = MatrixSlice<'a, Real, U3, U4, U1, U5>;
+
+/// Row of the incoming electron in the event data matrix
 pub const INCOMING_E_M: usize = 0;
 
 /// Index of the incoming positron in the 4-momentum array
@@ -62,10 +67,7 @@ pub struct EventGenerator {
     ev_weight: Real,
 
     /// Incoming electron and positron momenta
-    ///
-    /// FIXME: Should be a matrix
-    ///
-    incoming_momenta: IncomingVector<Momentum>,
+    incoming_momenta: Matrix2x4<Real>,
 }
 //
 impl EventGenerator {
@@ -105,9 +107,9 @@ impl EventGenerator {
 
         // Compute the incoming particle momenta
         let half_e_tot = e_tot / 2.;
-        let incoming_momenta = IncomingVector::new(
-            Momentum::new(-half_e_tot, 0., 0., half_e_tot),
-            Momentum::new(half_e_tot, 0., 0., half_e_tot),
+        let incoming_momenta = Matrix2x4::new(
+            -half_e_tot, 0., 0., half_e_tot,
+            half_e_tot, 0., 0., half_e_tot
         );
         
         // Construct and return the output data structure
@@ -130,139 +132,202 @@ impl EventGenerator {
     /// The 4-momenta of output photons are sorted by decreasing energy.
     ///
     pub fn generate(&self, rng: &mut RandomGenerator) -> Event {
-        // TODO: There might be room for more vectorization or layout optims.
-        //       Here is where I ended up the last time I looked at it:
-        //
-        //       - There is an obvious vectorization opportunity in energy
-        //         computations (see below).
-        //       - The normalization in the middle is a sequential bottleneck.
-        //       - A vectorized RNG would be useful here and there.
-        //       - It's not that obvious what the layout of q_arr shoud be. I
-        //         think the computation of r works much better with q_arr in
-        //         its current layout, but the computation of p at the end could
-        //         work better with q_arr in a transposed layout.
-        //       - The ideal layout for p is mostly determined from clients, but
-        //         there is also an incentive to compute p in the same
-        //         orientation as q.
-
-        // Pregenerate the random parameters to shield later computations from
-        // the averse impact of RNG calls on the compiler's loop optimizations
-        const COS_THETA: usize = 0;
-        const COS_PHI: usize = 1;
-        const SIN_PHI: usize = 2;
-        const EXP_MINUS_E: usize = 3;
-        let rand_params_vec = OutgoingVector::from_fn(|_, _| {
-            let cos_theta = 2. * rng.random() - 1.;
-            let sincos_phi = Self::random_unit_2d(rng);
-            let exp_minus_e = rng.random() * rng.random();
-            [cos_theta, sincos_phi[X], sincos_phi[Y], exp_minus_e]
-        });
-
         // Generate massless outgoing 4-momenta in infinite phase space
-        //
-        // FIXME: The main obvious remaining bottleneck of this function is that
-        //        it spends 25% of its time computing scalar logarithms. Using
-        //        a vectorized ln() implementation should help there.
-        //
-        let q_vec = rand_params_vec.map(|rand_params| {
-            let cos_theta = rand_params[COS_THETA];
-            let sin_theta = sqrt(1. - sqr(cos_theta));
-            let energy = -ln(rand_params[EXP_MINUS_E]);
-            energy * Momentum::new(sin_theta * rand_params[SIN_PHI],
-                                   sin_theta * rand_params[COS_PHI],
-                                   cos_theta,
-                                   1.)
-        });
+        let q = Self::generate_raw(rng);
 
         // Calculate the parameters of the conformal transformation
-        let r: &Momentum = &q_vec.iter().sum();
+        let r = &Momentum::from_fn(|coord, _| {
+            q.fixed_rows::<U1>(coord).iter().sum()
+        });
         let r_norm_2 = r[E] * r[E] - xyz(r).norm_squared();
         let alpha = self.e_tot / r_norm_2;
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 
-        // Build the event, starting with the incoming momenta, then
-        // transforming the Q's conformally into the output 4-momenta
-        let mut event = Event(ParticleVector::from_iterator(
-            self.incoming_momenta.iter().cloned()
-                                 .chain(q_vec.into_iter().map(|q| {
-                let rq = xyz(r).dot(&xyz(q));
-                let p_xyz = r_norm * xyz(q) + (beta * rq - q[E]) * xyz(r);
-                let p_e = r[E] * q[E] - rq;
-                alpha * Momentum::new(p_xyz[X], p_xyz[Y], p_xyz[Z], p_e)
-            }))
-        ));
+        // Perform the conformal transformation from Q's to output 4-momenta
+        let tr_q = q.transpose();
+        let rq = tr_q.fixed_columns::<U3>(X) * xyz(r);
+        let q_e = tr_q.fixed_columns::<U1>(E);
+        let mut p_e = alpha * (r[E]*q_e - rq);
+        let tr_q_xyz = tr_q.fixed_columns::<U3>(X);
+        let b_rq_e = beta * rq - q_e;
+        let mut p_xyz = alpha * (r_norm*tr_q_xyz + b_rq_e*xyz(r).transpose());
 
-        // Sort the output 4-momenta in order of decreasing energy
+        // Sort the output 4-momenta in order of decreasing energy (if enabled)
+        //
+        // FIXME: A bug in either rustc or LLVM corrupts the output of the
+        //        obvious p_xyz.swap_rows(i, j)-based implementation.
+        //        A workaround will land in Rust 1.30.
+        //
         if cfg!(not(feature = "no-photon-sorting")) {
-            assert_eq!(OUTGOING_COUNT, 3,
-                       "This code assumes that there are 3 outgoing particles");
-            let mut outgoing = event.outgoing_momenta_mut();
-            if outgoing[1][E] > outgoing[0][E] { outgoing.swap_rows(0, 1); }
-            if outgoing[2][E] > outgoing[0][E] { outgoing.swap_rows(0, 2); }
-            if outgoing[2][E] > outgoing[1][E] { outgoing.swap_rows(1, 2); }
+            for par1 in 0..OUTGOING_COUNT-1 {
+                for par2 in par1+1..OUTGOING_COUNT {
+                    if p_e[par2] > p_e[par1] {
+                        p_e.swap_rows(par1, par2);
+                        let mom1 = p_xyz.fixed_rows::<U1>(par1).into_owned();
+                        let mom2 = p_xyz.fixed_rows::<U1>(par2).into_owned();
+                        p_xyz.fixed_rows_mut::<U1>(par1).copy_from(&mom2);
+                        p_xyz.fixed_rows_mut::<U1>(par2).copy_from(&mom1);
+                    }
+                }
+            }
         }
+
+        // Build the final event: incoming momenta + output 4-momenta
+        assert_eq!(PARTICLE_COUNT, 5, "This part assumes 5-particle events");
+        let event = Event(Matrix5x4::from_fn(|par, coord| {
+            if par < INCOMING_COUNT {
+                self.incoming_momenta[(par, coord)]
+            } else if coord <= Z {
+                p_xyz[(par-INCOMING_COUNT, coord)]
+            } else if coord == E {
+                p_e[par-INCOMING_COUNT]
+            } else {
+                unreachable!()
+            }
+        }));
 
         // Hand off the generated event
         event
     }
 
-    /// Generate a vector on the unit circle with uniform angle distribution
+    /// Generate massless outgoing 4-momenta in infinite phase space
+    ///
+    /// The output momenta are provided as a matrix where rows are 4-momentum
+    /// components (Px, Py, Pz, E) and columns are particles.
+    ///
+    /// FIXME: The main obvious remaining bottleneck of this function is that
+    ///        it spends 25% of its time computing scalar logarithms. Using
+    ///        a vectorized ln() implementation should help there.
+    ///
+    fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Real> {
+        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
+
+        // In all operating modes, random number generation is kept
+        // well-separated from computations, as it was observed that it has a
+        // harmful interaction with the compiler's loop optimizations.
+        if cfg!(feature = "faster-evgen") {
+            // This mode allows random number generation to be carried out in a
+            // different order, and using different algorithms than what the
+            // original 3photons did. This enables greater performance.
+
+            // Generate the basic random parameters of the particles
+            let params = Matrix3::from_column_slice(&rng.random9()[..]);
+            let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
+            let exp_min_e = params.fixed_columns::<U1>(1)
+                                  .component_mul(&params.fixed_columns::<U1>(2));
+            let sincos_phi = Self::random_unit_2d_outgoing(rng);
+
+            // Compute the outgoing momenta
+            //
+            // FIXME: The main obvious remaining bottleneck of this version is
+            //        that it spends ~40% of its time computing scalar
+            //        logarithms. Using a vectorized ln() implementation in the
+            //        computation of the energy vector should help.
+            //
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+            let energy = exp_min_e.map(|e_me| -ln(e_me));
+            Matrix4x3::from_fn(|coord, par| {
+                energy[par] * match coord {
+                    X => sin_theta[par] * sincos_phi[(par, X)],
+                    Y => sin_theta[par] * sincos_phi[(par, Y)],
+                    Z => cos_theta[par],
+                    E => 1.,
+                    _ => unreachable!()
+                }
+            })
+        } else {
+            // This mode targets maximal reproducibility with respect to the
+            // original 3photons program, at the expense of performance.
+
+            // Generate the basic random parameters of the particles
+            const COS_THETA: usize = 0;
+            const PHI: usize = 1;
+            const EXP_MIN_E: usize = 2;
+            let params = Matrix3::from_fn(|coord, _par| {
+                match coord {
+                    COS_THETA => 2. * rng.random() - 1.,
+                    PHI => 2. * PI * rng.random(),
+                    EXP_MIN_E => rng.random() * rng.random(),
+                    _ => unreachable!()
+                }
+            });
+            let cos_theta = params.fixed_rows::<U1>(COS_THETA);
+            let phi = params.fixed_rows::<U1>(PHI);
+            let exp_min_e = params.fixed_rows::<U1>(EXP_MIN_E);
+
+            // Compute the outgoing momenta
+            let cos_phi = phi.map(cos);
+            let sin_phi = phi.map(sin);
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+            let energy = exp_min_e.map(|e_me| -ln(e_me));
+            Matrix4x3::from_fn(|coord, par| {
+                energy[par] * match coord {
+                    X => sin_theta[par] * sin_phi[par],
+                    Y => sin_theta[par] * cos_phi[par],
+                    Z => cos_theta[par],
+                    E => 1.,
+                    _ => unreachable!()
+                }
+            })
+        }
+    }
+
+    /// Generate 3 vectors on the unit circle with uniform angle distribution
     ///
     /// NOTE: Similar techniques may be used to generate a vector on the unit
     ///       sphere, but that benchmarked unfavorably, likely because it
     ///       entails bringing more computations close to the RNG calls and
     ///       because the 2D case fits available vector hardware more tightly.
     ///
-    fn random_unit_2d(rng: &mut RandomGenerator) -> Vector2<Real> {
-        // This function has two operating modes: a default mode which produces
-        // bitwise identical results w.r.t. the original 3photons code, and a
-        // mode which uses a different (faster) algorithm.
-        if cfg!(feature = "fast-sincos") {
-            // In a nutshell, this path is faster because it favors cheap RNG
-            // calls over expensive trigonometric functions
+    fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
+        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
+
+        // Grab three random points on the unit square
+        let mut points = Matrix3x2::from_iterator(
+            rng.random6().iter().map(|r| 2. * r - 1.)
+        );
+
+        // Re-roll each point until it falls on the unit disc, and is not
+        // too close to the origin (otherwise we'll get floating-point issues)
+        let mut radius2 = Vector3::from_fn(|par, _|
+            points.fixed_rows::<U1>(par).norm_squared()
+        );
+        for par in 0..OUTGOING_COUNT {
             const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
-            loop {
-                // Grab a random point on the unit square
-                let mut p = Vector2::from_fn(|_, _| 2. * rng.random() - 1.);
-
-                // Compute (squared) distance from the origin
-                let n2 = p.norm_squared();
-
-                // Discard points outside the unit disc or whose norm is small
-                if n2 <= 1. && n2 >= MIN_POSITIVE_2 {
-                    // Normalize and you get a point on the unit circle!
-                    p /= sqrt(n2);
-                    break p;
-                }
+            while radius2[par] > 1. || radius2[par] < MIN_POSITIVE_2 {
+                let new_point = Vector2::from_iterator(
+                    rng.random2().iter().map(|r| 2. * r - 1.)
+                );
+                points.set_row(par, &new_point.transpose());
+                radius2[par] = new_point.norm_squared();
             }
-        } else {
-            // This code path strictly follows the original 3photons algorithm
-            let phi = 2. * PI * rng.random();
-            Vector2::new(cos(phi), sin(phi))
         }
+
+        // Now you only need to normalize to get points on the unit circle
+        let norm = radius2.map(|r2| 1. / sqrt(r2));
+        for par in 0..OUTGOING_COUNT {
+            points.fixed_rows_mut::<U1>(par).apply(|c| c * norm[par]);
+        }
+        points
     }
 
-    /// Simulate the impact of a certain number of calls to "generate()" on a
-    /// random number generator. This code must be manually synchronized with
-    /// the implementation of "generate()", but such is the price for perfect
-    /// reproducibility between single-threaded and multi-threaded mode...
+    /// Simulate the impact of N calls to "generate()" on an RNG
+    ///
+    /// This function must be kept in sync with the `genrate_raw()`
+    /// implementation. Such is the price to pay for perfect reproducibility
+    /// between single-threaded and multi-threaded runs...
+    ///
     #[cfg(all(feature = "multi-threading",
               not(feature = "faster-threading")))]
     pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
                                        num_events: usize) {
-        if cfg!(feature = "fast-sincos") {
-            // If fast-sincos is enabled, the number of RNG calls per event is
-            // nondeterministic, so we must simulate events one by one.
-            for _ in 0..num_events*OUTGOING_COUNT {
-                rng.skip(1);
-                Self::random_unit_2d(rng);
-                rng.skip(2);
+        if cfg!(feature = "faster-evgen") {
+            for _ in 0..num_events {
+                rng.skip9();
+                Self::random_unit_2d_outgoing(rng);
             }
         } else {
-            // If fast-sincos is not enabled, we know exactly how many RNG calls
-            // will be made per event, and we can let the RNG skip through the
-            // events as quickly as it can.
             rng.skip(num_events*OUTGOING_COUNT*4);
         }
     }
@@ -281,51 +346,54 @@ impl EventGenerator {
 ///
 /// Encapsulates a vector of incoming and outgoing 4-momenta
 ///
-/// TODO: Try making that a full-blown matrix
-///
-pub struct Event(ParticleVector<Momentum>);
+pub struct Event(EventMatrix);
 //
 impl Event {
     // ### ACCESSORS ###
 
     /// Access the full internal 4-momentum array by reference
-    pub fn all_momenta(&self) -> &ParticleVector<Momentum> {
+    pub fn all_momenta(&self) -> &EventMatrix {
         &self.0
     }
 
-    /// Access the electron 4-momentum only
-    pub fn electron_momentum(&self) -> &Momentum {
-        &self.0[INCOMING_E_M]
+    /// Extract the 4-momentum of a single particle (internal for now)
+    fn momentum(&self, par: usize) -> Momentum {
+        Momentum::from_iterator(self.0.fixed_rows::<U1>(par).iter().cloned())
     }
 
-    /// Access the positron 4-momentum only
+    /// Extract the electron 4-momentum
+    pub fn electron_momentum(&self) -> Momentum {
+        self.momentum(INCOMING_E_M)
+    }
+
+    /// Extract the positron 4-momentum
     #[allow(dead_code)]
-    pub fn positron_momentum(&self) -> &Momentum {
-        &self.0[INCOMING_E_P]
+    pub fn positron_momentum(&self) -> Momentum {
+        self.momentum(INCOMING_E_P)
     }
 
-    /// Access the outgoing 4-momenta only
-    pub fn outgoing_momenta(&self) -> OutgoingVectorSlice<Momentum> {
+    /// Extract a photon's 4-momentum
+    pub fn outgoing_momentum(&self, par: usize) -> Momentum {
+        self.momentum(OUTGOING_SHIFT + par)
+    }
+
+    /// Access the outgoing 4-momenta
+    pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
         self.0.fixed_rows::<U3>(OUTGOING_SHIFT)
-    }
-
-    /// Mutable access to the outgoing 4-momenta (for internal use)
-    fn outgoing_momenta_mut(&mut self) -> OutgoingVectorSliceMut<Momentum> {
-        self.0.fixed_rows_mut::<U3>(OUTGOING_SHIFT)
     }
 
     /// Minimal outgoing photon energy
     pub fn min_photon_energy(&self) -> Real {
         if cfg!(feature = "no-photon-sorting") {
-            let first_out_e = self.outgoing_momenta()[0][E];
+            let first_out_e = self.outgoing_momenta()[(0, E)];
             self.outgoing_momenta()
+                .fixed_columns::<U1>(E)
                 .iter()
                 .skip(1)
-                .map(|p| p[E])
-                .fold(first_out_e, |e1, e2| if e1 < e2 { e1 } else { e2 })
+                .fold(first_out_e, |e1, &e2| if e1 < e2 { e1 } else { e2 })
         } else {
             // Use the fact that photons are sorted by decreasing energy
-            self.outgoing_momenta()[OUTGOING_COUNT-1][E]
+            self.outgoing_momenta()[(OUTGOING_COUNT-1, E)]
         }
     }
 

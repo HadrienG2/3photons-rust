@@ -16,14 +16,13 @@ to the original `3photons` program. However, if you feel like going beyond that,
 here are some features which you can enable:
 
 - The `f32` feature moves all computations to single precision.
-- The `fast-sincos` feature uses a different algorithm for computing points on
-  the unit circle, which provides a great computational speedup at the cost of
-  making reproducible parallelization more challenging.
+- The `faster-evgen` feature enables optimizations which modify the generated
+  photon momenta (and, therefore, the results).
 - The `multi-threading` feature parallelizes the computation using multi-
-  threading. By default, it generates results which are identical to the
-  sequential version, but this has a performance, memory footprint and
-  scalability cost. You can remove this constraint and allow the program to take
-  more performance shortcuts by also enabling the `faster-threading` feature.
+  threading. By default, it generates the same results as the sequential
+  version, but this has a performance, memory footprint and scalability cost.
+  You can remove this constraint and allow the program to take more performance
+  shortcuts by also enabling the `faster-threading` feature.
 - The `no-photon-sorting` feature disables the sorting of outgoing photons by
   energy that used to be present in the original `3photons` code.
 - The `standard-random` uses standard Rust abstractions for random number
@@ -74,10 +73,10 @@ in this configuration, use the following command:
 
 ## Miscellaneous remarks, subjected to future obsolescence
 
-As of 2018-09-13, various other things can be said about this version of
+As of 2018-09-17, various other things can be said about this version of
 3photons, which I do not expect to remain accurate in the future.
 
-1. You will need at least Rust v1.25 to compile it.
+1. You will need at least Rust v1.27 to compile it.
 2. Comparing its performance with that of other versions would be unfair,
    because the porting process enabled many optimizations which other versions
    did not receive yet.

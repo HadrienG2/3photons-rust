@@ -5,11 +5,10 @@ authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 
 
 [features]
-default = []
 # Use single precision instead of double precision
 f32 = []
-# Use a faster algorithm for random unit vector generation
-fast-sincos = []
+# Use different event generation algorithms to improve performance
+faster-evgen = []
 # Maximize multi-threaded performance at the expense of result reproducibility
 faster-threading = []
 # Parallelize the computation via multi-threading
@@ -23,7 +22,7 @@ standard-random = ["rand", "xoshiro"]
 [dependencies]
 chrono = "0.4"
 error-chain = "0.12"
-nalgebra = "0.15"
+nalgebra = "0.16"
 num-complex = "0.2"
 num-traits = "0.2"
 # These deps are only needed when some features are enabled
