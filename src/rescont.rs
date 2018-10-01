@@ -3,7 +3,7 @@
 use ::{
     coupling::Couplings,
     event::{Event, OUTGOING_COUNT},
-    linalg::{Vector5, Vector8},
+    linalg::{Matrix5x8, U1, Vector5},
     numeric::{Complex, Real},
     spinor::SpinorProducts,
 };
@@ -19,7 +19,7 @@ use std::mem;
 ///     - Configuration 1 (0b001) is --+
 ///     - And so on...
 ///
-type MEContributions = Vector8<Real>;
+type MEContributions = Matrix5x8<Real>;
 
 /// Number of results (matrix elements)
 pub const NUM_RESULTS: usize = 5;
@@ -47,18 +47,15 @@ pub const I_MX: usize = 4;
 pub struct ResultContribution {
     /// Array of squared matrix elements, featuring five contributions with the
     /// detail of outgoing helicities configuration
-    ///
-    /// TODO: Should probably be a matrix
-    ///
-    m2x: ResultVector<MEContributions>,
+    m2x: MEContributions,
 }
 //
 impl ResultContribution {
     /// Construct the matrix element from the spinor products
     pub fn new(couplings: &Couplings, event: Event) -> Self {
         // This code is very specific to the current problem definition
-        debug_assert_eq!(OUTGOING_COUNT, 3);
-        debug_assert_eq!(NUM_RESULTS, 5);
+        assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_RESULTS, 5);
 
         // Compute spinor inner products
         let spinor = SpinorProducts::new(event);
@@ -111,11 +108,11 @@ impl ResultContribution {
             //       the price to pay for an efficient final m2_sums reduction?
             //
             let mixed = 2. * a * b_p.conj();
-            result.m2x[A][index] = a.norm_sqr();
-            result.m2x[B_P][index] = b_p.norm_sqr();
-            result.m2x[B_M][index] = b_m.norm_sqr();
-            result.m2x[R_MX][index] = mixed.re;
-            result.m2x[I_MX][index] = mixed.im;
+            result.m2x[(A, index)] = a.norm_sqr();
+            result.m2x[(B_P, index)] = b_p.norm_sqr();
+            result.m2x[(B_M, index)] = b_m.norm_sqr();
+            result.m2x[(R_MX, index)] = mixed.re;
+            result.m2x[(I_MX, index)] = mixed.im;
         }
 
         // Output the results
@@ -124,7 +121,7 @@ impl ResultContribution {
 
     /// Compute the sums of the squared matrix elements for each contribution
     pub fn m2_sums(&self) -> ResultVector<Real> {
-        self.m2x.map(|contrib| contrib.iter().sum())
+        ResultVector::from_fn(|i, _| self.m2x.fixed_rows::<U1>(i).iter().sum())
     }
 
     /// Display the results in human-readable form
@@ -132,9 +129,10 @@ impl ResultContribution {
     pub fn display(&self) {
         assert_eq!(OUTGOING_COUNT, 3);
         
-        for (index, contribution) in self.m2x.iter().enumerate() {
-            println!("Contribution {}", index);
+        for result in 0..NUM_RESULTS {
+            println!("Contribution {}", result);
             println!("---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++");
+            let contribution = self.m2x.fixed_rows::<U1>(result);
             for &matrix_elem in contribution.iter() {
                 print!("{}  \t", matrix_elem);
             }
