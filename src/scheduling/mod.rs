@@ -37,7 +37,8 @@ pub fn run_simulation<'a>(
                           + Fn(usize,
                                &mut RandomGenerator) -> ResultsBuilder<'a>
 ) -> FinalResults<'a> {
-    // Check that the user is being reasonable
+    // Check that the user is being reasonable (should have already been checked
+    // at configuration time, but bugs can happen...)
     assert!(num_events > 0, "Must simulate at least one event");
 
     // Initialize the random number generator

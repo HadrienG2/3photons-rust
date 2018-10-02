@@ -27,6 +27,9 @@ pub fn run_simulation_impl<'a>(
                           + Fn(usize,
                                &mut RandomGenerator) -> ResultsBuilder<'a>
 ) -> ResultsBuilder<'a> {
+    // Some double-checking cannot hurt...
+    assert!(num_events > 0, "Must simulate at least one event");
+
     // We know in advance how many batches of event we will process
     let num_batches =
         num_events / EVENT_BATCH_SIZE

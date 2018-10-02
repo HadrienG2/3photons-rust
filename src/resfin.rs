@@ -170,9 +170,11 @@ impl<'a> ResultsBuilder<'a> {
 
     /// Turn integrated simulation data into finalized results
     pub fn finalize(mut self) -> FinalResults<'a> {
+        // This code depends on some aspects of the problem definition
+        assert_eq!(NUM_SPINS, 2);
+        assert_eq!(NUM_RESULTS, 5);
+
         // Extract whatever our needs from the results builder
-        assert_eq!(NUM_SPINS, 2, "This code is only valid for two spins");
-        assert_eq!(NUM_RESULTS, 5, "This code is only valid for two spins");
         let cfg = self.cfg;
 
         // Keep around a floating-point version of the total event count

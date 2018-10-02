@@ -85,7 +85,7 @@ impl EventCut {
 
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
-        debug_assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
         let n_ppp = xyz(&event.outgoing_momentum(0))
                         .cross(&xyz(&event.outgoing_momentum(1)));
 
