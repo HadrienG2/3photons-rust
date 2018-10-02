@@ -20,7 +20,7 @@ use std::sync::Mutex;
 /// the output results, so should be readily amenable to extra layers of
 /// parallelization (such as distribution across multiple compute nodes).
 ///
-pub(crate) fn run_simulation_impl<'a>(
+pub fn run_simulation_impl<'a>(
     mut num_events: usize,
     mut rng: RandomGenerator,
     simulate_events: impl Send + Sync

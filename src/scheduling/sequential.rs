@@ -17,7 +17,7 @@ use ::{
 /// larger than the accumulated values and numerical accumulation errors
 /// will start to blow up.
 ///
-pub(crate) fn run_simulation_impl<'a>(
+pub fn run_simulation_impl<'a>(
     mut num_events: usize,
     mut rng: RandomGenerator,
     simulate_events: impl Send + Sync

@@ -324,8 +324,7 @@ impl EventGenerator {
     ///
     #[cfg(all(feature = "multi-threading",
               not(feature = "faster-threading")))]
-    pub(crate) fn simulate_event_batch(rng: &mut RandomGenerator,
-                                       num_events: usize) {
+    pub fn simulate_event_batch(rng: &mut RandomGenerator, num_events: usize) {
         if cfg!(feature = "faster-evgen") {
             for _ in 0..num_events {
                 rng.skip9();
