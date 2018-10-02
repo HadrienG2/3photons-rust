@@ -1,8 +1,13 @@
 //! Physical couplings used for result computations
 
-use config::Configuration;
-use numeric::{powi, sqrt, Real};
-use numeric::reals::consts::PI;
+use ::{
+    config::Configuration,
+    numeric::{
+        functions::{powi, sqrt},
+        Real,
+        reals::consts::PI,
+    },
+};
 
 
 /// Set of physical couplings

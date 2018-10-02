@@ -1,9 +1,26 @@
 //! Facilities for computing spinor products
 
-use event::{Event, INCOMING_COUNT, OUTGOING_COUNT, PARTICLE_COUNT};
-use linalg::{X, Y, Z, E};
-use numeric::{Complex, Real, sqr, sqrt};
-use numeric::reals::consts::SQRT_2;
+use ::{
+    event::{
+        Event,
+        INCOMING_COUNT,
+        INCOMING_E_M as E_M,
+        INCOMING_E_P as E_P,
+        OUTGOING_COUNT,
+        ParticleMatrix,
+    },
+    linalg::{
+        dimension::*,
+        momentum::{E, X, Y, Z},
+    },
+    numeric::{
+        Complex,
+        functions::{conj, sqr, sqrt},
+        Real,
+        reals::consts::SQRT_2,
+    },
+};
+
 use num_traits::Zero;
 
 
@@ -11,151 +28,167 @@ use num_traits::Zero;
 const RAC8: Real = 2. * SQRT_2;
 
 
-/// Array of massless momenta spinor products
+/// Massless 4-momenta spinor inner products
 pub struct SpinorProducts {
-    /// Massless momenta spinor inner products Gram matrix
-    gram_matrix: ComplexGramMatrix,
+    /// Gram matrix associated with the inner products
+    sx: ParticleMatrix<Complex>,
 }
 //
 impl SpinorProducts {
     // ### CONSTRUCTION ###
 
-    /// Build spinor products from previously generated particle momenta
-    pub fn new(event: &Event) -> Self {
-        // The underlying GramMatrix is not particularly specific to the
-        // physical problem of e+e- -> ppp collisions, but this struct is...
-        debug_assert_eq!(INCOMING_COUNT, 2);
-        debug_assert_eq!(OUTGOING_COUNT, 3);
+    /// Build spinor products from previously generated particle 4-momenta
+    pub fn new(event: Event) -> Self {
+        // The underlying Gram matrix is not specific to the physics of
+        // e+e- -> ppp collisions, but our methods are specific to it.
+        assert_eq!(INCOMING_COUNT, 2);
+        assert_eq!(OUTGOING_COUNT, 3);
 
-        // ...even though all it does is computations on a GramMatrix
-        SpinorProducts {
-            gram_matrix: ComplexGramMatrix::new(event),
-        }
+        // Access the array of incoming and outgoing particle 4-momenta
+        let p = event.all_momenta();
+        let p_x = p.fixed_columns::<U1>(X);
+        let p_y = p.fixed_columns::<U1>(Y);
+        let p_z = p.fixed_columns::<U1>(Z);
+        let p_e = p.fixed_columns::<U1>(E);
+
+        // Compute the spinor products (method from M. Mangano and S. Parke)
+        let xx = (p_e + p_z).map(sqrt);
+        let inv_xx = xx.map(|x| 1. / x);
+        let re_fx = p_x.component_mul(&inv_xx);
+        let im_fx = p_y.component_mul(&inv_xx);
+
+        // Fill up the Gram matrix
+        // TODO: Can we leverage antisymmetry + zero diagonal better?
+        let result = Self {
+            sx: ParticleMatrix::from_fn(|i, j| {
+                Complex::new(re_fx[i]*xx[j] - re_fx[j]*xx[i],
+                             im_fx[i]*xx[j] - im_fx[j]*xx[i])
+            }),
+        };
+
+        // Return the result
+        result
     }
 
 
     // ### GRAM MATRIX ACCESSORS ###
 
     /// Quickly access the underlying Gram matrix of spinor products
+    #[inline]
     fn s(&self, i: usize, j: usize) -> Complex {
-        self.gram_matrix.s(i, j)
+        self.sx[(i, j)]
     }
 
+    #[inline]
     fn t(&self, i: usize, j: usize) -> Complex {
-        self.gram_matrix.t(i, j)
-    }
-
-    pub fn s2(&self, i: usize, j: usize) -> Real {
-        self.s(i, j).norm_sqr()
+        -conj(self.s(i, j))
     }
 
 
     // ### AMPLITUDE COMPUTATIONS ###
 
+    /// Standard amplitude for given photon helicities
+    #[inline]
+    pub fn a(&self, helicities: PhotonHelicities) -> Complex {
+        use self::PhotonHelicities::*;
+        match helicities {
+            MMM => Complex::zero(),
+            MMP => self.a_pmm(4, 2, 3),
+            MPM => self.a_pmm(3, 2, 4),
+            MPP => self.a_ppm(3, 4, 2),
+            PMM => self.a_pmm(2, 3, 4),
+            PMP => self.a_ppm(2, 4, 3),
+            PPM => self.a_ppm(2, 3, 4),
+            PPP => Complex::zero(),
+        }
+    }
+
+    /// Anomalous amplitude 𝛽₊ for given photon helicities
+    #[inline]
+    pub fn b_p(&self, helicities: PhotonHelicities) -> Complex {
+        use self::PhotonHelicities::*;
+        match helicities {
+            MMM => Complex::zero(),
+            MMP => self.bp_pmm(4, 2, 3),
+            MPM => self.bp_pmm(3, 2, 4),
+            MPP => self.bp_ppm(3, 4, 2),
+            PMM => self.bp_pmm(2, 3, 4),
+            PMP => self.bp_ppm(2, 4, 3),
+            PPM => self.bp_ppm(2, 3, 4),
+            PPP => Complex::zero(),
+        }
+    }
+
+    /// Anomalous amplitude 𝛽₋ for given photon helicities
+    #[inline]
+    pub fn b_m(&self, helicities: PhotonHelicities) -> Complex {
+        use self::PhotonHelicities::*;
+        match helicities {
+            MMM => self.bm_mmm(2, 3, 4),
+            MMP => Complex::zero(),
+            MPM => Complex::zero(),
+            MPP => Complex::zero(),
+            PMM => Complex::zero(),
+            PMP => Complex::zero(),
+            PPM => Complex::zero(),
+            PPP => self.bm_ppp(2, 3, 4),
+        }
+    }
+
     /// Standard amplitude for helicities ++-
-    pub fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(0, 1) * sqr(self.s(0, k3)) /
-            (self.s(0, k1) * self.s(0, k2) * self.s(1, k1) * self.s(1, k2))
+    #[inline]
+    fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3)) /
+            (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
     }
 
     /// Standard amplitude for helicities +--
-    pub fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(0, 1) * sqr(self.t(1, k1)) /
-            (self.t(1, k2) * self.t(1, k3) * self.t(0, k2) * self.t(0, k3))
+    #[inline]
+    fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1)) /
+            (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
     }
 
-    /// Anomalous amplitude for helicities ++-
-    pub fn b_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(0, 1) * sqr(self.t(k1, k2) * self.s(k3, 0))
+    /// Anomalous amplitude 𝛽₊ for helicities ++-
+    #[inline]
+    fn bp_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.t(E_M, E_P) * sqr(self.t(k1, k2) * self.s(k3, E_M))
     }
 
-    /// Anomalous amplitude for helicities +--
-    pub fn b_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(0, 1) * sqr(self.t(k1, 1) * self.s(k2, k3))
+    /// Anomalous amplitude 𝛽₊ for helicities +--
+    #[inline]
+    fn bp_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.s(E_M, E_P) * sqr(self.t(k1, E_P) * self.s(k2, k3))
     }
 
-    /// Anomalous amplitude for helicities +++
-    pub fn b_ppp(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(0, 1) * (sqr(self.t(k1, k2) * self.t(k3, 1)) +
-                                sqr(self.t(k1, k3) * self.t(k2, 1)) +
-                                sqr(self.t(k2, k3) * self.t(k1, 1)))
+    /// Anomalous amplitude 𝛽₋ for helicities +++
+    #[inline]
+    fn bm_ppp(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.s(E_M, E_P) * (sqr(self.t(k1, k2) * self.t(k3, E_P)) +
+                                    sqr(self.t(k1, k3) * self.t(k2, E_P)) +
+                                    sqr(self.t(k2, k3) * self.t(k1, E_P)))
     }
 
-    /// Anomalous amplitude for helicities ---
-    pub fn b_mmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(0, 1) * (sqr(self.s(k1, 0) * self.s(k2, k3)) +
-                                sqr(self.s(k2, 0) * self.s(k1, k3)) +
-                                sqr(self.s(k3, 0) * self.s(k1, k2)))
+    /// Anomalous amplitude 𝛽₋ for helicities ---
+    #[inline]
+    fn bm_mmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.t(E_M, E_P) * (sqr(self.s(k1, E_M) * self.s(k2, k3)) +
+                                    sqr(self.s(k2, E_M) * self.s(k1, k3)) +
+                                    sqr(self.s(k3, E_M) * self.s(k1, k2)))
     }
 }
 
 
-// ### IMPLEMENTATION DETAILS ###
-
-/// Gram matrix of massless momenta direct & conjugate spinor inner products.
-/// Extracted from SpinorProducts as it uses an optimized but unpleasant data
-/// storage model which is best left on its own.
-struct ComplexGramMatrix {
-    /// You should ONLY access this data through the s(i, j) method. The reason
-    /// is that we only fill the lower half of the matrix, and leave the rest of
-    /// the matrix full of garbage, opting to compute the remaining values on
-    /// the fly if requested instead of storing them.
-    ///
-    /// We found this to improve performance over the naive approach of filling
-    /// and accessing the entire Gram matrix.
-    ///
-    /// We explored using packed storage instead, but performance analysis found
-    /// the extra indexing complexity to be a worse trade-off.
-    ///
-    /// We also explored computing the whole contents of the matrix on the fly,
-    /// and again found this to be a worse trade-off.
-    ///
-    /// So it looks like this is the most efficient storage model.
-    ///
-    sx: [[Complex; PARTICLE_COUNT]; PARTICLE_COUNT],
-}
-//
-impl ComplexGramMatrix {
-    /// Build a Gram matrix from previously generated particle momenta
-    fn new(event: &Event) -> Self {
-        // Access the array of incoming and outgoing particle momenta
-        let p_arr = event.dump_momenta();
-
-        // Compute the spinor products (method from M. Mangano and S. Parke)
-        // TODO: Once Rust supports it, initialize xx and fx more directly
-        let mut xx = [0.; PARTICLE_COUNT];
-        let mut fx = [Complex::new(0., 0.); PARTICLE_COUNT];
-        for (i, p) in p_arr.iter().enumerate() {
-            xx[i] = sqrt(p[E] + p[Z]);
-            fx[i] = Complex::new(p[X], p[Y]) / xx[i];
-        }
-
-        // We will only fill the lower half of the matrix
-        let mut result = ComplexGramMatrix {
-            sx: [[Complex::zero(); PARTICLE_COUNT]; PARTICLE_COUNT],
-        };
-        for j in 1..PARTICLE_COUNT {
-            for i in 0..j {
-                let cx = fx[i]*xx[j] - fx[j]*xx[i];
-                result.sx[i][j] = cx;
-            }
-        }
-
-        // Return the result
-        result
-    }
-
-    /// Massless momenta spinor inner products Gram matrix accessor
-    fn s(&self, i: usize, j: usize) -> Complex {
-        if i < j {
-            self.sx[i][j]
-        } else {
-            -self.sx[j][i]
-        }
-    }
-
-    /// Massless momenta conjugate spinor inner products Gram matrix accessor
-    fn t(&self, i: usize, j: usize) -> Complex {
-        -self.s(i, j).conj()
-    }
+/// Output photon helicities (M is - and P is +)
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PhotonHelicities {
+    MMM,
+    MMP,
+    MPM,
+    MPP,
+    PMM,
+    PMP,
+    PPM,
+    PPP,
 }

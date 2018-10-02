@@ -1,15 +1,24 @@
 //! Mechanism for loading and sharing the simulation configuration
 
-use evcut::EventCut;
-use numeric::Real;
-use std::fs::File;
-use std::io::Read;
+use ::{
+    evcut::EventCut,
+    numeric::Real,
+    Result,
+};
+
+use failure::{ResultExt, SyncFailure};
+
+use std::{
+    fs::File,
+    io::Read,
+    str::FromStr,
+};
 
 
-// This struct loads and gives access to the simulation's configuration
+/// This struct gives access to the simulation's configuration
 pub struct Configuration {
     /// Number of events to be simulated
-    pub num_events: i32,
+    pub num_events: usize,
 
     /// Collision energy at center of mass (GeV)
     pub e_tot: Real,
@@ -55,14 +64,15 @@ pub struct Configuration {
 }
 //
 impl Configuration {
-    // Load the configuration from a file, check it, and print it out
-    pub fn new(file_name: &str) -> Result<Self> {
-        // ### LOAD CONFIGURATION ###
-
-        // Read out the simulation configuration file or die trying.
-        let mut config_file = File::open(file_name)?;
-        let mut config_str = String::new();
-        config_file.read_to_string(&mut config_str)?;
+    /// Load the configuration from a file, check it, and print it out
+    pub fn load(file_name: &str) -> Result<Self> {
+        // Read out the simulation's configuration file or die trying.
+        let config_str = {
+            let mut config_file = File::open(file_name)?;
+            let mut buffer = String::new();
+            config_file.read_to_string(&mut buffer)?;
+            buffer
+        };
 
         // We will iterate over the configuration items. In 3photons' simple
         // config file format, these should be the first non-whitespace chunk of
@@ -72,153 +82,120 @@ impl Configuration {
                       .filter_map(|line| line.split_whitespace()
                                              .next());
 
-        // To allow better error reporting, configuration items will be tagged
-        // with the name of the variable that they are mapped to.
-        struct ConfigItem<'a> {
-            name: &'static str,
-            value: Result<&'a str>,
-        };
-
-        // Fetch the next configuration item, in textual form
-        let mut next_item = |name: &'static str| -> ConfigItem {
-            ConfigItem {
-                name: name,
-                value: config_iter.next()
-                                  .ok_or(ErrorKind::Missing(name).into())
-            }
-        };
-
-        // Now that we have textual configuration items, we can parse them.
-        // The process is mostly the same for integers and reals, in fact we
-        // could have used a single generic implementation here if Rust allowed
-        // us to write generic closures.
-        let as_i32 = |item: ConfigItem| -> Result<i32> {
-            let item_name = item.name;
-            item.value?
-                .parse::<i32>()
-                .map_err(|e| ErrorKind::Unreadable(item_name,
-                                                   Box::new(e)).into())
-        };
-        let as_real = |item: ConfigItem| -> Result<Real> {
-            let item_name = item.name;
-            item.value?
-                .parse::<Real>()
-                .map_err(|e| ErrorKind::Unreadable(item_name,
-                                                   Box::new(e)).into())
-        };
-
-        // Booleans are a bit special: for compatibility with the original
-        // 3photons code, we also support FORTRAN syntax for them.
-        let as_bool = |item: ConfigItem| -> Result<bool> {
-            let item_name = item.name;
-            let item_value_lower = item.value?.to_lowercase();
-            match item_value_lower.as_str() {
-                // Handle FORTRAN booleans as a special case
-                ".true." => Ok(true),
-                ".false." => Ok(false),
-                // Delegate other booleans to the standard Rust parser
-                other =>
-                    other.parse::<bool>()
-                         .map_err(|e| ErrorKind::Unreadable(item_name,
-                                                            Box::new(e)).into())
-            }
+        // This closure fetches the next configuration item, tagging it with
+        // the name of the configuration field which it is supposed to fill to
+        // ease error reporting, and handling unexpected end-of-file too.
+        let mut next_item = |name: &'static str| -> Result<ConfigItem> {
+            config_iter.next()
+                       .map(|data| ConfigItem::new(name, data))
+                       .ok_or(format_err!("Missing configuration of {}", name))
         };
 
         // Decode the configuration items into concrete values
         let config = Configuration {
-            num_events: as_i32(next_item("num_events"))?,
-            e_tot: as_real(next_item("e_tot"))?,
-            event_cut: EventCut::new(as_real(next_item("a_cut"))?,
-                                     as_real(next_item("b_cut"))?,
-                                     as_real(next_item("e_min"))?,
-                                     as_real(next_item("sin_cut"))?),
-            alpha: as_real(next_item("alpha"))?,
-            alpha_z: as_real(next_item("alpha_z"))?,
-            convers: as_real(next_item("convers"))?,
-            m_z0: as_real(next_item("m_z0"))?,
-            g_z0: as_real(next_item("g_z0"))?,
-            sin2_w: as_real(next_item("sin2_w"))?,
-            br_ep_em: as_real(next_item("br_ep_em"))?,
-            beta_plus: as_real(next_item("beta_plus"))?,
-            beta_minus: as_real(next_item("beta_moins"))?,
-            n_bin: as_i32(next_item("n_bin"))?,
-            impr: as_bool(next_item("impr"))?,
-            plot: as_bool(next_item("plot"))?,
+            num_events: next_item("num_events")?.parse::<usize>()?,
+            e_tot: next_item("e_tot")?.parse::<Real>()?,
+            event_cut: EventCut::new(next_item("a_cut")?.parse::<Real>()?,
+                                     next_item("b_cut")?.parse::<Real>()?,
+                                     next_item("e_min")?.parse::<Real>()?,
+                                     next_item("sin_cut")?.parse::<Real>()?),
+            alpha: next_item("alpha")?.parse::<Real>()?,
+            alpha_z: next_item("alpha_z")?.parse::<Real>()?,
+            convers: next_item("convers")?.parse::<Real>()?,
+            m_z0: next_item("m_z0")?.parse::<Real>()?,
+            g_z0: next_item("g_z0")?.parse::<Real>()?,
+            sin2_w: next_item("sin2_w")?.parse::<Real>()?,
+            br_ep_em: next_item("br_ep_em")?.parse::<Real>()?,
+            beta_plus: next_item("beta_plus")?.parse::<Real>()?,
+            beta_minus: next_item("beta_moins")?.parse::<Real>()?,
+            n_bin: next_item("n_bin")?.parse::<i32>()?,
+            impr: next_item("impr")?.parse_bool()?,
+            plot: next_item("plot")?.parse_bool()?,
         };
 
+        // Display it the way the C++ version used to (this eases comparisons)
+        config.print();
 
-        // ### DISPLAY IT ###
+        // A sensible simulation must run for at least one event
+        ensure!(config.num_events > 0,
+                "Invalid event count: {}",
+                config.num_events);
 
-        // Print out the configuration that we extracted from the file, in the
-        // same format as used by the original C++ version (this eases comparisons)
-        println!("ITOT           : {}", config.num_events);
-        println!("ETOT           : {}", config.e_tot);
-        println!("oCutpar.ACUT   : {}", config.event_cut.a_cut);
-        println!("oCutpar.BCUT   : {}", config.event_cut.b_cut);
-        println!("oCutpar.EMIN   : {}", config.event_cut.e_min);
-        println!("oCutpar.SINCUT : {}", config.event_cut.sin_cut);
-        println!("ALPHA          : {}", config.alpha);
-        println!("ALPHAZ         : {}", config.alpha_z);
-        println!("CONVERS        : {}", config.convers);
-        println!("oParam.MZ0     : {}", config.m_z0);
-        println!("oParam.GZ0     : {}", config.g_z0);
-        println!("SIN2W          : {}", config.sin2_w);
-        println!("BREPEM         : {}", config.br_ep_em);
-        println!("BETAPLUS       : {}", config.beta_plus);
-        println!("BETAMOINS      : {}", config.beta_minus);
-        println!("NBIN           : {}", config.n_bin);
-        println!("oParam.IMPR    : {}", config.impr);
-        println!("PLOT           : {}", config.plot);
-
-
-        // ### CHECK UNSUPPORTED FEATURES ###
-
-        // NOTE: This is where the FORTRAN code would setup PAW for plotting.
-        //       We don't support plotting, so we only check that it's disabled.
-        if config.plot { return Err(ErrorKind::Unsupported("plot").into()); }
+        // NOTE: We don't support the original code's PAW-based plotting
+        //       features, so we make sure that it was not enabled.
+        ensure!(!config.plot, "Plotting is not supported by this version");
 
         // NOTE: We do not support the initial code's debugging feature which
-        //       displays all intermediary results during sampling. That feature
-        //       should be configured at compile time to avoid run-time costs.
-        if config.impr { return Err(ErrorKind::Unsupported("impr").into()); }
+        //       displays all intermediary results during sampling. Such a
+        //       feature should be set up at build time to avoid run-time costs.
+        ensure!(!config.impr, "Individual result printing is not supported. \
+                               This debugging feature comes as a run-time \
+                               performance cost even when unused. It should be \
+                               implemented at compile-time instead.");
 
         // If nothing bad occured, we can now return the configuration
         Ok(config)
     }
+
+    /// Display the configuration, following formatting of the original version
+    pub fn print(&self) {
+        println!("ITOT           : {}", self.num_events);
+        println!("ETOT           : {}", self.e_tot);
+        println!("oCutpar.ACUT   : {}", self.event_cut.a_cut);
+        println!("oCutpar.BCUT   : {}", self.event_cut.b_cut);
+        println!("oCutpar.EMIN   : {}", self.event_cut.e_min);
+        println!("oCutpar.SINCUT : {}", self.event_cut.sin_cut);
+        println!("ALPHA          : {}", self.alpha);
+        println!("ALPHAZ         : {}", self.alpha_z);
+        println!("CONVERS        : {}", self.convers);
+        println!("oParam.MZ0     : {}", self.m_z0);
+        println!("oParam.GZ0     : {}", self.g_z0);
+        println!("SIN2W          : {}", self.sin2_w);
+        println!("BREPEM         : {}", self.br_ep_em);
+        println!("BETAPLUS       : {}", self.beta_plus);
+        println!("BETAMOINS      : {}", self.beta_minus);
+        println!("NBIN           : {}", self.n_bin);
+        println!("oParam.IMPR    : {}", self.impr);
+        println!("PLOT           : {}", self.plot);
+    }
 }
 
 
-// Here are the various things that can go wrong while loading the configuration
-mod config_errors {
-    error_chain!{
-        foreign_links{
-            // Failed to load the simulation configuration
-            Io(::std::io::Error);
+/// A value from the configuration file, tagged with the struct field which it
+/// is supposed to map for error reporting purposes.
+struct ConfigItem<'a> {
+    name: &'static str,
+    data: &'a str,
+}
+//
+impl<'a> ConfigItem<'a> {
+    /// Build a config item from a struct field tag and raw iterator data
+    fn new(name: &'static str, data: &'a str) -> Self {
+        Self {
+            name,
+            data,
         }
+    }
 
-        errors {
-            // The configuration file is missing some field
-            Missing(field: &'static str) {
-                description("Missing configuration field")
-                display("Missing configuration field: '{}'", field)
-            }
+    /// Parse this data using Rust's standard parsing logic
+    fn parse<T: FromStr>(self) -> Result<T>
+        where <T as FromStr>::Err: ::std::error::Error + Send + 'static
+    {
+        self.data
+            .parse::<T>()
+            .map_err(|e| SyncFailure::new(e))
+            .context(format!("Could not parse configuration of {}", self.name))
+            .map_err(|e| e.into())
+    }
 
-            // A configuration field could not be parsed
-            Unreadable(field: &'static str,
-                       parse_error: Box<::std::error::Error + Send>) {
-                description("Failed to parse configuration field")
-                display("Failed to parse configuration for field '{}' ({})",
-                        field,
-                        parse_error)
-            }
-
-            // The value of a configuration field is valid, but unsupported
-            Unsupported(field: &'static str) {
-                description("Unsupported configuration")
-                display("Unsupported configuration for field '{}'", field)
-            }
+    /// Parse this data using special logic which handles Fortran's bool syntax
+    fn parse_bool(self) -> Result<bool> {
+        match self.data.to_lowercase().as_str() {
+            // Handle FORTRAN booleans as a special case
+            ".true." => Ok(true),
+            ".false." => Ok(false),
+            // Delegate other booleans to the standard Rust parser
+            _ => self.parse::<bool>()
         }
     }
 }
-//
-pub use self::config_errors::*;

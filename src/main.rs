@@ -44,12 +44,16 @@
 //! The fact that we can plug each phase's output as the input of the next phase
 //! lend to a functionnal approach.
 
-// `error_chain!` can recurse deeply
-#![recursion_limit = "1024"]
+#![warn(missing_docs)]
+
+#[macro_use] extern crate failure;
+
+#[cfg(feature = "multi-threading")] extern crate rayon;
+
+#[cfg(feature = "standard-random")] extern crate rand;
+#[cfg(feature = "standard-random")] extern crate xoshiro;
 
 extern crate chrono;
-#[macro_use]
-extern crate error_chain;
 extern crate nalgebra;
 extern crate num_complex;
 extern crate num_traits;
@@ -61,31 +65,37 @@ mod event;
 mod linalg;
 mod numeric;
 mod output;
-mod ranf;
+mod random;
 mod rescont;
 mod resfin;
-mod scalar;
+mod scheduling;
 mod spinor;
 
-use config::Configuration;
-use coupling::Couplings;
-use event::Event;
-use ranf::RanfGenerator;
-use rescont::ResultContribution;
-use resfin::ResultsBuilder;
-use scalar::ScalarProducts;
-use spinor::SpinorProducts;
+use ::{
+    config::Configuration,
+    coupling::Couplings,
+    event::EventGenerator,
+    random::RandomGenerator,
+    rescont::ResultContribution,
+    resfin::ResultsBuilder,
+};
+
+use failure::ResultExt;
+
 use std::time::Instant;
 
 
+/// We'll use failure's type-erased result type throughout the application
+type Result<T> = std::result::Result<T, failure::Error>;
+
 /// This will act as our main function, with suitable error handling
-quick_main!(|| {
+fn main() -> Result<()> {
     // ### CONFIGURATION READOUT ###
 
     // The work of loading, parsing, and checking the configuration has now been
     // offloaded to a dedicated struct
-    let cfg = Configuration::new("valeurs")
-                            .chain_err(|| "Failed to load the configuration")?;
+    let cfg = Configuration::load("valeurs")
+                            .context("Failed to load the configuration")?;
 
 
     // ### SIMULATION INITIALIZATION ###
@@ -103,44 +113,40 @@ quick_main!(|| {
     // Compute physical couplings
     let couplings = Couplings::new(&cfg);
 
-    // Initialize the random number generator
-    let mut rng = RanfGenerator::new();
-
     // Initialize the event generator
-    let mut event = Event::new(cfg.e_tot);
-
-    // Initialize results accumulator
-    let mut res_builder = ResultsBuilder::new(&cfg, event.weight());
+    let evgen = EventGenerator::new(cfg.e_tot);
 
 
-    // ### SAMPLING LOOP ###
+    // ### SIMULATION EXECUTION ###
 
-    for _ in 0..cfg.num_events {
-        // Generate an event
-        event.generate_momenta(&mut rng);
+    // This kernel simulates a number of events, given an initial random number
+    // generator state, and return the accumulated intermediary results
+    let simulate_events = |num_events: usize,
+                           rng: &mut RandomGenerator| -> ResultsBuilder {
+        // Setup a results accumulator
+        let mut res_builder = ResultsBuilder::new(&cfg, evgen.event_weight());
 
-        // Sort the outgoing photons by energy
-        event.sort_output_momenta();
+        // Simulate the requested number of events
+        for _ in 0..num_events {
+            // Generate an event
+            let event = evgen.generate(rng);
 
-        // Compute spinor inner products and scalar products
-        let spinor = SpinorProducts::new(&event);
-        let scalar = ScalarProducts::new(&spinor);
-
-        // If the event passes the cut, compute the total weight (incl. matrix
-        // elements) and integrate it into the final results.
-        if cfg.event_cut.keep(&event, scalar) {
-            let res_contrib = ResultContribution::new(&couplings, &spinor);
-            // NOTE: This is where the original code would display the result
-            res_builder.integrate(res_contrib);
-            // NOTE: This is where the FORTRAN code would fill histograms
+            // If the event passes the cut, compute the total weight (incl.
+            // matrix elements) and integrate it into the final results.
+            if cfg.event_cut.keep(&event) {
+                let res_contrib = ResultContribution::new(&couplings, event);
+                // NOTE: The original code would display the result here
+                res_builder.integrate(res_contrib);
+                // NOTE: The FORTRAN code would fill histograms here
+            }
         }
-    }
 
+        // Return the accumulated results
+        res_builder
+    };
 
-    // ### PHYSICAL RESULTS COMPUTATION ###
-    
-    // Now that we have integrated everything, compute the physical results
-    let res_fin = res_builder.finalize();
+    // Run the simulation
+    let result = scheduling::run_simulation(cfg.num_events, simulate_events);
 
     // NOTE: This is where the FORTRAN code would normalize histograms
 
@@ -151,25 +157,9 @@ quick_main!(|| {
     let elapsed_time = saved_time.elapsed();
     
     // Send the results to the standard output and to disk and we're done
-    output::dump_results(&cfg, res_fin, elapsed_time)
-           .chain_err(|| "Failed to output the results")
-});
+    output::dump_results(&cfg, result, elapsed_time)
+           .context("Failed to output the results")?;
 
-
-
-// Here are the various things that can go wrong during the main function
-mod errors {
-    error_chain!{
-        links{
-            // Something bad happened while loading the configuration
-            Config(::config::Error, ::config::ErrorKind);
-        }
-
-        foreign_links{
-            // Something bad happened while outputting the results
-            ResultsIo(::std::io::Error);
-        }
-    }
+    // ...and we're done
+    Ok(())
 }
-//
-use errors::*;

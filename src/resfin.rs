@@ -1,16 +1,48 @@
 //! This module contains everything that is needed to compute, store, and
 //! analyze the final results: differential cross-section, sum & variance
 
-use config::Configuration;
-use event::{INCOMING_COUNT, OUTGOING_COUNT};
-use numeric::{abs, Complex, powi, Real, sqr, sqrt};
-use numeric::reals::consts::PI;
+use ::{
+    config::Configuration,
+    event::OUTGOING_COUNT,
+    linalg::{
+        dimension::*,
+        vecmat::*,
+    },
+    numeric::{
+        Complex,
+        functions::*,
+        Real,
+        reals::consts::PI,
+    },
+    rescont::{
+        A,
+        B_P,
+        B_M,
+        I_MX,
+        NUM_RESULTS,
+        R_MX,
+        ResultContribution,
+        ResultVector
+    },
+};
+
 use num_traits::Zero;
-use rescont::{ResultContribution, ResultVector};
 
 
 /// Number of spins
-const NUM_SPINS: usize = 2;
+pub const NUM_SPINS: usize = 2;
+
+/// Matrix of per-spin result contributions
+///
+/// Rows are spins, columns are result contributions (in the rescont.rs sense)
+///
+pub type PerSpinResults = Matrix2x5<Real>;
+
+/// Index of negative spin data
+pub const SP_M: usize = 0;
+
+/// Index of positive spin data
+pub const SP_P: usize = 1;
 
 
 /// This struct will accumulate intermediary results during integration, and
@@ -19,7 +51,7 @@ pub struct ResultsBuilder<'a> {
     // ### RESULT ACCUMULATORS ###
 
     /// Number of integrated events
-    selected_events: i32,
+    selected_events: usize,
 
     /// Accumulated cross-section for each contribution
     spm2: ResultVector<Real>,
@@ -40,7 +72,7 @@ pub struct ResultsBuilder<'a> {
     // ### PHYSICAL CONSTANTS (CACHED FOR FINALIZATION) ###
 
     /// Configuration of the simulation
-    config: &'a Configuration,
+    cfg: &'a Configuration,
 
     /// Common factor, non-averaged over spins=1
     ///                  /(symmetry factor)
@@ -60,7 +92,7 @@ pub struct ResultsBuilder<'a> {
 }
 //
 impl<'a> ResultsBuilder<'a> {
-    // Prepare for results integration
+    /// Prepare for results integration
     pub fn new(cfg: &'a Configuration, event_weight: Real) -> Self {
         // Common factor (see definition and remarks above)
         let fact_com = 1./6. * cfg.convers;
@@ -108,11 +140,11 @@ impl<'a> ResultsBuilder<'a> {
             sigma: 0.,
             variance: 0.,
 
-            config: cfg,
-            fact_com: fact_com,
-            norm_weight: norm_weight,
-            propag: propag,
-            ecart_pic: ecart_pic,
+            cfg,
+            fact_com,
+            norm_weight,
+            propag,
+            ecart_pic,
         }
     }
 
@@ -127,104 +159,101 @@ impl<'a> ResultsBuilder<'a> {
         self.variance += sqr(weight);
     }
 
-    // After integration is done, build final simulations results
-    pub fn finalize(self) -> FinalResults<'a> {
+    /// Integrate simulation results from another ResultsBuilder
+    pub fn merge(&mut self, other: Self) {
+        self.selected_events += other.selected_events;
+        self.spm2 += other.spm2;
+        self.vars += other.vars;
+        self.sigma += other.sigma;
+        self.variance += other.variance;
+    }
+
+    /// Turn integrated simulation data into finalized results
+    pub fn finalize(mut self) -> FinalResults<'a> {
+        // This code depends on some aspects of the problem definition
+        assert_eq!(NUM_SPINS, 2);
+        assert_eq!(NUM_RESULTS, 5);
+
         // Extract whatever our needs from the results builder
-        let cfg = self.config;
+        let cfg = self.cfg;
 
-        // Compute the final results
-        let mut results = FinalResults {
-            selected_events: self.selected_events,
-            spm2: [self.spm2, ResultVector::zero()],
-            vars: [self.vars, ResultVector::zero()],
-            sigma: self.sigma,
-            variance: self.variance,
-            beta_min: 0.,
-            prec: 0.,
-            ss_p: 0.,
-            inc_ss_p: 0.,
-            ss_m: 0.,
-            inc_ss_m: 0.,
-            config: cfg,
-        };
-        {
-            // Borrow spm2 and var from them to avoid repetitive member access
-            let spm2 = &mut results.spm2;
-            let var = &mut results.vars;
+        // Keep around a floating-point version of the total event count
+        let n_ev = cfg.num_events as Real;
 
-            // Keep around a floating-point version of the total event count
-            let n_ev = cfg.num_events as Real;
-
-            // Compute the relative uncertainties for one spin
-            for (&v_spm2, v_var) in spm2[0].iter().zip(var[0].iter_mut()) {
-                *v_var = (*v_var - sqr(v_spm2)/n_ev) / (n_ev - 1.);
-                *v_var = sqrt(*v_var/n_ev) / abs(v_spm2/n_ev);
-            }
-
-            // Copy for the opposite spin
-            spm2[1] = spm2[0];
-            var[1] = var[0];
-
-            // Electroweak polarisations factors for the 𝛽₊/𝛽₋ anomalous
-            // contribution
-            let pol_p = -2. * cfg.sin2_w;
-            let pol_m = 1. + pol_p;
-
-            // Take polarisations into account
-            for k in 1..3 {
-                spm2[0][k] *= sqr(pol_m);
-                spm2[1][k] *= sqr(pol_p);
-            }
-            for k in 3..5 {
-                spm2[0][k] *= pol_m;
-                spm2[1][k] *= pol_p;
-            }
-
-            // Flux factor (=1/2s for 2 initial massless particles)
-            let flux = 1. / (2. * sqr(cfg.e_tot));
-
-            // Apply physical coefficients and Z⁰ propagator to each spin
-            let gz0_mz0 = cfg.g_z0 * cfg.m_z0;
-            for s_spm2 in spm2.iter_mut() {
-                for v_spm2 in s_spm2.iter_mut() {
-                    *v_spm2 *= self.fact_com * flux * self.norm_weight;
-                }
-                s_spm2[0] *= 1.;
-                s_spm2[1] *= self.propag / sqr(gz0_mz0);
-                s_spm2[2] *= self.propag / sqr(gz0_mz0);
-                s_spm2[3] *= self.propag * self.ecart_pic / gz0_mz0;
-                s_spm2[4] *= self.propag / gz0_mz0;
-            }
-
-            results.beta_min = sqrt((spm2[0][0]+spm2[1][0]) /
-                                        (spm2[0][1]+spm2[1][1]));
-
-            let ss_denom = spm2[0][0] + spm2[1][0];
-
-            results.ss_p = (spm2[0][1] + spm2[1][1]) / (2. * sqrt(ss_denom));
-            results.ss_m = (spm2[0][2] + spm2[1][2]) / (2. * sqrt(ss_denom));
-
-            let inc_ss_common = sqrt(sqr(spm2[0][0]*var[0][0])
-                                     + sqr(spm2[1][0]*var[1][0])) /
-                                (2. * abs(ss_denom));
-
-            results.inc_ss_p = sqrt(sqr(spm2[0][1]*var[0][1])
-                                    + sqr(spm2[1][1]*var[1][1])) /
-                               abs(spm2[0][1] + spm2[1][1])
-                             + inc_ss_common;
-            results.inc_ss_m = sqrt(sqr(spm2[0][2]*var[0][2])
-                                    + sqr(spm2[1][2]*var[1][2])) /
-                               abs(spm2[0][2] + spm2[1][2])
-                             + inc_ss_common;
-
-            results.variance = (self.variance - sqr(self.sigma)/n_ev) /
-                                   (n_ev-1.);
-            results.prec = sqrt(results.variance/n_ev) / abs(self.sigma/n_ev);
-            results.sigma = self.sigma * flux;
+        // Compute the relative uncertainties for one spin
+        for (&v_spm2, v_var) in self.spm2.iter()
+                                         .zip(self.vars.iter_mut()) {
+            *v_var = (*v_var - sqr(v_spm2)/n_ev) / (n_ev - 1.);
+            *v_var = sqrt(*v_var/n_ev) / abs(v_spm2/n_ev);
         }
 
+        // Copy for the opposite spin
+        let mut spm2 = PerSpinResults::from_fn(|_spin, res| self.spm2[res]);
+        let vars = PerSpinResults::from_fn(|_spin, res| self.vars[res]);
+
+        // Electroweak polarisations factors for the 𝛽₊/𝛽₋ anomalous
+        // contribution
+        let pol_p = -2. * cfg.sin2_w;
+        let pol_m = 1. + pol_p;
+
+        // Take polarisations into account
+        spm2.fixed_slice_mut::<U1, U2>(SP_M, B_P).apply(|x| x * sqr(pol_m));
+        spm2.fixed_slice_mut::<U1, U2>(SP_P, B_P).apply(|x| x * sqr(pol_p));
+        spm2.fixed_slice_mut::<U1, U2>(SP_M, R_MX).apply(|x| x * pol_m);
+        spm2.fixed_slice_mut::<U1, U2>(SP_P, R_MX).apply(|x| x * pol_p);
+
+        // Flux factor (=1/2s for 2 initial massless particles)
+        let flux = 1. / (2. * sqr(cfg.e_tot));
+
+        // Apply physical coefficients and Z⁰ propagator to each spin
+        spm2 *= self.fact_com * flux * self.norm_weight;
+        let gm_z0 = cfg.g_z0 * cfg.m_z0;
+        spm2.fixed_columns_mut::<U4>(B_P).apply(|x| x * self.propag / gm_z0);
+        spm2.fixed_columns_mut::<U2>(B_P).apply(|x| x / gm_z0);
+        spm2.fixed_columns_mut::<U1>(R_MX).apply(|x| x * self.ecart_pic);
+
+        // Compute other parts of the result
+        let beta_min = sqrt((spm2[(SP_M, A)] + spm2[(SP_P, A)]) /
+                            (spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)]));
+
+        let ss_denom = spm2[(SP_M, A)] + spm2[(SP_P, A)];
+        let ss_norm = 1. / (2. * sqrt(ss_denom));
+
+        let ss_p = (spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)]) * ss_norm;
+        let ss_m = (spm2[(SP_M, B_M)] + spm2[(SP_P, B_M)]) * ss_norm;
+
+        let inc_ss_common = sqrt(sqr(spm2[(SP_M, A)]*vars[(SP_M, A)])
+                                 + sqr(spm2[(SP_P, A)]*vars[(SP_P, A)])) /
+                            (2. * abs(ss_denom));
+
+        let inc_ss_p = sqrt(sqr(spm2[(SP_M, B_P)] * vars[(SP_M, B_P)])
+                            + sqr(spm2[(SP_P, B_P)] * vars[(SP_P, B_P)])) /
+                       abs(spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)])
+                     + inc_ss_common;
+        let inc_ss_m = sqrt(sqr(spm2[(SP_M, B_M)] * vars[(SP_M, B_M)])
+                            + sqr(spm2[(SP_P, B_M)] * vars[(SP_P, B_M)])) /
+                       abs(spm2[(SP_M, B_M)] + spm2[(SP_P, B_M)])
+                     + inc_ss_common;
+
+        let variance = (self.variance - sqr(self.sigma)/n_ev) / (n_ev - 1.);
+        let prec = sqrt(variance/n_ev) / abs(self.sigma/n_ev);
+        let sigma = self.sigma * flux;
+
         // Return the final results
-        results
+        FinalResults {
+            selected_events: self.selected_events,
+            spm2,
+            vars,
+            sigma,
+            variance,
+            beta_min,
+            prec,
+            ss_p,
+            inc_ss_p,
+            ss_m,
+            inc_ss_m,
+            config: cfg,
+        }
     }
 }
 
@@ -232,13 +261,13 @@ impl<'a> ResultsBuilder<'a> {
 /// This struct will hold the final results of the simulation
 pub struct FinalResults<'a> {
     /// Number of integrated events
-    pub selected_events: i32,
+    pub selected_events: usize,
 
     /// Cross-section for each spin
-    pub spm2: [ResultVector<Real>; NUM_SPINS],
+    pub spm2: PerSpinResults,
 
     /// Variance for each spin
-    pub vars: [ResultVector<Real>; NUM_SPINS],
+    pub vars: PerSpinResults,
 
     /// Total cross-section
     pub sigma: Real,
@@ -252,12 +281,16 @@ pub struct FinalResults<'a> {
     /// Beta minimum (???)
     pub beta_min: Real,
 
-    /// Statistical significance B+(pb-1/2) (???) and associated incertitude
+    /// Statistical significance B+(pb-1/2) (???)
     pub ss_p: Real,
+
+    /// Incertitide associated with ss_p
     pub inc_ss_p: Real,
 
-    /// Statistical significance B-(pb-1/2) (???) and associated incertitude
+    /// Statistical significance B-(pb-1/2) (???)
     pub ss_m: Real,
+
+    /// Incertitude associated with ss_m
     pub inc_ss_m: Real,
 
     /// Configuration of the simulation (for further derivation)
@@ -267,33 +300,33 @@ pub struct FinalResults<'a> {
 impl<'a> FinalResults<'a> {
     /// Display results using Eric's (???) parametrization
     pub fn eric(&self) {
-        debug_assert_eq!(INCOMING_COUNT, 2);
-        debug_assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_SPINS, 2);
+        assert_eq!(NUM_RESULTS, 5);
 
         let cfg = self.config;
 
         let mu_th = cfg.br_ep_em * cfg.convers /
             (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
-        let lambda0_m = (-self.spm2[0][1] + self.spm2[0][2]) / 2.;
-        let lambda0_p = (-self.spm2[1][1] + self.spm2[1][2]) / 2.;
-        let mu0_m = (self.spm2[0][1] + self.spm2[0][2]) / 2.;
-        let mu0_p = (self.spm2[1][1] + self.spm2[1][2]) / 2.;
-        let mu_num = (self.spm2[0][1] +
-                      self.spm2[0][2] +
-                      self.spm2[1][1] +
-                      self.spm2[1][2]) / 4.;
+        let lambda0_m = (-self.spm2[(SP_M, B_P)] + self.spm2[(SP_M, B_M)]) / 2.;
+        let lambda0_p = (-self.spm2[(SP_P, B_P)] + self.spm2[(SP_P, B_M)]) / 2.;
+        let mu0_m = (self.spm2[(SP_M, B_P)] + self.spm2[(SP_M, B_M)]) / 2.;
+        let mu0_p = (self.spm2[(SP_P, B_P)] + self.spm2[(SP_P, B_M)]) / 2.;
+        let mu_num = (self.spm2[(SP_M, B_P)] +
+                      self.spm2[(SP_M, B_M)] +
+                      self.spm2[(SP_P, B_P)] +
+                      self.spm2[(SP_P, B_M)]) / 4.;
 
         println!();
         println!("       :        -          +");
         println!("sigma0  : {:.6} | {:.6}",
-                 self.spm2[0][0]/2.,
-                 self.spm2[1][0]/2.);
+                 self.spm2[(SP_M, A)]/2.,
+                 self.spm2[(SP_P, A)]/2.);
         println!("alpha0  : {:.5e} | {:.4e}",
-                 self.spm2[0][4]/2.,
-                 self.spm2[1][4]/2.);
+                 self.spm2[(SP_M, I_MX)]/2.,
+                 self.spm2[(SP_P, I_MX)]/2.);
         println!("beta0   : {:} | {:}",
-                 -self.spm2[0][3]/2.,
-                 -self.spm2[1][3]/2.);
+                 -self.spm2[(SP_M, R_MX)]/2.,
+                 -self.spm2[(SP_P, R_MX)]/2.);
         println!("lambda0 : {:.4} | {:.4}", lambda0_m, lambda0_p);
         println!("mu0     : {:.4} | {:.5}", mu0_m, mu0_p);
         println!("mu/lamb : {:.5} | {:.5}", mu0_m/lambda0_m, mu0_p/lambda0_p);
@@ -305,8 +338,8 @@ impl<'a> FinalResults<'a> {
     /// Display Fawzi's (???) analytical results and compare them to the Monte
     /// Carlo results that we have computed
     pub fn fawzi(&self) {
-        debug_assert_eq!(INCOMING_COUNT, 2);
-        debug_assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_SPINS, 2);
+        assert_eq!(NUM_RESULTS, 5);
 
         let cfg = self.config;
         let ref ev_cut = cfg.event_cut;
@@ -349,14 +382,14 @@ impl<'a> FinalResults<'a> {
         let sig_p = sig*(ff+2.*gg);
         let sig_m = sig_p + 2.*sig*gg;
 
-        let mc_p = (self.spm2[0][1] + self.spm2[1][1]) / 4.;
-        let mc_m = (self.spm2[0][2] + self.spm2[1][2]) / 4.;
-        let incr_p = sqrt(sqr(self.spm2[0][1] * self.vars[0][1]) +
-                            sqr(self.spm2[1][1] * self.vars[1][1]))
-                     / abs(self.spm2[0][1] + self.spm2[1][1]);
-        let incr_m = sqrt(sqr(self.spm2[0][2] * self.vars[0][2]) +
-                            sqr(self.spm2[1][2] * self.vars[1][2]))
-                     / abs(self.spm2[0][2] + self.spm2[1][2]);
+        let mc_p = (self.spm2[(SP_M, B_P)] + self.spm2[(SP_P, B_P)]) / 4.;
+        let mc_m = (self.spm2[(SP_M, B_M)] + self.spm2[(SP_P, B_M)]) / 4.;
+        let incr_p = sqrt(sqr(self.spm2[(SP_M, B_P)] * self.vars[(SP_M, B_P)]) +
+                            sqr(self.spm2[(SP_P, B_P)] * self.vars[(SP_P, B_P)]))
+                     / abs(self.spm2[(SP_M, B_P)] + self.spm2[(SP_P, B_P)]);
+        let incr_m = sqrt(sqr(self.spm2[(SP_M, B_M)] * self.vars[(SP_M, B_M)]) +
+                            sqr(self.spm2[(SP_P, B_M)] * self.vars[(SP_P, B_M)]))
+                     / abs(self.spm2[(SP_M, B_M)] + self.spm2[(SP_P, B_M)]);
 
         println!();
         println!("s (pb) :   Sig_cut_Th    Sig_Th      Rapport");
