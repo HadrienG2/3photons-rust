@@ -3,6 +3,7 @@
 Processeur de portable i7-4720HQ (4 coeurs + HT)
 Rust 1.29.1
 Commit cc1f0481d6660e6aa5581f68f2f0416e88d09bec
+Running on 10^7 events.
 
 
 # Tests de features isolées
