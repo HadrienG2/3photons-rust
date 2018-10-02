@@ -276,9 +276,13 @@ impl EventGenerator {
     /// Generate 3 vectors on the unit circle with uniform angle distribution
     ///
     /// NOTE: Similar techniques may be used to generate a vector on the unit
-    ///       sphere, but that benchmarked unfavorably, likely because it
-    ///       entails bringing more computations close to the RNG calls and
-    ///       because the 2D case fits available vector hardware more tightly.
+    ///       sphere, but that benchmarked unfavorably, likely because...
+    ///
+    ///       - We perform best in SSE, in which 2 doubles fit better than 3
+    ///       - The phi trig ops are expensive, the random cos of theta isn't
+    ///       - RNG calls disturb compiler optimizations, and the 3D case brings
+    ///         more computations close to them.
+    ///       - Statistics force us to discard more points and call the RNG more
     ///
     fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
         assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");

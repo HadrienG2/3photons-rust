@@ -26,7 +26,8 @@ impl RanfGenerator {
 
     /// Create a new generator, with state faithful to original 3photons code
     pub fn new() -> RanfGenerator {
-        // FIXME: Provide control over seeding
+        // TODO: Would be nice to figure out the seed constraints of seeded_new
+        //       and publicize that interface too.
         Self::seeded_new(234612947)
     }
 
