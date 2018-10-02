@@ -9,7 +9,10 @@ use ::{
         OUTGOING_COUNT,
         ParticleMatrix,
     },
-    linalg::{E, U1, X, Y, Z},
+    linalg::{
+        dimension::*,
+        momentum::{E, X, Y, Z},
+    },
     numeric::{
         Complex,
         functions::{conj, sqr, sqrt},

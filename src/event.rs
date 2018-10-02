@@ -2,28 +2,12 @@
 
 use ::{
     linalg::{
-        Momentum,
-        E,
-        Matrix2x4,
-        Matrix3,
-        Matrix3x2,
-        Matrix4x3,
-        Matrix5,
-        Matrix5x4,
-        MatrixSlice,
-        U1,
-        U3,
-        U4,
-        U5,
-        Vector2,
-        Vector3,
-        X,
-        xyz,
-        Y,
-        Z
+        dimension::*,
+        momentum::{Momentum, E, X, Y, Z, xyz},
+        vecmat::*,
     },
     numeric::{
-        functions::{cos, exp, ln, sin, sqr, sqrt},
+        functions::*,
         Real,
         reals::{
             MIN_POSITIVE,

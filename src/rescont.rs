@@ -3,9 +3,12 @@
 use ::{
     coupling::Couplings,
     event::{Event, OUTGOING_COUNT},
-    linalg::{Matrix5x8, U1, Vector5, Vector8},
+    linalg::{
+        dimension::*,
+        vecmat::*,
+    },
     numeric::{
-        functions::conj,
+        functions::*,
         Real
     },
     spinor::SpinorProducts,

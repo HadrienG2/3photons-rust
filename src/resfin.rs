@@ -4,10 +4,13 @@
 use ::{
     config::Configuration,
     event::OUTGOING_COUNT,
-    linalg::{Matrix2x5, U1, U2, U4},
+    linalg::{
+        dimension::*,
+        vecmat::*,
+    },
     numeric::{
         Complex,
-        functions::{abs, powi, sqr, sqrt},
+        functions::*,
         Real,
         reals::consts::PI,
     },

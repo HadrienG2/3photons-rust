@@ -2,9 +2,12 @@
 
 use ::{
     event::{Event, OUTGOING_COUNT},
-    linalg::{E, U1, U2, U3, X, xyz},
+    linalg::{
+        dimension::*,
+        momentum::{E, X, xyz},
+    },
     numeric::{
-        functions::abs,
+        functions::*,
         Real
     },
 };
