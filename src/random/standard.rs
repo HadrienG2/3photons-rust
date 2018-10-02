@@ -6,7 +6,8 @@ use rand::Rng;
 
 
 /// Random number generation engine in use
-type Engine = ::xoshiro::Xoshiro256Plus;
+#[cfg(feature = "f32")] type Engine = ::xoshiro::Xoshiro128Plus;
+#[cfg(not(feature = "f32"))] type Engine = ::xoshiro::Xoshiro256Plus;
 
 /// Facade which makes the rand crate look like RanfGenerator
 #[derive(Clone)]
