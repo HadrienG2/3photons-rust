@@ -20,14 +20,14 @@ use std::{
 };
 
 
-// Write a floating-point number using "engineering" notation
-//
-// Analogous to the %g format of the C printf function, this method switches
-// between naive and scientific notation for floating-point numbers when the
-// number being printed becomes so small that printing leading zeroes could end
-// up larger than the scientific notation, or so large that we would be forced
-// to print more significant digits than requested.
-//
+/// Write a floating-point number using "engineering" notation
+///
+/// Analogous to the %g format of the C printf function, this method switches
+/// between naive and scientific notation for floating-point numbers when the
+/// number being printed becomes so small that printing leading zeroes could end
+/// up larger than the scientific notation, or so large that we would be forced
+/// to print more significant digits than requested.
+///
 pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
     let mut precision = sig_digits - 1;
     let log_x = x.abs().log10();
@@ -51,7 +51,7 @@ pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
 }
 
 
-// Output the simulation results to the console and to disk
+/// Output the simulation results to the console and to disk
 pub fn dump_results(cfg: &Configuration,
                     res_fin: FinalResults,
                     elapsed_time: Duration) -> Result<()> {

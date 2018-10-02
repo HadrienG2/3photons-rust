@@ -24,12 +24,16 @@ pub const INCOMING_COUNT: usize = 2;
 /// Number of outgoing particles (replaces original INP)
 pub const OUTGOING_COUNT: usize = 3;
 
-/// Number of particles in an event, and square matrix type with that dimension
+/// Number of particles in an event
 const PARTICLE_COUNT: usize = INCOMING_COUNT + OUTGOING_COUNT;
+
+/// Square matrix type whose side is the number of particles in an event
 pub type ParticleMatrix<T> = Matrix5<T>;
 
-/// Event data matrix definitions (columns are coordinates, rows are particles)
+/// Event data matrix type (columns are 4-coordinates, rows are particles)
 type EventMatrix = Matrix5x4<Real>;
+
+/// Slice of the event data matrix containing only outgoing particles
 type OutgoingMomentaSlice<'a> = MatrixSlice<'a, Real, U3, U4, U1, U5>;
 
 /// Row of the incoming electron in the event data matrix
@@ -179,10 +183,6 @@ impl EventGenerator {
     ///
     /// The output momenta are provided as a matrix where rows are 4-momentum
     /// components (Px, Py, Pz, E) and columns are particles.
-    ///
-    /// FIXME: The main obvious remaining bottleneck of this function is that
-    ///        it spends 25% of its time computing scalar logarithms. Using
-    ///        a vectorized ln() implementation should help there.
     ///
     fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Real> {
         assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");

@@ -1,13 +1,15 @@
 //! Basic numerical concepts used throughout the program
 
+#![allow(missing_docs)]
+
 use num_complex;
 
 
-/// Floating-point precision is configured here
-#[cfg(feature = "f32")] pub use std::f32 as reals;
+// Floating-point precision is configured here
 #[cfg(feature = "f32")] pub type Real = f32;
-#[cfg(not(feature = "f32"))] pub use std::f64 as reals;
+#[cfg(feature = "f32")] pub use std::f32 as reals;
 #[cfg(not(feature = "f32"))] pub type Real = f64;
+#[cfg(not(feature = "f32"))] pub use std::f64 as reals;
 pub type Complex = num_complex::Complex<Real>;
 
 /// Mathematical functions

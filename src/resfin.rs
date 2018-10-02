@@ -92,7 +92,7 @@ pub struct ResultsBuilder<'a> {
 }
 //
 impl<'a> ResultsBuilder<'a> {
-    // Prepare for results integration
+    /// Prepare for results integration
     pub fn new(cfg: &'a Configuration, event_weight: Real) -> Self {
         // Common factor (see definition and remarks above)
         let fact_com = 1./6. * cfg.convers;
@@ -168,7 +168,7 @@ impl<'a> ResultsBuilder<'a> {
         self.variance += other.variance;
     }
 
-    // After integration is done, build final simulations results
+    /// Turn integrated simulation data into finalized results
     pub fn finalize(mut self) -> FinalResults<'a> {
         // Extract whatever our needs from the results builder
         assert_eq!(NUM_SPINS, 2, "This code is only valid for two spins");
@@ -279,12 +279,16 @@ pub struct FinalResults<'a> {
     /// Beta minimum (???)
     pub beta_min: Real,
 
-    /// Statistical significance B+(pb-1/2) (???) and associated incertitude
+    /// Statistical significance B+(pb-1/2) (???)
     pub ss_p: Real,
+
+    /// Incertitide associated with ss_p
     pub inc_ss_p: Real,
 
-    /// Statistical significance B-(pb-1/2) (???) and associated incertitude
+    /// Statistical significance B-(pb-1/2) (???)
     pub ss_m: Real,
+
+    /// Incertitude associated with ss_m
     pub inc_ss_m: Real,
 
     /// Configuration of the simulation (for further derivation)

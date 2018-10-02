@@ -60,6 +60,9 @@ impl RandGenerator {
     }
 
     // Advance state as if random9() had been called
+    ///
+    /// TODO: Clean up this API once Rust has const generics
+    ///
     #[cfg(all(feature = "multi-threading",
               not(feature = "faster-threading")))]
     pub fn skip9(&mut self) {

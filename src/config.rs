@@ -197,6 +197,7 @@ impl<'a> ConfigItem<'a> {
 //
 // TODO: Migrate to failure?
 //
+#[allow(missing_docs)]
 mod config_errors {
     error_chain!{
         foreign_links{
