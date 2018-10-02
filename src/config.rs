@@ -3,7 +3,10 @@
 use ::{
     evcut::EventCut,
     numeric::Real,
+    Result,
 };
+
+use failure::{ResultExt, SyncFailure};
 
 use std::{
     fs::File,
@@ -85,7 +88,7 @@ impl Configuration {
         let mut next_item = |name: &'static str| -> Result<ConfigItem> {
             config_iter.next()
                        .map(|data| ConfigItem::new(name, data))
-                       .ok_or(ErrorKind::Missing(name).into())
+                       .ok_or(format_err!("Missing configuration of {}", name))
         };
 
         // Decode the configuration items into concrete values
@@ -114,18 +117,21 @@ impl Configuration {
         config.print();
 
         // A sensible simulation must run for at least one event
-        if config.num_events <= 0 {
-            return Err(ErrorKind::Unsupported("num_events").into());
-        }
+        ensure!(config.num_events > 0,
+                "Invalid event count: {}",
+                config.num_events);
 
         // NOTE: We don't support the original code's PAW-based plotting
         //       features, so we make sure that it was not enabled.
-        if config.plot { return Err(ErrorKind::Unsupported("plot").into()); }
+        ensure!(!config.plot, "Plotting is not supported by this version");
 
         // NOTE: We do not support the initial code's debugging feature which
         //       displays all intermediary results during sampling. Such a
         //       feature should be set up at build time to avoid run-time costs.
-        if config.impr { return Err(ErrorKind::Unsupported("impr").into()); }
+        ensure!(!config.impr, "Individual result printing is not supported. \
+                               This debugging feature comes as a run-time \
+                               performance cost even when unused. It should be \
+                               implemented at compile-time instead.");
 
         // If nothing bad occured, we can now return the configuration
         Ok(config)
@@ -177,7 +183,9 @@ impl<'a> ConfigItem<'a> {
     {
         self.data
             .parse::<T>()
-            .map_err(|e| ErrorKind::Unreadable(self.name, Box::new(e)).into())
+            .map_err(|e| SyncFailure::new(e))
+            .context(format!("Could not parse configuration of {}", self.name))
+            .map_err(|e| e.into())
     }
 
     /// Parse this data using special logic which handles Fortran's bool syntax
@@ -191,43 +199,3 @@ impl<'a> ConfigItem<'a> {
         }
     }
 }
-
-
-// Here are the various things that can go wrong while loading the configuration
-//
-// TODO: Migrate to failure?
-//
-#[allow(missing_docs)]
-mod config_errors {
-    error_chain!{
-        foreign_links{
-            // Failed to load the simulation configuration
-            Io(::std::io::Error);
-        }
-
-        errors {
-            // The configuration file is missing some field
-            Missing(field: &'static str) {
-                description("Missing configuration field")
-                display("Missing configuration field: '{}'", field)
-            }
-
-            // A configuration field could not be parsed
-            Unreadable(field: &'static str,
-                       parse_error: Box<::std::error::Error + Send>) {
-                description("Failed to parse configuration field")
-                display("Failed to parse configuration for field '{}' ({})",
-                        field,
-                        parse_error)
-            }
-
-            // The value of a configuration field is valid, but unsupported
-            Unsupported(field: &'static str) {
-                description("Unsupported configuration")
-                display("Unsupported configuration for field '{}'", field)
-            }
-        }
-    }
-}
-//
-pub use self::config_errors::{Error, ErrorKind, Result};

@@ -44,11 +44,9 @@
 //! The fact that we can plug each phase's output as the input of the next phase
 //! lend to a functionnal approach.
 
-// `error_chain!` can recurse deeply
-#![recursion_limit = "1024"]
 #![warn(missing_docs)]
 
-#[macro_use] extern crate error_chain;
+#[macro_use] extern crate failure;
 
 #[cfg(feature = "multi-threading")] extern crate rayon;
 
@@ -82,9 +80,13 @@ use ::{
     resfin::ResultsBuilder,
 };
 
+use failure::ResultExt;
 
 use std::time::Instant;
 
+
+/// We'll use failure's type-erased result type throughout the application
+type Result<T> = std::result::Result<T, failure::Error>;
 
 /// This will act as our main function, with suitable error handling
 fn main() -> Result<()> {
@@ -93,7 +95,7 @@ fn main() -> Result<()> {
     // The work of loading, parsing, and checking the configuration has now been
     // offloaded to a dedicated struct
     let cfg = Configuration::load("valeurs")
-                            .chain_err(|| "Failed to load the configuration")?;
+                            .context("Failed to load the configuration")?;
 
 
     // ### SIMULATION INITIALIZATION ###
@@ -156,27 +158,8 @@ fn main() -> Result<()> {
     
     // Send the results to the standard output and to disk and we're done
     output::dump_results(&cfg, result, elapsed_time)
-           .chain_err(|| "Failed to output the results")
+           .context("Failed to output the results")?;
+
+    // ...and we're done
+    Ok(())
 }
-
-
-
-// Here are the various things that can go wrong during the main function
-//
-// TODO: Move to failure
-//
-mod errors {
-    error_chain!{
-        links{
-            // Something bad happened while loading the configuration
-            Config(::config::Error, ::config::ErrorKind);
-        }
-
-        foreign_links{
-            // Something bad happened while outputting the results
-            ResultsIo(::std::io::Error);
-        }
-    }
-}
-//
-use errors::*;
