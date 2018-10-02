@@ -26,9 +26,7 @@ here are some features which you can enable:
 - The `no-photon-sorting` feature disables the sorting of outgoing photons by
   energy that used to be present in the original `3photons` code.
 - The `standard-random` uses standard Rust abstractions for random number
-  generation. The current algorithm (`xoshiro256+`) is not faster than what
-  3photons uses by default (`ranf`), but is more friendly to parallelization
-  (especially in `faster-threading` mode).
+  generation (currently `xoshiro128+` and `xoshiro256+`).
 
 These features are enabled using the `--features` flag to cargo, as follows:
 
