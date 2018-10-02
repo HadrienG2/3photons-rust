@@ -229,4 +229,4 @@ mod config_errors {
     }
 }
 //
-pub use self::config_errors::*;
+pub use self::config_errors::{Error, ErrorKind, Result};

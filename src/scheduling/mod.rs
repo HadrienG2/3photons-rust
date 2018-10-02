@@ -10,6 +10,8 @@ use ::{
 };
 
 
+/// Size of the simulated event batches
+///
 /// Simulated events are grouped in batches of a certain size in order to reduce
 /// accumulation error and achieve perfect reproducibility between sequential
 /// and parallel runs of the simulation.

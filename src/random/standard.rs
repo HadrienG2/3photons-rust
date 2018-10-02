@@ -5,7 +5,7 @@ use ::numeric::Real;
 use rand::Rng;
 
 
-/// Random number generation engine in use
+// Select random number generation engine in use
 #[cfg(feature = "f32")] type Engine = ::xoshiro::Xoshiro128Plus;
 #[cfg(not(feature = "f32"))] type Engine = ::xoshiro::Xoshiro256Plus;
 
