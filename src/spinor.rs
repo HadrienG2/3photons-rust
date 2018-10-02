@@ -86,13 +86,6 @@ impl SpinorProducts {
 
 
     // ### AMPLITUDE COMPUTATIONS ###
-    //
-    // TODO: These long products of complex numbers are getting expensive,
-    //       try expanding them on paper to see if they can be reworded into a
-    //       simpler overall expression.
-    //
-    // TODO: Also, the RAC8 prefactor should be applied to the final result, not
-    //       to every contribution thereof.
 
     /// Standard amplitude for given photon helicities
     #[inline]
@@ -108,20 +101,6 @@ impl SpinorProducts {
             PPM => self.a_ppm(2, 3, 4),
             PPP => Complex::zero(),
         }
-    }
-
-    /// Standard amplitude for helicities ++-
-    #[inline]
-    fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3)) /
-            (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
-    }
-
-    /// Standard amplitude for helicities +--
-    #[inline]
-    fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1)) /
-            (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
     }
 
     /// Anomalous amplitude 𝛽₊ for given photon helicities
@@ -140,18 +119,6 @@ impl SpinorProducts {
         }
     }
 
-    /// Anomalous amplitude 𝛽₊ for helicities ++-
-    #[inline]
-    fn bp_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(E_M, E_P) * sqr(self.t(k1, k2) * self.s(k3, E_M))
-    }
-
-    /// Anomalous amplitude 𝛽₊ for helicities +--
-    #[inline]
-    fn bp_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(E_M, E_P) * sqr(self.t(k1, E_P) * self.s(k2, k3))
-    }
-
     /// Anomalous amplitude 𝛽₋ for given photon helicities
     #[inline]
     pub fn b_m(&self, helicities: PhotonHelicities) -> Complex {
@@ -166,6 +133,32 @@ impl SpinorProducts {
             PPM => Complex::zero(),
             PPP => self.bm_ppp(2, 3, 4),
         }
+    }
+
+    /// Standard amplitude for helicities ++-
+    #[inline]
+    fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3)) /
+            (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
+    }
+
+    /// Standard amplitude for helicities +--
+    #[inline]
+    fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1)) /
+            (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
+    }
+
+    /// Anomalous amplitude 𝛽₊ for helicities ++-
+    #[inline]
+    fn bp_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.t(E_M, E_P) * sqr(self.t(k1, k2) * self.s(k3, E_M))
+    }
+
+    /// Anomalous amplitude 𝛽₊ for helicities +--
+    #[inline]
+    fn bp_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
+        -RAC8 * self.s(E_M, E_P) * sqr(self.t(k1, E_P) * self.s(k2, k3))
     }
 
     /// Anomalous amplitude 𝛽₋ for helicities +++
