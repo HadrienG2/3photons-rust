@@ -40,8 +40,8 @@ Mode standard-random :
 # Tests de features combinées
 
 Modes faster-evgen + f32 :
-- Numériquement instable, des NaNs partout...
-- 1.98s (mais ne veut pas dire grand-chose en présence de NaNs)
+- Différences de 0.1% vs défaut
+- 2.11s (40% vs défaut, 67% vs original)
 
 Modes faster-evgen + multi-threading :
 - Exactement reproductible vs faster
@@ -54,3 +54,7 @@ Modes faster-evgen + multi-threading + faster-threading :
 Modes faster-evgen + multi-threading + faster-threading + standard-random :
 - Différences de 0.1% vs faster
 - 0.59s (speedup 4.6x => OK)
+
+Modes faster-evgen + f32 + multi-threading + faster-threading :
+- Différences de 0.1% vs défaut
+- 0.48s (speedup 4.4x => OK)
