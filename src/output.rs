@@ -37,7 +37,7 @@ pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
             // Since Rust's precision controls number of digits after the
             // decimal point, we must adjust it depending on magnitude in order
             // to operate at a constant number of significant digits.
-            precision -= log_x.trunc() as usize;
+            precision = (precision as isize - log_x.trunc() as isize) as usize;
 
             // Numbers smaller than 1 must get one extra digit since the leading
             // zero does not count as a significant digit.
