@@ -210,7 +210,7 @@ impl EventGenerator {
             //        computation of the energy vector should help.
             //
             let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
-            let energy = exp_min_e.map(|e_me| -ln(e_me));
+            let energy = exp_min_e.map(|e_me| -ln(e_me + MIN_POSITIVE));
             Matrix4x3::from_fn(|coord, par| {
                 energy[par] * match coord {
                     X => sin_theta[par] * sincos_phi[(par, X)],
