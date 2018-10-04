@@ -81,8 +81,6 @@ performance bottlenecks (as of 2018-10-02):
 - 30~40% of the remaining program time is spent in the complex number
   manipulations of `spinor.rs`. Someone with more mathematical skills than me
   could probably find a faster yet equally readable formulation.
-- It would be interesting to know why `f32` blows up when combined with the
-  `faster-evgen` event generation optimizations.
 
 
 ## Miscellaneous remarks, subjected to future obsolescence
