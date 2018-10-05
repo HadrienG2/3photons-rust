@@ -4,7 +4,7 @@ use ::{
     event::{Event, OUTGOING_COUNT},
     linalg::{
         dimension::*,
-        momentum::{E, X, xyz, Z},
+        momentum::{E, X, xyz},
     },
     numeric::{
         functions::*,
@@ -95,12 +95,6 @@ impl EventCut {
 
         // Check if the (beam, normal to photon plane) angle passes the cut
         if abs(cos_num) < self.sin_cut * cos_denom { return false; }
-
-        // Check if the momentum is too close to the -Z direction (this causes
-        // a numerical instability in spinor products)
-        for par in 0..OUTGOING_COUNT {
-            if p_out_xyz[(par, Z)] < -0.99999 * p_out_e[par] { return false; }
-        }
 
         // If all checks passed, we're good
         true

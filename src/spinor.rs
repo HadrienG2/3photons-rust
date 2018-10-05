@@ -8,6 +8,7 @@ use ::{
         INCOMING_E_P as E_P,
         OUTGOING_COUNT,
         ParticleMatrix,
+        ParticleVector,
     },
     linalg::{
         dimension::*,
@@ -17,7 +18,10 @@ use ::{
         Complex,
         functions::{conj, sqr, sqrt},
         Real,
-        reals::consts::SQRT_2,
+        reals::{
+            consts::SQRT_2,
+            MIN_POSITIVE,
+        }
     },
 };
 
@@ -53,16 +57,19 @@ impl SpinorProducts {
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
         let xx = (p_e + p_z).map(sqrt);
-        let inv_xx = xx.map(|x| 1. / x);
-        let re_fx = p_x.component_mul(&inv_xx);
-        let im_fx = p_y.component_mul(&inv_xx);
+        let fx = ParticleVector::from_fn(|par, _|
+            if xx[par] > MIN_POSITIVE {
+                Complex::new(p_x[par] / xx[par], p_y[par] / xx[par])
+            } else {
+                Complex::new(sqrt(2. * p_e[par]), 0.)
+            }
+        );
 
         // Fill up the Gram matrix
         // TODO: Can we leverage antisymmetry + zero diagonal better?
         let result = Self {
             sx: ParticleMatrix::from_fn(|i, j| {
-                Complex::new(re_fx[i]*xx[j] - re_fx[j]*xx[i],
-                             im_fx[i]*xx[j] - im_fx[j]*xx[i])
+                fx[i] * xx[j] - fx[j] * xx[i]
             }),
         };
 

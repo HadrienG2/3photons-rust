@@ -27,6 +27,9 @@ pub const OUTGOING_COUNT: usize = 3;
 /// Number of particles in an event
 const PARTICLE_COUNT: usize = INCOMING_COUNT + OUTGOING_COUNT;
 
+/// Vector type whose side is the number of particles in an event
+pub type ParticleVector<T> = Vector5<T>;
+
 /// Square matrix type whose side is the number of particles in an event
 pub type ParticleMatrix<T> = Matrix5<T>;
 
