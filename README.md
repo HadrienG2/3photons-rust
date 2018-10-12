@@ -85,10 +85,10 @@ performance bottlenecks (as of 2018-10-02):
 
 ## Miscellaneous remarks, subjected to future obsolescence
 
-As of 2018-09-17, various other things can be said about this version of
+As of 2018-10-12, various other things can be said about this version of
 3photons, which I do not expect to remain accurate in the future.
 
-1. You will need at least Rust v1.27 to compile it.
+1. You will need at least Rust v1.29.2 to run it.
 2. Comparing its performance with that of other versions would be unfair,
    because the porting process enabled many optimizations which other versions
    did not receive yet.
