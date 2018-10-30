@@ -1,6 +1,6 @@
 //! Mechanism to apply a cut to generated events
 
-use ::{
+use crate::{
     event::{Event, OUTGOING_COUNT},
     linalg::{
         dimension::*,

@@ -4,7 +4,7 @@
 #[cfg(not(feature = "multi-threading"))] mod sequential;
 #[cfg(feature = "multi-threading")] mod multi_threading;
 
-use ::{
+use crate::{
     random::RandomGenerator,
     resfin::{FinalResults, ResultsBuilder},
 };

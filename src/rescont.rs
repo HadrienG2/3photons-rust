@@ -1,6 +1,6 @@
 //! Intermediary results of the computation for one event
 
-use ::{
+use crate::{
     coupling::Couplings,
     event::{Event, OUTGOING_COUNT},
     linalg::{
@@ -63,7 +63,7 @@ impl ResultContribution {
 
         // Compute the helicity amplitudes, formerly known as a, b_p and b_m,
         // for each possible output spin configuration
-        use spinor::PhotonHelicities::*;
+        use crate::spinor::PhotonHelicities::*;
         let helicities = Vector8::from_column_slice(
             &[MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP]
         );

@@ -1,6 +1,6 @@
 //! This module takes care of event generation and storage
 
-use ::{
+use crate::{
     linalg::{
         dimension::*,
         momentum::{Momentum, E, X, Y, Z, xyz},

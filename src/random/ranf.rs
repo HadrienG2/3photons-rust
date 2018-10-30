@@ -1,6 +1,6 @@
 //! Random number generation, from Knuth's ranf (in Seminumerical Algorithm)
 
-use ::numeric::Real;
+use crate::numeric::Real;
 
 // Generated random numbers will have a granularity of 1/MODULO
 type Integer = i32;

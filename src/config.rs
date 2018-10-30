@@ -1,6 +1,6 @@
 //! Mechanism for loading and sharing the simulation configuration
 
-use ::{
+use crate::{
     evcut::EventCut,
     numeric::Real,
     Result,

@@ -46,7 +46,7 @@ pub mod vecmat {
 
 /// Handling of relativistic 4-momenta
 pub mod momentum {
-    use ::numeric::Real;
+    use crate::numeric::Real;
 
     use nalgebra::{
         dimension::*,

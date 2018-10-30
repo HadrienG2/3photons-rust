@@ -1,7 +1,7 @@
 //! This module contains everything that is needed to compute, store, and
 //! analyze the final results: differential cross-section, sum & variance
 
-use ::{
+use crate::{
     config::Configuration,
     event::OUTGOING_COUNT,
     linalg::{

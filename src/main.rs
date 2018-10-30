@@ -71,7 +71,7 @@ mod resfin;
 mod scheduling;
 mod spinor;
 
-use ::{
+use crate::{
     config::Configuration,
     coupling::Couplings,
     event::EventGenerator,

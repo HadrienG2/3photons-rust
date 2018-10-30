@@ -1,7 +1,7 @@
 //! This module is in charge of outputting the final simulation results to the
 //! standard output and various files
 
-use ::{
+use crate::{
     config::Configuration,
     numeric::{
         functions::{abs, sqr, sqrt},

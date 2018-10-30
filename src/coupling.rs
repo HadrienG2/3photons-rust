@@ -1,6 +1,6 @@
 //! Physical couplings used for result computations
 
-use ::{
+use crate::{
     config::Configuration,
     numeric::{
         functions::{powi, sqrt},

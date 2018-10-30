@@ -1,6 +1,6 @@
 //! Sequential back-end of the simulation
 
-use ::{
+use crate::{
     random::RandomGenerator,
     resfin::ResultsBuilder,
     scheduling::EVENT_BATCH_SIZE,

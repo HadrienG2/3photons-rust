@@ -1,6 +1,6 @@
 //! Facilities for computing spinor products
 
-use ::{
+use crate::{
     event::{
         Event,
         INCOMING_COUNT,
