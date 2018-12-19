@@ -28,7 +28,7 @@ impl RanfGenerator {
     pub fn new() -> RanfGenerator {
         // TODO: Would be nice to figure out the seed constraints of seeded_new
         //       and publicize that interface too.
-        Self::seeded_new(234612947)
+        Self::seeded_new(234_612_947)
     }
 
     /// Create a new generator with an arbitrary seed.
@@ -108,6 +108,7 @@ impl RanfGenerator {
     /// TODO: Clean up this API once Rust has const generics
     ///
     #[inline(always)]
+    #[allow(clippy::cast_lossless)]
     fn random_slice(&mut self, storage: &mut [Real]) {
         // Assuming that we will never need more than a round of numbers at a
         // time allows us to take implementation and performance shortcuts.

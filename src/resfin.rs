@@ -149,6 +149,7 @@ impl<'a> ResultsBuilder<'a> {
     }
 
     /// Integrate one intermediary result into the simulation results
+    #[allow(clippy::needless_pass_by_value)]
     pub fn integrate(&mut self, result: ResultContribution) {
         self.selected_events += 1;
         let spm2_dif = result.m2_sums();
@@ -160,6 +161,7 @@ impl<'a> ResultsBuilder<'a> {
     }
 
     /// Integrate simulation results from another ResultsBuilder
+    #[allow(clippy::needless_pass_by_value)]
     pub fn merge(&mut self, other: Self) {
         self.selected_events += other.selected_events;
         self.spm2 += other.spm2;
@@ -342,7 +344,7 @@ impl<'a> FinalResults<'a> {
         assert_eq!(NUM_RESULTS, 5);
 
         let cfg = self.config;
-        let ref ev_cut = cfg.event_cut;
+        let ev_cut = &cfg.event_cut;
 
         let mre = cfg.m_z0 / cfg.e_tot;
         let gre = cfg.g_z0 * cfg.m_z0 / sqr(cfg.e_tot);

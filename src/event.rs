@@ -158,7 +158,7 @@ impl EventGenerator {
 
         // Build the final event: incoming momenta + output 4-momenta
         assert_eq!(PARTICLE_COUNT, 5, "This part assumes 5-particle events");
-        let event = Event(Matrix5x4::from_fn(|par, coord| {
+        Event(Matrix5x4::from_fn(|par, coord| {
             if par < INCOMING_COUNT {
                 self.incoming_momenta[(par, coord)]
             } else if coord <= Z {
@@ -168,10 +168,7 @@ impl EventGenerator {
             } else {
                 unreachable!()
             }
-        }));
-
-        // Hand off the generated event
-        event
+        }))
     }
 
     /// Generate massless outgoing 4-momenta in infinite phase space
@@ -263,6 +260,7 @@ impl EventGenerator {
     ///         more computations close to them.
     ///       - Statistics force us to discard more points and call the RNG more
     ///
+    #[allow(clippy::needless_range_loop)]
     fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
         assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
 

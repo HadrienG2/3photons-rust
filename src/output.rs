@@ -54,8 +54,9 @@ pub fn write_engineering(writer: &mut impl Write,
 
 
 /// Output the simulation results to the console and to disk
+#[allow(clippy::cast_lossless)]
 pub fn dump_results(cfg: &Configuration,
-                    res_fin: FinalResults,
+                    res_fin: &FinalResults,
                     elapsed_time: Duration) -> Result<()> {
     // Get current date and time for result archival purposes
     let current_time = chrono::Utc::now();

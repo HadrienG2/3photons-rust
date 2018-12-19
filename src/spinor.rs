@@ -42,7 +42,7 @@ impl SpinorProducts {
     // ### CONSTRUCTION ###
 
     /// Build spinor products from previously generated particle 4-momenta
-    pub fn new(event: Event) -> Self {
+    pub fn new(event: &Event) -> Self {
         // The underlying Gram matrix is not specific to the physics of
         // e+e- -> ppp collisions, but our methods are specific to it.
         assert_eq!(INCOMING_COUNT, 2);
@@ -67,14 +67,11 @@ impl SpinorProducts {
 
         // Fill up the Gram matrix
         // TODO: Can we leverage antisymmetry + zero diagonal better?
-        let result = Self {
+        Self {
             sx: ParticleMatrix::from_fn(|i, j| {
                 fx[i] * xx[j] - fx[j] * xx[i]
             }),
-        };
-
-        // Return the result
-        result
+        }
     }
 
 

@@ -37,7 +37,7 @@ pub fn run_simulation_impl<'a>(
     for _ in 0..num_full_batches {
         accumulator.merge(simulate_events(EVENT_BATCH_SIZE, &mut rng));
     }
-    num_events = num_events % EVENT_BATCH_SIZE;
+    num_events %= EVENT_BATCH_SIZE;
 
     // Integrate the remaining events
     accumulator.merge(simulate_events(num_events, &mut rng));

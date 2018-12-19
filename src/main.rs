@@ -134,7 +134,7 @@ fn main() -> Result<()> {
             // If the event passes the cut, compute the total weight (incl.
             // matrix elements) and integrate it into the final results.
             if cfg.event_cut.keep(&event) {
-                let res_contrib = ResultContribution::new(&couplings, event);
+                let res_contrib = ResultContribution::new(&couplings, &event);
                 // NOTE: The original code would display the result here
                 res_builder.integrate(res_contrib);
                 // NOTE: The FORTRAN code would fill histograms here
@@ -157,7 +157,7 @@ fn main() -> Result<()> {
     let elapsed_time = saved_time.elapsed();
     
     // Send the results to the standard output and to disk and we're done
-    output::dump_results(&cfg, result, elapsed_time)
+    output::dump_results(&cfg, &result, elapsed_time)
            .context("Failed to output the results")?;
 
     // ...and we're done

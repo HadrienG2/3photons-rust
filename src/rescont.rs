@@ -53,13 +53,13 @@ pub struct ResultContribution {
 //
 impl ResultContribution {
     /// Construct the matrix element from the spinor products
-    pub fn new(couplings: &Couplings, event: Event) -> Self {
+    pub fn new(couplings: &Couplings, event: &Event) -> Self {
         // This code is very specific to the current problem definition
         assert_eq!(OUTGOING_COUNT, 3);
         assert_eq!(NUM_RESULTS, 5);
 
         // Compute spinor inner products
-        let spinor = SpinorProducts::new(event);
+        let spinor = SpinorProducts::new(&event);
 
         // Compute the helicity amplitudes, formerly known as a, b_p and b_m,
         // for each possible output spin configuration

@@ -88,7 +88,7 @@ impl Configuration {
         let mut next_item = |name: &'static str| -> Result<ConfigItem> {
             config_iter.next()
                        .map(|data| ConfigItem::new(name, data))
-                       .ok_or(format_err!("Missing configuration of {}", name))
+                       .ok_or_else(|| format_err!("Missing configuration of {}", name))
         };
 
         // Decode the configuration items into concrete values
@@ -183,7 +183,7 @@ impl<'a> ConfigItem<'a> {
     {
         self.data
             .parse::<T>()
-            .map_err(|e| SyncFailure::new(e))
+            .map_err(SyncFailure::new)
             .context(format!("Could not parse configuration of {}", self.name))
             .map_err(|e| e.into())
     }
