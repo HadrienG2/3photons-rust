@@ -125,7 +125,7 @@ impl RanfGenerator {
 
         // ...so it's best to generate all the numbers in one go
         self.index -= request_len;
-        let numbers = &self.numbers[self.index+1..self.index+request_len+1];
+        let numbers = &self.numbers[self.index+1..self.index+1+request_len];
         for (dst, src) in storage.iter_mut().zip(numbers) {
             *dst = (*src as Real) * INV_MODULO;
         }
