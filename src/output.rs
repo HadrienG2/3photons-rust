@@ -28,7 +28,9 @@ use std::{
 /// up larger than the scientific notation, or so large that we would be forced
 /// to print more significant digits than requested.
 ///
-pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
+pub fn write_engineering(writer: &mut impl Write,
+                         x: Real,
+                         sig_digits: usize) -> Result<()> {
     let mut precision = sig_digits - 1;
     let log_x = x.abs().log10();
     if (log_x >= -3. && log_x <= (sig_digits as Real)) || x == 0. {
@@ -43,10 +45,10 @@ pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) {
             // zero does not count as a significant digit.
             if log_x < 0. { precision += 1 }
         }
-        write!(writer, "{:.1$}", x, precision);
+        write!(writer, "{:.1$}", x, precision)
     } else {
         // Print using scientific notation
-        write!(writer, "{:.1$e}", x, precision);
+        write!(writer, "{:.1$e}", x, precision)
     }
 }
 
@@ -72,15 +74,15 @@ pub fn dump_results(cfg: &Configuration,
 
         // Create a few closure shorthands for common writing operations
         let write_label = |file: &mut File, label: &str| {
-            write!(*file, " {:<31}: ", label);
+            write!(*file, " {:<31}: ", label)
         };
         let write_usize = |file: &mut File, label: &str, value: usize| {
-            write_label(file, label);
+            write_label(file, label)?;
             writeln!(*file, "{}", value)
         };
         let write_real = |file: &mut File, label: &str, value: Real| {
-            write_label(file, label);
-            write_engineering(file, value, 8);
+            write_label(file, label)?;
+            write_engineering(file, value, 8)?;
             writeln!(file)
         };
 
