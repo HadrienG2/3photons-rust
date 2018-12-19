@@ -16,7 +16,7 @@ use crate::{
     },
     numeric::{
         Complex,
-        functions::{conj, sqr, sqrt},
+        functions::*,
         Real,
         reals::{
             consts::SQRT_2,

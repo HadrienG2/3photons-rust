@@ -3,7 +3,7 @@
 use crate::{
     config::Configuration,
     numeric::{
-        functions::{powi, sqrt},
+        functions::*,
         Real,
         reals::consts::PI,
     },

@@ -1,7 +1,7 @@
 //! This module mimicks the interface of RanfGenerator on top of the
 //! abstractions of the standard "random" crate.
 
-use ::numeric::Real;
+use crate::numeric::Real;
 use rand::Rng;
 
 

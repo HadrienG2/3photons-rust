@@ -4,7 +4,7 @@
 use crate::{
     config::Configuration,
     numeric::{
-        functions::{abs, sqr, sqrt},
+        functions::*,
         Real,
     },
     rescont::{A, B_M, B_P, NUM_RESULTS, R_MX},

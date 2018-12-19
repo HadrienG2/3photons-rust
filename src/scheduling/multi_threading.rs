@@ -3,7 +3,7 @@
 #[cfg(feature = "faster-threading")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use ::{
+use crate::{
     random::RandomGenerator,
     resfin::ResultsBuilder,
     scheduling::EVENT_BATCH_SIZE,
@@ -68,8 +68,8 @@ pub fn run_simulation_impl<'a>(
             // results reproducible, but slows down the scheduling
             // thread and may thus reduce performance and scalability.
             #[cfg(not(feature = "faster-threading"))]
-            ::event::EventGenerator::simulate_event_batch(&mut rng,
-                                                          batch_size);
+            crate::event::EventGenerator::simulate_event_batch(&mut rng,
+                                                               batch_size);
 
             // In non-reproducible mode, we instead ask the RNG to
             // switch to a wildly different state as quickly as it can.
