@@ -136,7 +136,7 @@ impl<'a> ResultsBuilder<'a> {
             selected_events: 0,
             spm2: ResultVector::zero(),
             vars: ResultVector::zero(),
-            sigma_contribs: sigma_contribs,
+            sigma_contribs,
             sigma: 0.,
             variance: 0.,
 

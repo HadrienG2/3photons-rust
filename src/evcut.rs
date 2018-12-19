@@ -32,10 +32,10 @@ impl EventCut {
     /// Setup the cuts on generated events
     pub fn new(a_cut: Real, b_cut: Real, e_min: Real, sin_cut: Real) -> Self {
         EventCut {
-            a_cut: a_cut,
-            b_cut: b_cut,
-            e_min: e_min,
-            sin_cut: sin_cut,
+            a_cut,
+            b_cut,
+            e_min,
+            sin_cut,
         }
     }
 
