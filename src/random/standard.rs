@@ -4,10 +4,11 @@
 use crate::numeric::Real;
 use rand::Rng;
 
-
 // Select random number generation engine in use
-#[cfg(feature = "f32")] type Engine = ::xoshiro::Xoshiro128Plus;
-#[cfg(not(feature = "f32"))] type Engine = ::xoshiro::Xoshiro256Plus;
+#[cfg(feature = "f32")]
+type Engine = ::xoshiro::Xoshiro128Plus;
+#[cfg(not(feature = "f32"))]
+type Engine = ::xoshiro::Xoshiro256Plus;
 
 /// Facade which makes the rand crate look like RanfGenerator
 #[derive(Clone)]
@@ -53,25 +54,24 @@ impl RandGenerator {
     }
 
     // Advance state as if random() had been called "iteration" times
-    #[cfg(all(feature = "multi-threading",
-              not(feature = "faster-threading")))]
+    #[cfg(all(feature = "multi-threading", not(feature = "faster-threading")))]
     pub fn skip(&mut self, iterations: usize) {
-        for _ in 0..iterations { self.random(); }
+        for _ in 0..iterations {
+            self.random();
+        }
     }
 
     // Advance state as if random9() had been called
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    #[cfg(all(feature = "multi-threading",
-              not(feature = "faster-threading")))]
+    #[cfg(all(feature = "multi-threading", not(feature = "faster-threading")))]
     pub fn skip9(&mut self) {
         self.random9();
     }
 
     // Advance state in an arbitrary but maximally fast way
-    #[cfg(all(feature = "multi-threading",
-              feature = "faster-threading"))]
+    #[cfg(all(feature = "multi-threading", feature = "faster-threading"))]
     pub fn jump(&mut self) {
         self.rng.jump();
     }

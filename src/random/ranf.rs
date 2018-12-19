@@ -7,7 +7,6 @@ type Integer = i32;
 const MODULO: Integer = 1_000_000_000;
 const INV_MODULO: Real = 1e-9;
 
-
 /// Random number generator
 #[derive(Clone)]
 pub struct RanfGenerator {
@@ -49,7 +48,9 @@ impl RanfGenerator {
             let ii = (21 * i) % 55;
             result.numbers[ii] = k;
             k = j - k;
-            if k < 0 { k += MODULO };
+            if k < 0 {
+                k += MODULO
+            }
             j = result.numbers[ii];
         }
 
@@ -61,7 +62,6 @@ impl RanfGenerator {
         // Return the initialized generator
         result
     }
-
 
     // ### RANDOM NUMBER GENERATION ###
 
@@ -114,8 +114,10 @@ impl RanfGenerator {
         // time allows us to take implementation and performance shortcuts.
         let request_len = storage.len();
         let round_size = self.numbers.len() - 1;
-        assert!(request_len <= round_size,
-                "Current algorithm only supports a round of numbers at a time");
+        assert!(
+            request_len <= round_size,
+            "Current algorithm only supports a round of numbers at a time"
+        );
 
         // In principle, we could reuse the remaining numbers in the active
         // round, in practice it costs more than it helps...
@@ -126,46 +128,48 @@ impl RanfGenerator {
 
         // ...so it's best to generate all the numbers in one go
         self.index -= request_len;
-        let numbers = &self.numbers[self.index+1..self.index+1+request_len];
+        let numbers = &self.numbers[self.index + 1..self.index + 1 + request_len];
         for (dst, src) in storage.iter_mut().zip(numbers) {
             *dst = (*src as Real) * INV_MODULO;
         }
     }
 
-
     /// Generate 55 new random numbers between 0 and 1/FMODUL
     /// This roughly maps to the IRN55 method in the original code.
     fn reset(&mut self) {
         for i in 1..25 {
-            self.numbers[i] -= self.numbers[i+31];
-            if self.numbers[i] < 0 { self.numbers[i] += MODULO };
+            self.numbers[i] -= self.numbers[i + 31];
+            if self.numbers[i] < 0 {
+                self.numbers[i] += MODULO
+            }
         }
         for i in 25..56 {
-            self.numbers[i] -= self.numbers[i-24];
-            if self.numbers[i] < 0 { self.numbers[i] += MODULO };
+            self.numbers[i] -= self.numbers[i - 24];
+            if self.numbers[i] < 0 {
+                self.numbers[i] += MODULO
+            }
         }
     }
 
     // Advance state as if random() had been called "iteration" times
-    #[cfg(all(feature = "multi-threading",
-              not(feature = "faster-threading")))]
+    #[cfg(all(feature = "multi-threading", not(feature = "faster-threading")))]
     pub fn skip(&mut self, iterations: usize) {
-        for _ in 0..iterations { self.random(); }
+        for _ in 0..iterations {
+            self.random();
+        }
     }
 
     // Advance state as if random9() had been called
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    #[cfg(all(feature = "multi-threading",
-              not(feature = "faster-threading")))]
+    #[cfg(all(feature = "multi-threading", not(feature = "faster-threading")))]
     pub fn skip9(&mut self) {
         self.random9();
     }
 
     // Just switch to another state as fast as we can
-    #[cfg(all(feature = "multi-threading",
-              feature = "faster-threading"))]
+    #[cfg(all(feature = "multi-threading", feature = "faster-threading"))]
     pub fn jump(&mut self) {
         let new_seed = self.seed + 123456;
         ::std::mem::replace(self, Self::seeded_new(new_seed));

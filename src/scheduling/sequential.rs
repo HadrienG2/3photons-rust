@@ -1,11 +1,6 @@
 //! Sequential back-end of the simulation
 
-use crate::{
-    random::RandomGenerator,
-    resfin::ResultsBuilder,
-    scheduling::EVENT_BATCH_SIZE,
-};
-
+use crate::{random::RandomGenerator, resfin::ResultsBuilder, scheduling::EVENT_BATCH_SIZE};
 
 /// Simulate events in sequential mode
 ///
@@ -20,9 +15,7 @@ use crate::{
 pub fn run_simulation_impl<'a>(
     mut num_events: usize,
     mut rng: RandomGenerator,
-    simulate_events: impl Send + Sync
-                          + Fn(usize,
-                               &mut RandomGenerator) -> ResultsBuilder<'a>
+    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'a>,
 ) -> ResultsBuilder<'a> {
     // Some double-checking cannot hurt...
     assert!(num_events > 0, "Must simulate at least one event");

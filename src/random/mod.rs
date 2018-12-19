@@ -10,7 +10,7 @@ mod ranf;
 mod standard;
 
 // Select the RNG implementation in use
-#[cfg(feature = "standard-random")]
-pub use self::standard::RandGenerator as RandomGenerator;
 #[cfg(not(feature = "standard-random"))]
 pub use self::ranf::RanfGenerator as RandomGenerator;
+#[cfg(feature = "standard-random")]
+pub use self::standard::RandGenerator as RandomGenerator;

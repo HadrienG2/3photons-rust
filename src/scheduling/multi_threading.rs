@@ -3,16 +3,11 @@
 #[cfg(feature = "faster-threading")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::{
-    random::RandomGenerator,
-    resfin::ResultsBuilder,
-    scheduling::EVENT_BATCH_SIZE,
-};
+use crate::{random::RandomGenerator, resfin::ResultsBuilder, scheduling::EVENT_BATCH_SIZE};
 
 use rayon;
 
 use std::sync::Mutex;
-
 
 /// Simulate events in multi-threaded mode
 ///
@@ -23,27 +18,32 @@ use std::sync::Mutex;
 pub fn run_simulation_impl<'a>(
     mut num_events: usize,
     mut rng: RandomGenerator,
-    simulate_events: impl Send + Sync
-                          + Fn(usize,
-                               &mut RandomGenerator) -> ResultsBuilder<'a>
+    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'a>,
 ) -> ResultsBuilder<'a> {
     // Some double-checking cannot hurt...
     assert!(num_events > 0, "Must simulate at least one event");
 
     // We know in advance how many batches of event we will process
-    let num_batches =
-        num_events / EVENT_BATCH_SIZE
-            + if num_events % EVENT_BATCH_SIZE == 0 { 0 } else { 1 };
+    let num_batches = num_events / EVENT_BATCH_SIZE
+        + if num_events % EVENT_BATCH_SIZE == 0 {
+            0
+        } else {
+            1
+        };
 
     // The results of parallel tasks will be aggregated...
     let accumulator = {
         // ...in a way that is optimized for numerical reproduciblity
         #[cfg(not(feature = "faster-threading"))]
-        { ReproducibleAccumulator::new(num_batches) }
+        {
+            ReproducibleAccumulator::new(num_batches)
+        }
 
         // ...in a way that is optimized for computational performance
         #[cfg(feature = "faster-threading")]
-        { FastAccumulator::new(num_batches) }
+        {
+            FastAccumulator::new(num_batches)
+        }
     };
 
     // This function is a synchronization scope: it will only return
@@ -68,8 +68,7 @@ pub fn run_simulation_impl<'a>(
             // results reproducible, but slows down the scheduling
             // thread and may thus reduce performance and scalability.
             #[cfg(not(feature = "faster-threading"))]
-            crate::event::EventGenerator::simulate_event_batch(&mut rng,
-                                                               batch_size);
+            crate::event::EventGenerator::simulate_event_batch(&mut rng, batch_size);
 
             // In non-reproducible mode, we instead ask the RNG to
             // switch to a wildly different state as quickly as it can.
@@ -82,12 +81,11 @@ pub fn run_simulation_impl<'a>(
     accumulator.get_merged_result()
 }
 
-
 /// Reproducibility-optimized results accumulation mechanism
 #[cfg(not(feature = "faster-threading"))]
 struct ReproducibleAccumulator<'a> {
     /// Storage for the intermediary simulation results of parallel tasks
-    results: Box<[Mutex<Option<ResultsBuilder<'a>>>]>
+    results: Box<[Mutex<Option<ResultsBuilder<'a>>>]>,
 }
 //
 #[cfg(not(feature = "faster-threading"))]
@@ -96,20 +94,18 @@ impl<'a> ReproducibleAccumulator<'a> {
     fn new(num_tasks: usize) -> Self {
         assert!(num_tasks > 0, "There should be at least one task");
         Self {
-            results: (0..num_tasks).map(|_| Mutex::new(None))
-                                   .collect::<Vec<_>>()
-                                   .into_boxed_slice()
+            results: (0..num_tasks)
+                .map(|_| Mutex::new(None))
+                .collect::<Vec<_>>()
+                .into_boxed_slice(),
         }
     }
 
     /// Integrate the results of the n-th simulation task
-    fn set_task_result(&self,
-                       task_id: usize,
-                       result: ResultsBuilder<'a>)
-    {
-        let mut lock =
-            self.results[task_id].lock()
-                                 .expect("Mutex data should be valid");
+    fn set_task_result(&self, task_id: usize, result: ResultsBuilder<'a>) {
+        let mut lock = self.results[task_id]
+            .lock()
+            .expect("Mutex data should be valid");
         assert!(lock.is_none(), "Tasks should not report results twice");
         *lock = Some(result);
     }
@@ -117,26 +113,25 @@ impl<'a> ReproducibleAccumulator<'a> {
     /// Aggregate the results in a reproducible fashion
     fn get_merged_result(self) -> ResultsBuilder<'a> {
         // Start iterating over the task results
-        let mut results_iter =
-            self.results.into_vec()
-                        .into_iter()
-                        .map(|entry| {
-                            entry.into_inner()
-                                 .expect("Mutex data should be valid")
-                                 .expect("Result should be ready")
-                        });
+        let mut results_iter = self.results.into_vec().into_iter().map(|entry| {
+            entry
+                .into_inner()
+                .expect("Mutex data should be valid")
+                .expect("Result should be ready")
+        });
 
         // Initialize results storage with the result of the first task
-        let first_result =
-            results_iter.next()
-                        .expect("There should be at least one task");
+        let first_result = results_iter
+            .next()
+            .expect("There should be at least one task");
 
         // Merge the results of the other tasks
-        results_iter.fold(first_result,
-                          |mut r1, r2| { r1.merge(r2); r1 })
+        results_iter.fold(first_result, |mut r1, r2| {
+            r1.merge(r2);
+            r1
+        })
     }
 }
-
 
 /// Speed-optimized results accumulation mechanism
 #[cfg(feature = "faster-threading")]
@@ -155,20 +150,20 @@ impl<'a> FastAccumulator<'a> {
         assert!(num_tasks > 0, "There should be at least one task");
         Self {
             merged_result: Mutex::new(None),
-            task_finished: (0..num_tasks).map(|_| AtomicBool::new(false))
-                                         .collect::<Vec<_>>()
-                                         .into_boxed_slice(),
+            task_finished: (0..num_tasks)
+                .map(|_| AtomicBool::new(false))
+                .collect::<Vec<_>>()
+                .into_boxed_slice(),
         }
     }
 
     /// Integrate the results of the n-th simulation task
-    fn set_task_result(&self,
-                       task_id: usize,
-                       result: ResultsBuilder<'a>)
-    {
+    fn set_task_result(&self, task_id: usize, result: ResultsBuilder<'a>) {
         // Initialize the accumulator or merge the task result into it
-        match *self.merged_result.lock()
-                                 .expect("Mutex data should be valid")
+        match *self
+            .merged_result
+            .lock()
+            .expect("Mutex data should be valid")
         {
             // If we are the first, initialize the accumulator
             ref mut storage @ None => *storage = Some(result),
@@ -178,8 +173,7 @@ impl<'a> FastAccumulator<'a> {
         }
 
         // Remember that this task has completed its work
-        let was_finished =
-            self.task_finished[task_id].swap(true, Ordering::Relaxed);
+        let was_finished = self.task_finished[task_id].swap(true, Ordering::Relaxed);
         assert!(!was_finished, "Tasks should not set their result twice");
     }
 
@@ -187,13 +181,16 @@ impl<'a> FastAccumulator<'a> {
     fn get_merged_result(self) -> ResultsBuilder<'a> {
         // Check that all tasks have completed their work
         for ready in self.task_finished.into_vec().into_iter() {
-            assert!(ready.load(Ordering::Relaxed),
-                    "All tasks should have completed their work");
+            assert!(
+                ready.load(Ordering::Relaxed),
+                "All tasks should have completed their work"
+            );
         }
 
         // Collect the merged result
-        self.merged_result.into_inner()
-                          .expect("Mutex data should be valid")
-                          .expect("Result should be ready")
+        self.merged_result
+            .into_inner()
+            .expect("Mutex data should be valid")
+            .expect("Result should be ready")
     }
 }

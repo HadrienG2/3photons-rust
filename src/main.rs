@@ -5,7 +5,7 @@
 //!
 //! This small computational program computes cross-section for the particle
 //! physics process electron + positron gives three photons (e⁺e⁻ → 𝛾𝛾𝛾).
-//! 
+//!
 //! It distinguishes a classical Standard Model contribution, of purely Quantum
 //! ElectroDynamic origin and an hypothetic, beyond the Standard Model, New
 //! Physics contribution, phenomenologically described by two effective
@@ -46,12 +46,16 @@
 
 #![warn(missing_docs)]
 
-#[macro_use] extern crate failure;
+#[macro_use]
+extern crate failure;
 
-#[cfg(feature = "multi-threading")] extern crate rayon;
+#[cfg(feature = "multi-threading")]
+extern crate rayon;
 
-#[cfg(feature = "standard-random")] extern crate rand;
-#[cfg(feature = "standard-random")] extern crate xoshiro;
+#[cfg(feature = "standard-random")]
+extern crate rand;
+#[cfg(feature = "standard-random")]
+extern crate xoshiro;
 
 extern crate chrono;
 extern crate nalgebra;
@@ -72,18 +76,13 @@ mod scheduling;
 mod spinor;
 
 use crate::{
-    config::Configuration,
-    coupling::Couplings,
-    event::EventGenerator,
-    random::RandomGenerator,
-    rescont::ResultContribution,
-    resfin::ResultsBuilder,
+    config::Configuration, coupling::Couplings, event::EventGenerator, random::RandomGenerator,
+    rescont::ResultContribution, resfin::ResultsBuilder,
 };
 
 use failure::ResultExt;
 
 use std::time::Instant;
-
 
 /// We'll use failure's type-erased result type throughout the application
 type Result<T> = std::result::Result<T, failure::Error>;
@@ -94,9 +93,7 @@ fn main() -> Result<()> {
 
     // The work of loading, parsing, and checking the configuration has now been
     // offloaded to a dedicated struct
-    let cfg = Configuration::load("valeurs")
-                            .context("Failed to load the configuration")?;
-
+    let cfg = Configuration::load("valeurs").context("Failed to load the configuration")?;
 
     // ### SIMULATION INITIALIZATION ###
 
@@ -116,13 +113,11 @@ fn main() -> Result<()> {
     // Initialize the event generator
     let evgen = EventGenerator::new(cfg.e_tot);
 
-
     // ### SIMULATION EXECUTION ###
 
     // This kernel simulates a number of events, given an initial random number
     // generator state, and return the accumulated intermediary results
-    let simulate_events = |num_events: usize,
-                           rng: &mut RandomGenerator| -> ResultsBuilder {
+    let simulate_events = |num_events: usize, rng: &mut RandomGenerator| -> ResultsBuilder {
         // Setup a results accumulator
         let mut res_builder = ResultsBuilder::new(&cfg, evgen.event_weight());
 
@@ -150,15 +145,13 @@ fn main() -> Result<()> {
 
     // NOTE: This is where the FORTRAN code would normalize histograms
 
-
     // ### RESULTS DISPLAY AND STORAGE ###
 
     // Measure how much time has elapsed
     let elapsed_time = saved_time.elapsed();
-    
+
     // Send the results to the standard output and to disk and we're done
-    output::dump_results(&cfg, &result, elapsed_time)
-           .context("Failed to output the results")?;
+    output::dump_results(&cfg, &result, elapsed_time).context("Failed to output the results")?;
 
     // ...and we're done
     Ok(())

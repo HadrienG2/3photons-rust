@@ -1,19 +1,10 @@
 //! Mechanism for loading and sharing the simulation configuration
 
-use crate::{
-    evcut::EventCut,
-    numeric::Real,
-    Result,
-};
+use crate::{evcut::EventCut, numeric::Real, Result};
 
 use failure::{ResultExt, SyncFailure};
 
-use std::{
-    fs::File,
-    io::Read,
-    str::FromStr,
-};
-
+use std::{fs::File, io::Read, str::FromStr};
 
 /// This struct gives access to the simulation's configuration
 pub struct Configuration {
@@ -77,28 +68,30 @@ impl Configuration {
         // We will iterate over the configuration items. In 3photons' simple
         // config file format, these should be the first non-whitespace chunk of
         // text on each line. We will ignore blank lines.
-        let mut config_iter =
-            config_str.lines()
-                      .filter_map(|line| line.split_whitespace()
-                                             .next());
+        let mut config_iter = config_str
+            .lines()
+            .filter_map(|line| line.split_whitespace().next());
 
         // This closure fetches the next configuration item, tagging it with
         // the name of the configuration field which it is supposed to fill to
         // ease error reporting, and handling unexpected end-of-file too.
         let mut next_item = |name: &'static str| -> Result<ConfigItem> {
-            config_iter.next()
-                       .map(|data| ConfigItem::new(name, data))
-                       .ok_or_else(|| format_err!("Missing configuration of {}", name))
+            config_iter
+                .next()
+                .map(|data| ConfigItem::new(name, data))
+                .ok_or_else(|| format_err!("Missing configuration of {}", name))
         };
 
         // Decode the configuration items into concrete values
         let config = Configuration {
             num_events: next_item("num_events")?.parse::<usize>()?,
             e_tot: next_item("e_tot")?.parse::<Real>()?,
-            event_cut: EventCut::new(next_item("a_cut")?.parse::<Real>()?,
-                                     next_item("b_cut")?.parse::<Real>()?,
-                                     next_item("e_min")?.parse::<Real>()?,
-                                     next_item("sin_cut")?.parse::<Real>()?),
+            event_cut: EventCut::new(
+                next_item("a_cut")?.parse::<Real>()?,
+                next_item("b_cut")?.parse::<Real>()?,
+                next_item("e_min")?.parse::<Real>()?,
+                next_item("sin_cut")?.parse::<Real>()?,
+            ),
             alpha: next_item("alpha")?.parse::<Real>()?,
             alpha_z: next_item("alpha_z")?.parse::<Real>()?,
             convers: next_item("convers")?.parse::<Real>()?,
@@ -117,9 +110,11 @@ impl Configuration {
         config.print();
 
         // A sensible simulation must run for at least one event
-        ensure!(config.num_events > 0,
-                "Invalid event count: {}",
-                config.num_events);
+        ensure!(
+            config.num_events > 0,
+            "Invalid event count: {}",
+            config.num_events
+        );
 
         // NOTE: We don't support the original code's PAW-based plotting
         //       features, so we make sure that it was not enabled.
@@ -128,10 +123,11 @@ impl Configuration {
         // NOTE: We do not support the initial code's debugging feature which
         //       displays all intermediary results during sampling. Such a
         //       feature should be set up at build time to avoid run-time costs.
-        ensure!(!config.impr, "Individual result printing is not supported. \
-                               This debugging feature comes as a run-time \
-                               performance cost even when unused. It should be \
-                               implemented at compile-time instead.");
+        ensure!(
+            !config.impr,
+            "Individual result printing is not supported. This debugging feature has a run-time \
+             performance cost even when unused. It should be implemented at compile-time instead."
+        );
 
         // If nothing bad occured, we can now return the configuration
         Ok(config)
@@ -160,7 +156,6 @@ impl Configuration {
     }
 }
 
-
 /// A value from the configuration file, tagged with the struct field which it
 /// is supposed to map for error reporting purposes.
 struct ConfigItem<'a> {
@@ -171,15 +166,13 @@ struct ConfigItem<'a> {
 impl<'a> ConfigItem<'a> {
     /// Build a config item from a struct field tag and raw iterator data
     fn new(name: &'static str, data: &'a str) -> Self {
-        Self {
-            name,
-            data,
-        }
+        Self { name, data }
     }
 
     /// Parse this data using Rust's standard parsing logic
     fn parse<T: FromStr>(self) -> Result<T>
-        where <T as FromStr>::Err: ::std::error::Error + Send + 'static
+    where
+        <T as FromStr>::Err: ::std::error::Error + Send + 'static,
     {
         self.data
             .parse::<T>()
@@ -195,7 +188,7 @@ impl<'a> ConfigItem<'a> {
             ".true." => Ok(true),
             ".false." => Ok(false),
             // Delegate other booleans to the standard Rust parser
-            _ => self.parse::<bool>()
+            _ => self.parse::<bool>(),
         }
     }
 }

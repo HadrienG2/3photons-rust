@@ -2,35 +2,24 @@
 
 use crate::{
     event::{
-        Event,
-        INCOMING_COUNT,
-        INCOMING_E_M as E_M,
-        INCOMING_E_P as E_P,
-        OUTGOING_COUNT,
-        ParticleMatrix,
-        ParticleVector,
+        Event, ParticleMatrix, ParticleVector, INCOMING_COUNT, INCOMING_E_M as E_M,
+        INCOMING_E_P as E_P, OUTGOING_COUNT,
     },
     linalg::{
         dimension::*,
         momentum::{E, X, Y, Z},
     },
     numeric::{
-        Complex,
         functions::*,
-        Real,
-        reals::{
-            consts::SQRT_2,
-            MIN_POSITIVE,
-        }
+        reals::{consts::SQRT_2, MIN_POSITIVE},
+        Complex, Real,
     },
 };
 
 use num_traits::Zero;
 
-
 /// Square root of eight
 const RAC8: Real = 2. * SQRT_2;
-
 
 /// Massless 4-momenta spinor inner products
 pub struct SpinorProducts {
@@ -57,23 +46,20 @@ impl SpinorProducts {
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
         let xx = (p_e + p_z).map(sqrt);
-        let fx = ParticleVector::from_fn(|par, _|
+        let fx = ParticleVector::from_fn(|par, _| {
             if xx[par] > MIN_POSITIVE {
                 Complex::new(p_x[par] / xx[par], p_y[par] / xx[par])
             } else {
                 Complex::new(sqrt(2. * p_e[par]), 0.)
             }
-        );
+        });
 
         // Fill up the Gram matrix
         // TODO: Can we leverage antisymmetry + zero diagonal better?
         Self {
-            sx: ParticleMatrix::from_fn(|i, j| {
-                fx[i] * xx[j] - fx[j] * xx[i]
-            }),
+            sx: ParticleMatrix::from_fn(|i, j| fx[i] * xx[j] - fx[j] * xx[i]),
         }
     }
-
 
     // ### GRAM MATRIX ACCESSORS ###
 
@@ -87,7 +73,6 @@ impl SpinorProducts {
     fn t(&self, i: usize, j: usize) -> Complex {
         -conj(self.s(i, j))
     }
-
 
     // ### AMPLITUDE COMPUTATIONS ###
 
@@ -142,15 +127,15 @@ impl SpinorProducts {
     /// Standard amplitude for helicities ++-
     #[inline]
     fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3)) /
-            (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
+        -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3))
+            / (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
     }
 
     /// Standard amplitude for helicities +--
     #[inline]
     fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1)) /
-            (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
+        -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1))
+            / (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
     }
 
     /// Anomalous amplitude 𝛽₊ for helicities ++-
@@ -168,20 +153,23 @@ impl SpinorProducts {
     /// Anomalous amplitude 𝛽₋ for helicities +++
     #[inline]
     fn bm_ppp(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(E_M, E_P) * (sqr(self.t(k1, k2) * self.t(k3, E_P)) +
-                                    sqr(self.t(k1, k3) * self.t(k2, E_P)) +
-                                    sqr(self.t(k2, k3) * self.t(k1, E_P)))
+        -RAC8
+            * self.s(E_M, E_P)
+            * (sqr(self.t(k1, k2) * self.t(k3, E_P))
+                + sqr(self.t(k1, k3) * self.t(k2, E_P))
+                + sqr(self.t(k2, k3) * self.t(k1, E_P)))
     }
 
     /// Anomalous amplitude 𝛽₋ for helicities ---
     #[inline]
     fn bm_mmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(E_M, E_P) * (sqr(self.s(k1, E_M) * self.s(k2, k3)) +
-                                    sqr(self.s(k2, E_M) * self.s(k1, k3)) +
-                                    sqr(self.s(k3, E_M) * self.s(k1, k2)))
+        -RAC8
+            * self.t(E_M, E_P)
+            * (sqr(self.s(k1, E_M) * self.s(k2, k3))
+                + sqr(self.s(k2, E_M) * self.s(k1, k3))
+                + sqr(self.s(k3, E_M) * self.s(k1, k2)))
     }
 }
-
 
 /// Output photon helicities (M is - and P is +)
 #[allow(missing_docs)]

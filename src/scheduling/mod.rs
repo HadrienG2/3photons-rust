@@ -1,14 +1,15 @@
 //! This module takes care of scheduling the simulation work, encapsulating use
 //! of multiple threads and anything else that will come in the future
 
-#[cfg(not(feature = "multi-threading"))] mod sequential;
-#[cfg(feature = "multi-threading")] mod multi_threading;
+#[cfg(feature = "multi-threading")]
+mod multi_threading;
+#[cfg(not(feature = "multi-threading"))]
+mod sequential;
 
 use crate::{
     random::RandomGenerator,
     resfin::{FinalResults, ResultsBuilder},
 };
-
 
 /// Size of the simulated event batches
 ///
@@ -22,7 +23,6 @@ use crate::{
 ///
 const EVENT_BATCH_SIZE: usize = 10_000;
 
-
 /// Run the simulation in the manner that was configured at build time.
 ///
 /// Takes as parameters the total number of events to be simulated, and a
@@ -33,9 +33,7 @@ const EVENT_BATCH_SIZE: usize = 10_000;
 ///
 pub fn run_simulation<'a>(
     num_events: usize,
-    simulate_events: impl Send + Sync
-                          + Fn(usize,
-                               &mut RandomGenerator) -> ResultsBuilder<'a>
+    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'a>,
 ) -> FinalResults<'a> {
     // Check that the user is being reasonable (should have already been checked
     // at configuration time, but bugs can happen...)
@@ -48,15 +46,15 @@ pub fn run_simulation<'a>(
     let results_builder = {
         // ...in sequential mode
         #[cfg(not(feature = "multi-threading"))]
-        { sequential::run_simulation_impl(num_events,
-                                          rng,
-                                          simulate_events) }
+        {
+            sequential::run_simulation_impl(num_events, rng, simulate_events)
+        }
 
         // ...in multi-threaded mode
         #[cfg(feature = "multi-threading")]
-        { multi_threading::run_simulation_impl(num_events,
-                                               rng,
-                                               simulate_events) }
+        {
+            multi_threading::run_simulation_impl(num_events, rng, simulate_events)
+        }
     };
 
     // Finalize the results

@@ -2,7 +2,6 @@
 //! of that library (e.g. lack of vectors of size 8) and implements some domain-
 //! specific 4-momentum handling logic.
 
-
 /// Re-export of nalgebra's type-level integers
 pub mod dimension {
     pub use nalgebra::dimension::*;
@@ -10,27 +9,12 @@ pub mod dimension {
 
 /// Re-export of nalgebra's matrix and vector types + some extra definitions
 pub mod vecmat {
-    use nalgebra::{
-        dimension::*,
-        MatrixMN,
-        VectorN,
-    };
+    use nalgebra::{dimension::*, MatrixMN, VectorN};
 
     // Re-export of various matrix and vector types from nalgebra
     pub use nalgebra::{
-        Vector2,
-        Vector3,
-        Vector5,
-        Matrix2x3,
-        Matrix2x4,
-        Matrix2x5,
-        Matrix3,
-        Matrix3x2,
-        Matrix3x4,
-        Matrix4x3,
-        Matrix5,
-        Matrix5x4,
-        MatrixSlice,
+        Matrix2x3, Matrix2x4, Matrix2x5, Matrix3, Matrix3x2, Matrix3x4, Matrix4x3, Matrix5,
+        Matrix5x4, MatrixSlice, Vector2, Vector3, Vector5,
     };
 
     /// An 8-dimensional vector type
@@ -48,10 +32,7 @@ pub mod vecmat {
 pub mod momentum {
     use crate::numeric::Real;
 
-    use nalgebra::{
-        dimension::*,
-        Vector4
-    };
+    use nalgebra::{dimension::*, Vector4};
 
     /// Relativistic 4-momentum
     pub type Momentum = Vector4<Real>;

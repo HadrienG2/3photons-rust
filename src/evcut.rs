@@ -4,14 +4,10 @@ use crate::{
     event::{Event, OUTGOING_COUNT},
     linalg::{
         dimension::*,
-        momentum::{E, X, xyz},
+        momentum::{xyz, E, X},
     },
-    numeric::{
-        functions::*,
-        Real
-    },
+    numeric::{functions::*, Real},
 };
-
 
 /// Cuts on generated events
 pub struct EventCut {
@@ -40,10 +36,11 @@ impl EventCut {
     }
 
     /// Decide whether a generated event passes the cut or should be rejected
-    pub fn keep(&self, event: &Event) -> bool
-    {
+    pub fn keep(&self, event: &Event) -> bool {
         // Check if the outgoing photons pass the energy cut
-        if event.min_photon_energy() < self.e_min { return false; }
+        if event.min_photon_energy() < self.e_min {
+            return false;
+        }
 
         // Get the incoming electron 4-momentum and outgoing photon 4-momenta
         let p_el = event.electron_momentum();
@@ -56,7 +53,9 @@ impl EventCut {
             let cos_num = p_out_xyz * xyz(&p_el);
             let cos_denom = p_out_e * p_el[E];
             for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
-                if abs(num) > self.a_cut * denom { return false; }
+                if abs(num) > self.a_cut * denom {
+                    return false;
+                }
             }
         }
 
@@ -70,7 +69,9 @@ impl EventCut {
         let cos_num_1x23 = p_ph23_xyz * xyz(&p_ph1);
         let cos_denom_1x23 = p_ph23_e * p_ph1[E];
         for (&num, denom) in cos_num_1x23.iter().zip(cos_denom_1x23.iter()) {
-            if num > self.b_cut * denom { return false; }
+            if num > self.b_cut * denom {
+                return false;
+            }
         }
 
         // Check if the (photon2, photon3) angle passes the cut
@@ -81,20 +82,23 @@ impl EventCut {
         let p_ph3_xyz = p_ph3.fixed_columns::<U3>(X);
         let cos_num_2x3 = p_ph2_xyz.dot(&p_ph3_xyz);
         let cos_denom_2x3 = p_ph2[E] * p_ph3[E];
-        if cos_num_2x3 > self.b_cut * cos_denom_2x3 { return false; }
+        if cos_num_2x3 > self.b_cut * cos_denom_2x3 {
+            return false;
+        }
 
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
         assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
-        let n_ppp = xyz(&event.outgoing_momentum(0))
-                        .cross(&xyz(&event.outgoing_momentum(1)));
+        let n_ppp = xyz(&event.outgoing_momentum(0)).cross(&xyz(&event.outgoing_momentum(1)));
 
         // Compute the cosine of the angle between the beam and this vector
         let cos_num = xyz(&p_el).dot(&n_ppp);
         let cos_denom = p_el[E] * n_ppp.norm();
 
         // Check if the (beam, normal to photon plane) angle passes the cut
-        if abs(cos_num) < self.sin_cut * cos_denom { return false; }
+        if abs(cos_num) < self.sin_cut * cos_denom {
+            return false;
+        }
 
         // If all checks passed, we're good
         true

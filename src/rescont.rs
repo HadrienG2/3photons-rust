@@ -3,17 +3,10 @@
 use crate::{
     coupling::Couplings,
     event::{Event, OUTGOING_COUNT},
-    linalg::{
-        dimension::*,
-        vecmat::*,
-    },
-    numeric::{
-        functions::*,
-        Real
-    },
+    linalg::{dimension::*, vecmat::*},
+    numeric::{functions::*, Real},
     spinor::SpinorProducts,
 };
-
 
 /// Number of results (matrix elements)
 pub const NUM_RESULTS: usize = 5;
@@ -35,7 +28,6 @@ pub const R_MX: usize = 3;
 
 /// Index of the imaginary part of the mixed matrix element
 pub const I_MX: usize = 4;
-
 
 /// Array of square matrix elements contribution with detail of helicities
 pub struct ResultContribution {
@@ -64,9 +56,7 @@ impl ResultContribution {
         // Compute the helicity amplitudes, formerly known as a, b_p and b_m,
         // for each possible output spin configuration
         use crate::spinor::PhotonHelicities::*;
-        let helicities = Vector8::from_column_slice(
-            &[MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP]
-        );
+        let helicities = Vector8::from_column_slice(&[MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP]);
         let a_amps = helicities.map(|hel| spinor.a(hel) * couplings.g_a);
         let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_bp);
         let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_bm);
@@ -74,15 +64,13 @@ impl ResultContribution {
 
         // Compute the matrix elements
         ResultContribution {
-            m2x: Matrix5x8::from_fn(|contrib, hel| {
-                match contrib {
-                    A => a_amps[hel].norm_sqr(),
-                    B_P => bp_amps[hel].norm_sqr(),
-                    B_M => bm_amps[hel].norm_sqr(),
-                    R_MX => mixed_amps[hel].re,
-                    I_MX => mixed_amps[hel].im,
-                    _ => unreachable!(),
-                }
+            m2x: Matrix5x8::from_fn(|contrib, hel| match contrib {
+                A => a_amps[hel].norm_sqr(),
+                B_P => bp_amps[hel].norm_sqr(),
+                B_M => bm_amps[hel].norm_sqr(),
+                R_MX => mixed_amps[hel].re,
+                I_MX => mixed_amps[hel].im,
+                _ => unreachable!(),
             }),
         }
     }
@@ -96,7 +84,7 @@ impl ResultContribution {
     #[allow(dead_code)]
     pub fn display(&self) {
         assert_eq!(OUTGOING_COUNT, 3);
-        
+
         for index in 0..NUM_RESULTS {
             println!("Contribution {}", index);
             println!("---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++");
