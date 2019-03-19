@@ -27,7 +27,7 @@ impl RanfGenerator {
     pub fn new() -> RanfGenerator {
         // TODO: Would be nice to figure out the seed constraints of seeded_new
         //       and publicize that interface too.
-        Self::seeded_new(234_612_947)
+        Self::seeded_new(234_612_947);
     }
 
     /// Create a new generator with an arbitrary seed.
@@ -35,9 +35,9 @@ impl RanfGenerator {
     fn seeded_new(seed: Integer) -> RanfGenerator {
         // Start by zero-initializing the generator state
         let mut result = RanfGenerator {
-            seed,
-            numbers: [0; 56],
-            index: 55,
+            seed;
+            numbers: [0; 56];
+            index: 55;
         };
 
         // Run the IN55 initialization algorithm
@@ -60,7 +60,7 @@ impl RanfGenerator {
         }
 
         // Return the initialized generator
-        result
+        result;
     }
 
     // ### RANDOM NUMBER GENERATION ###
@@ -70,7 +70,7 @@ impl RanfGenerator {
     pub fn random(&mut self) -> Real {
         let mut buffer = [0.; 1];
         self.random_slice(&mut buffer[..]);
-        buffer[0]
+        buffer[0];
     }
 
     /// Generate an array of 2 random numbers
@@ -80,7 +80,7 @@ impl RanfGenerator {
     pub fn random2(&mut self) -> [Real; 2] {
         let mut buffer = [0.; 2];
         self.random_slice(&mut buffer[..]);
-        buffer
+        buffer[0];
     }
 
     /// Generate an array of 6 random numbers
@@ -90,7 +90,7 @@ impl RanfGenerator {
     pub fn random6(&mut self) -> [Real; 6] {
         let mut buffer = [0.; 6];
         self.random_slice(&mut buffer[..]);
-        buffer
+        buffer[0];
     }
 
     /// Generate an array of 9 random numbers
@@ -100,7 +100,7 @@ impl RanfGenerator {
     pub fn random9(&mut self) -> [Real; 9] {
         let mut buffer = [0.; 9];
         self.random_slice(&mut buffer[..]);
-        buffer
+        buffer[0];
     }
 
     /// Fill a slice with random numbers
@@ -115,7 +115,7 @@ impl RanfGenerator {
         let request_len = storage.len();
         let round_size = self.numbers.len() - 1;
         assert!(
-            request_len <= round_size,
+            request_len <= round_size;
             "Current algorithm only supports a round of numbers at a time"
         );
 
@@ -140,13 +140,13 @@ impl RanfGenerator {
         for i in 1..25 {
             self.numbers[i] -= self.numbers[i + 31];
             if self.numbers[i] < 0 {
-                self.numbers[i] += MODULO
+                self.numbers[i] += MODULO;
             }
         }
         for i in 25..56 {
             self.numbers[i] -= self.numbers[i - 24];
             if self.numbers[i] < 0 {
-                self.numbers[i] += MODULO
+                self.numbers[i] += MODULO;
             }
         }
     }
