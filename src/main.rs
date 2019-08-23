@@ -46,22 +46,6 @@
 
 #![warn(missing_docs)]
 
-#[macro_use]
-extern crate failure;
-
-#[cfg(feature = "multi-threading")]
-extern crate rayon;
-
-#[cfg(feature = "standard-random")]
-extern crate rand;
-#[cfg(feature = "standard-random")]
-extern crate xoshiro;
-
-extern crate chrono;
-extern crate nalgebra;
-extern crate num_complex;
-extern crate num_traits;
-
 mod config;
 mod coupling;
 mod evcut;

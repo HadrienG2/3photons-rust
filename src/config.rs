@@ -2,7 +2,7 @@
 
 use crate::{evcut::EventCut, numeric::Real, Result};
 
-use failure::{ResultExt, SyncFailure};
+use failure::{ensure, format_err, ResultExt, SyncFailure};
 
 use std::{fs::File, io::Read, str::FromStr};
 

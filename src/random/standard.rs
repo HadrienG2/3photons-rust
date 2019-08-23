@@ -2,13 +2,13 @@
 //! abstractions of the standard "random" crate.
 
 use crate::numeric::Real;
-use rand::Rng;
+use rand::{SeedableRng, Rng};
 
 // Select random number generation engine in use
 #[cfg(feature = "f32")]
-type Engine = ::xoshiro::Xoshiro128Plus;
+type Engine = rand_xoshiro::Xoshiro128Plus;
 #[cfg(not(feature = "f32"))]
-type Engine = ::xoshiro::Xoshiro256Plus;
+type Engine = rand_xoshiro::Xoshiro256Plus;
 
 /// Facade which makes the rand crate look like RanfGenerator
 #[derive(Clone)]
@@ -20,7 +20,7 @@ impl RandGenerator {
     // Spawn a new random number generator
     pub fn new() -> Self {
         Self {
-            rng: Engine::from_seed_u64(12345),
+            rng: Engine::seed_from_u64(12345),
         }
     }
 
