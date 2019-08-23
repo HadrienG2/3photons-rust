@@ -28,8 +28,8 @@ num-complex = "0.2"
 num-traits = "0.2"
 # These deps are only needed when some features are enabled
 rand = { version = "0.7", optional = true }
-rayon = { version = "1.1", optional = true }
 rand_xoshiro = { version = "0.3", optional = true }
+rayon = { version = "1.1", optional = true }
 
 
 [profile.release]
