@@ -22,17 +22,13 @@ pub mod vecmat {
 
     /// A 5x8 matrix type
     pub type Matrix5x8<T> = MatrixMN<T, U5, U8>;
-
-    /// Convenience shorthand for defining vector slices
-    pub type VectorSlice<'a, T, SliceDim, ParentDim> =
-        MatrixSlice<'a, T, SliceDim, U1, U1, ParentDim>;
 }
 
 /// Handling of relativistic 4-momenta
 pub mod momentum {
     use crate::numeric::Real;
 
-    use nalgebra::{dimension::*, Vector4};
+    use nalgebra::Vector4;
 
     /// Relativistic 4-momentum
     pub type Momentum = Vector4<Real>;
@@ -48,9 +44,4 @@ pub mod momentum {
 
     /// Convenience const for accessing the E coordinate of a 4-vector
     pub const E: usize = 3;
-
-    /// Get a read-only view on the spatial part of a 4-momentum
-    pub fn xyz(m: &Momentum) -> super::vecmat::VectorSlice<Real, U3, U4> {
-        m.fixed_rows::<U3>(X)
-    }
 }

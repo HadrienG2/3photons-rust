@@ -3,7 +3,7 @@
 use crate::{
     linalg::{
         dimension::*,
-        momentum::{xyz, Momentum, E, X, Y, Z},
+        momentum::{Momentum, E, X, Y, Z},
         vecmat::*,
     },
     numeric::{
@@ -126,19 +126,19 @@ impl EventGenerator {
 
         // Calculate the parameters of the conformal transformation
         let r = &Momentum::from_fn(|coord, _| q.fixed_rows::<U1>(coord).iter().sum());
-        let r_norm_2 = r[E] * r[E] - xyz(r).norm_squared();
+        let r_norm_2 = r[E] * r[E] - r.xyz().norm_squared();
         let alpha = self.e_tot / r_norm_2;
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 
         // Perform the conformal transformation from Q's to output 4-momenta
         let tr_q = q.transpose();
-        let rq = tr_q.fixed_columns::<U3>(X) * xyz(r);
+        let rq = tr_q.fixed_columns::<U3>(X) * r.xyz();
         let q_e = tr_q.fixed_columns::<U1>(E);
         let mut p_e = alpha * (r[E] * q_e - rq);
         let tr_q_xyz = tr_q.fixed_columns::<U3>(X);
         let b_rq_e = beta * rq - q_e;
-        let mut p_xyz = alpha * (r_norm * tr_q_xyz + b_rq_e * xyz(r).transpose());
+        let mut p_xyz = alpha * (r_norm * tr_q_xyz + b_rq_e * r.xyz().transpose());
 
         // Sort the output 4-momenta in order of decreasing energy (if enabled)
         if cfg!(not(feature = "no-photon-sorting")) {

@@ -4,7 +4,7 @@ use crate::{
     event::{Event, OUTGOING_COUNT},
     linalg::{
         dimension::*,
-        momentum::{xyz, E, X},
+        momentum::{E, X},
     },
     numeric::{functions::*, Real},
 };
@@ -50,7 +50,7 @@ impl EventCut {
 
         // Check if the (beam, photon) angles pass the cut
         {
-            let cos_num = p_out_xyz * xyz(&p_el);
+            let cos_num = p_out_xyz * p_el.xyz();
             let cos_denom = p_out_e * p_el[E];
             for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
                 if abs(num) > self.a_cut * denom {
@@ -66,7 +66,7 @@ impl EventCut {
         let p_ph23 = p_out.fixed_rows::<U2>(1);
         let p_ph23_xyz = p_ph23.fixed_columns::<U3>(X);
         let p_ph23_e = p_ph23.fixed_columns::<U1>(E);
-        let cos_num_1x23 = p_ph23_xyz * xyz(&p_ph1);
+        let cos_num_1x23 = p_ph23_xyz * p_ph1.xyz();
         let cos_denom_1x23 = p_ph23_e * p_ph1[E];
         for (&num, denom) in cos_num_1x23.iter().zip(cos_denom_1x23.iter()) {
             if num > self.b_cut * denom {
@@ -89,10 +89,10 @@ impl EventCut {
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
         assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
-        let n_ppp = xyz(&event.outgoing_momentum(0)).cross(&xyz(&event.outgoing_momentum(1)));
+        let n_ppp = event.outgoing_momentum(0).xyz().cross(&event.outgoing_momentum(1).xyz());
 
         // Compute the cosine of the angle between the beam and this vector
-        let cos_num = xyz(&p_el).dot(&n_ppp);
+        let cos_num = p_el.xyz().dot(&n_ppp);
         let cos_denom = p_el[E] * n_ppp.norm();
 
         // Check if the (beam, normal to photon plane) angle passes the cut

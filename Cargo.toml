@@ -23,7 +23,7 @@ standard-random = ["rand", "rand_xoshiro"]
 [dependencies]
 chrono = "0.4"
 failure = { version = "0.1", default-features = false, features = ["std"] }
-nalgebra = "0.16"
+nalgebra = "0.18"
 num-complex = "0.2"
 num-traits = "0.2"
 # These deps are only needed when some features are enabled
