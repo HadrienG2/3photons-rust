@@ -2,7 +2,7 @@
 
 use crate::{evcut::EventCut, numeric::Real, Result};
 
-use failure::{ensure, format_err, ResultExt, SyncFailure};
+use anyhow::{ensure, Context, Error, format_err};
 
 use std::{fs::File, io::Read, str::FromStr};
 
@@ -172,11 +172,11 @@ impl<'a> ConfigItem<'a> {
     /// Parse this data using Rust's standard parsing logic
     fn parse<T: FromStr>(self) -> Result<T>
     where
-        <T as FromStr>::Err: ::std::error::Error + Send + 'static,
+        <T as FromStr>::Err: ::std::error::Error + Send + Sync + 'static,
     {
         self.data
             .parse::<T>()
-            .map_err(SyncFailure::new)
+            .map_err(Error::new)
             .context(format!("Could not parse configuration of {}", self.name))
             .map_err(|e| e.into())
     }

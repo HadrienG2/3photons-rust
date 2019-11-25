@@ -59,17 +59,17 @@ mod resfin;
 mod scheduling;
 mod spinor;
 
+use anyhow::Context;
+
 use crate::{
     config::Configuration, coupling::Couplings, event::EventGenerator, random::RandomGenerator,
     rescont::ResultContribution, resfin::ResultsBuilder,
 };
 
-use failure::ResultExt;
-
 use std::time::Instant;
 
-/// We'll use failure's type-erased result type throughout the application
-type Result<T> = std::result::Result<T, failure::Error>;
+/// We'll use anyhow's type-erased result type throughout the application
+type Result<T> = anyhow::Result<T>;
 
 /// This will act as our main function, with suitable error handling
 fn main() -> Result<()> {
