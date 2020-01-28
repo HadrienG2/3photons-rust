@@ -59,7 +59,6 @@ jobs:
           command: build
           args: --release
 
-      # TODO: Add debug build w/ less iterations
       # TODO: Test multiple features
       # TODO: Test output with something like numdiff
       - name: Run the program
