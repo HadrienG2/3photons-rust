@@ -36,18 +36,13 @@ jobs:
           args: --all -- --check
 
 
-  # Clippy and rustc lints shouldn't depend on the host OS since this crate
-  # contains no OS-specific code. But the warnings may depend on the host Rust
-  # version. We should be clean on minimum supported version and latest stable.
+  # Clippy and rustc lints depend on cargo features, but shouldn't depend on the
+  # host OS since this crate contains no OS-specific code. We don't care about
+  # warnings on the minimum supported version, only about building and running.
   lints:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        rust:
-          - stable
-          - 1.37.0  # Minimum supported Rust version
-        # TODO: Add feature matrix too
+    # TODO: Add feature matrix
 
     env:
       RUSTFLAGS: -D warnings
@@ -61,7 +56,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.rust }}
+          toolchain: stable
           override: true
           components: clippy
 
@@ -81,13 +76,13 @@ jobs:
           restore_keys: |
             cargo-index-${{ runner.os }}
 
-      - name: Cache Cargo check build
+      - name: Cache Cargo check target directory
         uses: actions/cache@v1
         with:
           path: target
-          key: cargo-build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-build_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+            cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
@@ -120,9 +115,6 @@ jobs:
           - 1.37.0  # Minimum supported Rust version
         # TODO: Add feature matrix too
 
-    env:
-      RUSTFLAGS: -D warnings
-
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -151,13 +143,13 @@ jobs:
           restore_keys: |
             cargo-index-${{ runner.os }}
 
-      - name: Cache Cargo release build
+      - name: Cache Cargo release target directory
         uses: actions/cache@v1
         with:
           path: target
-          key: cargo-build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-build_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+            cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Roll a build
         uses: actions-rs/cargo@v1
