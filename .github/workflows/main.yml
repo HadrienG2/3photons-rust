@@ -30,22 +30,6 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Cache Cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: cargo-registry-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            cargo-registry-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
-
-      - name: Cache Cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: cargo-index-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
-            cargo-index-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
-
       - name: Cache Cargo build
         uses: actions/cache@v1
         with:
