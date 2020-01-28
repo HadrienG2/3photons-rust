@@ -19,7 +19,7 @@ jobs:
           #       workflow that's run every 6 weeks
           - beta
           - nightly
-          - 1.31.0  # MSRV
+          - 1.37.0  # MSRV
 
     steps:
       - name: Checkout sources
