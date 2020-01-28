@@ -47,7 +47,8 @@ jobs:
       - name: Build the code
         uses: actions-rs/cargo@v1
         with:
-          command: build --release
+          command: build
+          args: --release
 
       - name: Check format
         uses: actions-rs/cargo@v1
@@ -67,4 +68,5 @@ jobs:
       - name: Run the program
         uses: actions-rs/cargo@v1
         with:
-          command: run --release
+          command: run
+          args:  --release
