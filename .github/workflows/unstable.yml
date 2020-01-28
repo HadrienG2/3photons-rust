@@ -1,8 +1,8 @@
-# Based on templates from https://github.com/actions-rs
+on:
+  schedule:
+    - cron: '0 0 1,15 * *'
 
-on: [push, pull_request]
-
-name: Main CI
+name: Unstable Rust CI
 
 jobs:
   ci:
@@ -14,18 +14,12 @@ jobs:
           - windows-latest
           - macOS-latest
         rust:
-          - stable
-          - 1.37.0  # Minimum Supported Rust Version
+          - beta
+          - nightly
 
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-
-      - name: Cache Rust toolchains
-        uses: actions/cache@v1
-        with:
-          path: $HOME/.rustup
-          key: ${{ runner.os }}-rustup-${{ matrix.rust }}
 
       - name: Install toolchain
         id: toolchain
@@ -35,24 +29,6 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
           components: rustfmt, clippy
-
-      - name: Cache Cargo registry
-        uses: actions/cache@v1
-        with:
-          path: $HOME/.cargo/registry
-          key: ${{ runner.os }}-cargo_registry-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache Cargo index
-        uses: actions/cache@v1
-        with:
-          path: $HOME/.cargo/git
-          key: ${{ runner.os }}-cargo_index-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache Cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo_build-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
