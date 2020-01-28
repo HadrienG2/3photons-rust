@@ -72,31 +72,34 @@ jobs:
           override: true
           components: clippy
 
+      - name: Make cargo feature set hashable
+        run: echo ${{ matrix.features }} > __features.log
+
       - name: Cache Cargo registry
         uses: actions/cache@v1
         with:
           path: ~/.cargo/registry
-          key: cargo-registry-${{ runner.os }}-features_${{ matrix.features }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-${{ runner.os }}-features_${{ matrix.features }}
+            cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
             cargo-registry-${{ runner.os }}
 
       - name: Cache Cargo index
         uses: actions/cache@v1
         with:
           path: ~/.cargo/git
-          key: cargo-index-${{ runner.os }}-features_${{ matrix.features }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-index-${{ runner.os }}-features_${{ matrix.features }}
+            cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
             cargo-index-${{ runner.os }}
 
       - name: Cache Cargo check target directory
         uses: actions/cache@v1
         with:
           path: target
-          key: cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ matrix.features }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ matrix.features }}
+            cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
             cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Type-check the program
@@ -153,31 +156,34 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
+      - name: Make cargo feature set hashable
+        run: echo ${{ matrix.features }} > __features.log
+
       - name: Cache Cargo registry
         uses: actions/cache@v1
         with:
           path: ~/.cargo/registry
-          key: cargo-registry-${{ runner.os }}-features_${{ matrix.features }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-${{ runner.os }}-features_${{ matrix.features }}
+            cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
             cargo-registry-${{ runner.os }}
 
       - name: Cache Cargo index
         uses: actions/cache@v1
         with:
           path: ~/.cargo/git
-          key: cargo-index-${{ runner.os }}-features_${{ matrix.features }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-index-${{ runner.os }}-features_${{ matrix.features }}
+            cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
             cargo-index-${{ runner.os }}
 
       - name: Cache Cargo release target directory
         uses: actions/cache@v1
         with:
           path: target
-          key: cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ matrix.features }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ matrix.features }}
+            cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
             cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Roll a build
