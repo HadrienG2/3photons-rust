@@ -77,8 +77,8 @@ As of now, this version of 3photons is the fastest available by a good margin.
 To encourage future competition and contributions, let me reveal a few known
 performance bottlenecks (as of 2018-10-02):
 
-- The `faster-evgen` version spends ~20% of its time computing logarithm using a
-  scalar libm function. There is performance to be gained here through
+- The `faster-evgen` version spends ~20% of its time computing logarithms using
+  a scalar libm function. There is performance to be gained here through
   vectorization and "good enough" mathematical approximations.
 - 30~40% of the remaining program time is spent in the complex number
   manipulations of `spinor.rs`. Someone with more mathematical skills than me
