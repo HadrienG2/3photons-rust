@@ -15,8 +15,8 @@ jobs:
           - macOS-latest
         rust:
           - stable
-          # TODO: Once workflow's looking good, extract nightly+beta in a nightly.yml
-          #       workflow that's run every 6 weeks
+          # TODO: Once workflow's looking good, extract nightly+beta in a
+          #       nightly.yml workflow that's run every 6 weeks
           - beta
           - nightly
           - 1.37.0  # Minimum Supported Rust Version
