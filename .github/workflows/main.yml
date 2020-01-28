@@ -74,6 +74,7 @@ jobs:
 
       - name: Make cargo feature set hashable
         run: echo ${{ matrix.features }} > __features.log
+        shell: bash
 
       - name: Cache Cargo registry
         uses: actions/cache@v1
@@ -158,6 +159,7 @@ jobs:
 
       - name: Make cargo feature set hashable
         run: echo ${{ matrix.features }} > __features.log
+        shell: bash
 
       - name: Cache Cargo registry
         uses: actions/cache@v1
