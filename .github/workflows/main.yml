@@ -1,10 +1,13 @@
 # Based on templates from https://github.com/actions-rs
+#
+# FIXME: For now, must be manually kept in sync with unstable.yml
 
 on: [push, pull_request]
 
 name: Main CI
 
 jobs:
+  # TODO: Split into multiple jobs, enabling parallelization
   ci:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -20,6 +23,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
+
+      # NOTE: We don't cache the toolchain because bringing back the cache was
+      #       measured to take more time than downloading the toolchain.
 
       - name: Install toolchain
         id: toolchain

@@ -1,3 +1,8 @@
+# Evil twin of main.yml which checks that 3photons remains compatible with
+# latest Rust developments every once in a while.
+#
+# FIXME: For now, must be manually kept in sync with main.yml
+
 on:
   schedule:
     - cron: '0 0 1,15 * *'
@@ -5,6 +10,7 @@ on:
 name: Unstable Rust CI
 
 jobs:
+  # TODO: Split into multiple jobs, enabling parallelization
   ci:
     runs-on: ${{ matrix.os }}
     strategy:
