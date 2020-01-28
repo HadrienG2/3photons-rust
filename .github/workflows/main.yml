@@ -41,21 +41,21 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache Cargo registry
-        if: ${{ matrix.rust }} != 'nightly'
+        if: matrix.rust != 'nightly'
         uses: actions/cache@v1
         with:
           path: $HOME/.cargo/registry
           key: ${{ runner.os }}-cargo_registry-rust_${{ steps.toolchain.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache Cargo index
-        if: ${{ matrix.rust }} != 'nightly'
+        if: matrix.rust != 'nightly'
         uses: actions/cache@v1
         with:
           path: $HOME/.cargo/git
           key: ${{ runner.os }}-cargo_index-rust_${{ steps.toolchain.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache Cargo build
-        if: ${{ matrix.rust }} != 'nightly'
+        if: matrix.rust != 'nightly'
         uses: actions/cache@v1
         with:
           path: target
