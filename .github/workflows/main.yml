@@ -19,7 +19,7 @@ jobs:
           #       workflow that's run every 6 weeks
           - beta
           - nightly
-          - 1.37.0  # MSRV
+          - 1.37.0  # Minimum Supported Rust Version
 
     steps:
       - name: Checkout sources
@@ -90,6 +90,12 @@ jobs:
           command: build
           args: --release
 
+      - name: Cache pil.mc to ease comparative studies
+        uses: actions/cache@v1
+        with:
+          path: pil.mc
+          key: pil
+
       # TODO: Add debug build w/ less iterations
       # TODO: Test multiple features
       # TODO: Test output with something like numdiff
@@ -98,3 +104,15 @@ jobs:
         with:
           command: run
           args:  --release
+
+      - name: Upload the output for manual inspection
+        uses: actions/upload-artifact@v1
+        with:
+          name: result
+          path: res.dat
+
+      - name: Upload accumulated results for manual inspection
+        uses: actions/upload-artifact@v1
+        with:
+          name: pil
+          path: pil.mc
