@@ -45,21 +45,21 @@ jobs:
         uses: actions/cache@v1
         with:
           path: $HOME/.cargo/registry
-          key: ${{ runner.os }}-cargo_registry-rust_${{ steps.toolchain.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo_registry-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache Cargo index
         if: matrix.rust != 'nightly'
         uses: actions/cache@v1
         with:
           path: $HOME/.cargo/git
-          key: ${{ runner.os }}-cargo_index-rust_${{ steps.toolchain.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo_index-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache Cargo build
         if: matrix.rust != 'nightly'
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-cargo_build-rust_${{ steps.toolchain.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo_build-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
