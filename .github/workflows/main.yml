@@ -1,14 +1,115 @@
 # Based on templates from https://github.com/actions-rs
 #
+# We don't cache the toolchain because bringing back the cache was measured to
+# take more time than downloading the toolchain on Github's current setup. And
+# it also brought suspicious file permission warnings on unpacking.
+#
 # FIXME: For now, must be manually kept in sync with unstable.yml
 
 on: [push, pull_request]
 
 name: Main CI
 
+env:
+  MINIMUM_SUPPORTED_RUST_VERSION: 1.37.0
+
 jobs:
-  # TODO: Split into multiple jobs, to reduce redundancy + increase parallelism
-  ci:
+  # Formatter output should not depend on host OS or cargo features, and only
+  # needs to be tested on stable since we don't care about older format norms
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Check format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+
+  # Clippy and rustc lints shouldn't depend on the host OS since this crate
+  # contains no OS-specific code. But the warnings may depend on the host Rust
+  # version. We should be clean on minimum supported version and latest stable.
+  lints:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - $MINIMUM_SUPPORTED_RUST_VERSION
+        # TODO: Add feature matrix too
+
+    env:
+      RUSTFLAGS: -D warnings
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: clippy
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}
+
+      - name: Cache Cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-${{ runner.os }}
+
+      - name: Cache Cargo check build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: cargo-build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-build_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+
+      - name: Type-check the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - name: Check clippy lints
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+
+  # TODO: Add unit test build, which should get its own target cache
+
+
+  # Test that 3photons runs and produces sensible output on all supported
+  # combinations of operating system, rust version and features
+  run:
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -19,7 +120,8 @@ jobs:
           - macOS-latest
         rust:
           - stable
-          - 1.37.0  # Minimum Supported Rust Version
+          - $MINIMUM_SUPPORTED_RUST_VERSION
+        # TODO: Add feature matrix too
 
     env:
       RUSTFLAGS: -D warnings
@@ -28,9 +130,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      # NOTE: We don't cache the toolchain because bringing back the cache was
-      #       measured to take more time than downloading the toolchain.
-
       - name: Install toolchain
         id: toolchain
         uses: actions-rs/toolchain@v1
@@ -38,54 +137,30 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
-          components: rustfmt, clippy
 
       - name: Cache Cargo registry
         uses: actions/cache@v1
         with:
           path: ~/.cargo/registry
-          key: cargo-registry-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-registry-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+            cargo-registry-${{ runner.os }}
 
       - name: Cache Cargo index
         uses: actions/cache@v1
         with:
           path: ~/.cargo/git
-          key: cargo-index-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-index-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-index-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+            cargo-index-${{ runner.os }}
 
-      - name: Cache Cargo build
+      - name: Cache Cargo release build
         uses: actions/cache@v1
         with:
           path: target
           key: cargo-build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys:
-            cargo-build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
-
-      - name: Type-check the program
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-
-      - name: Check format
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-      - name: Check clippy lints
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
-
-      # TODO: Add unit tests
-      # - name: Run unit tests
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: test
+          restore_keys: |
+            cargo-build_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Roll a build
         uses: actions-rs/cargo@v1
@@ -93,7 +168,6 @@ jobs:
           command: build
           args: --release
 
-      # TODO: Test multiple features
       # TODO: Test output with something like numdiff
       - name: Run the program
         uses: actions-rs/cargo@v1

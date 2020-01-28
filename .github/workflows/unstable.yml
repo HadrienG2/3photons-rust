@@ -1,6 +1,10 @@
 # Evil twin of main.yml which checks that 3photons remains compatible with
 # latest Rust developments every once in a while.
 #
+# NOTE: It's useless to cache the target folder on this rare workflow since it
+#       would usually be invalidated by 1/how rarely the job runs and
+#       2/how frequently new nightly and beta versions come out.
+#
 # FIXME: For now, must be manually kept in sync with main.yml
 
 on:
@@ -9,20 +13,45 @@ on:
 
 name: Unstable Rust CI
 
+
 jobs:
-  # TODO: Split into multiple jobs, to reduce redundancy + increase parallelism
-  ci:
-    runs-on: ${{ matrix.os }}
+  # Formatter output should not depend on host OS or cargo features, and only
+  # needs to be tested on nightly since we don't care about older format norms
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+
+      - name: Check format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+
+  # Clippy and rustc lints shouldn't depend on the host OS since this crate
+  # contains no OS-specific code. But the warnings may depend on the host Rust
+  # version. We should be clean on beta and nightly.
+  lints:
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macOS-latest
         rust:
           - beta
           - nightly
+        # TODO: Add feature matrix too
 
     env:
       RUSTFLAGS: -D warnings
@@ -38,18 +67,28 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
-          components: rustfmt, clippy
+          components: clippy
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}
+
+      - name: Cache Cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-${{ runner.os }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
         with:
           command: check
-
-      - name: Check format
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
 
       - name: Check clippy lints
         uses: actions-rs/cargo@v1
@@ -57,11 +96,56 @@ jobs:
           command: clippy
           args: -- -D warnings
 
-      # TODO: Add unit tests
-      # - name: Run unit tests
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: test
+
+  # TODO: Add unit test build, which should get its own target cache
+
+
+  # Test that 3photons runs and produces sensible output on all supported
+  # combinations of operating system, rust version and features
+  run:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-latest
+        rust:
+          - beta
+          - nightly
+        # TODO: Add feature matrix too
+
+    env:
+      RUSTFLAGS: -D warnings
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}
+
+      - name: Cache Cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-${{ runner.os }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-${{ runner.os }}
 
       - name: Roll a build
         uses: actions-rs/cargo@v1
@@ -69,7 +153,6 @@ jobs:
           command: build
           args: --release
 
-      # TODO: Test multiple features
       # TODO: Test output with something like numdiff
       - name: Run the program
         uses: actions-rs/cargo@v1
