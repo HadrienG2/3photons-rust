@@ -1,10 +1,11 @@
 # Rust version of 3photons
 
-![](https://github.com/HadrienG2/3photons-rust/workflows/Main%20CI/badge.svg)
+![Build status](https://github.com/HadrienG2/3photons-rust/workflows/Main%20CI/badge.svg)
+![Requires rustc 1.37+](https://img.shields.io/badge/rustc-1.37+-red.svg)
 
-To run this version, make sure that you have a reasonably recent version of the
-rustc compiler and the Cargo package manager around. You will find installation
-instructions at <https://www.rust-lang.org/install.html>.
+To run this version, you will need recent versions of the rustc compiler and
+Cargo package manager, as featured in the Rust v1.37.0 release and newer. You
+can find installation instructions at <https://www.rust-lang.org/install.html>.
 
 Once you're ready, the program can be built and run with the following command:
 
@@ -87,10 +88,9 @@ performance bottlenecks (as of 2018-10-02):
 
 ## Miscellaneous remarks, subjected to future obsolescence
 
-As of 2020-01-28, various other things can be said about this version of
+As of 2020-01-28, some other things can be said about this version of
 3photons, which I do not expect to remain accurate in the future.
 
-1. You will need at least Rust v1.37.0 to run it.
-2. Comparing its performance with that of other versions would be unfair,
-   because the porting process enabled many optimizations which other versions
-   did not receive yet.
+- Comparing its performance with that of other versions would be unfair,
+  because the porting process enabled many optimizations which other versions
+  did not receive yet.
