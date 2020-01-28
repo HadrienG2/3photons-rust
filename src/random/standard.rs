@@ -2,7 +2,7 @@
 //! abstractions of the standard "random" crate.
 
 use crate::numeric::Real;
-use rand::{SeedableRng, Rng};
+use rand::{Rng, SeedableRng};
 
 // Select random number generation engine in use
 #[cfg(feature = "f32")]

@@ -89,7 +89,10 @@ impl EventCut {
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
         assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
-        let n_ppp = event.outgoing_momentum(0).xyz().cross(&event.outgoing_momentum(1).xyz());
+        let n_ppp = event
+            .outgoing_momentum(0)
+            .xyz()
+            .cross(&event.outgoing_momentum(1).xyz());
 
         // Compute the cosine of the angle between the beam and this vector
         let cos_num = p_el.xyz().dot(&n_ppp);

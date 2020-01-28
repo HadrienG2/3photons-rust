@@ -2,7 +2,7 @@
 
 use crate::{evcut::EventCut, numeric::Real, Result};
 
-use anyhow::{ensure, Context, Error, format_err};
+use anyhow::{ensure, format_err, Context, Error};
 
 use std::{fs::File, io::Read, str::FromStr};
 
