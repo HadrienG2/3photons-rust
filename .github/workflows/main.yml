@@ -10,9 +10,6 @@ on: [push, pull_request]
 
 name: Main CI
 
-env:
-  MINIMUM_SUPPORTED_RUST_VERSION: 1.37.0
-
 jobs:
   # Formatter output should not depend on host OS or cargo features, and only
   # needs to be tested on stable since we don't care about older format norms
@@ -49,7 +46,7 @@ jobs:
       matrix:
         rust:
           - stable
-          - $MINIMUM_SUPPORTED_RUST_VERSION
+          - 1.37.0  # Minimum supported Rust version
         # TODO: Add feature matrix too
 
     env:
@@ -120,7 +117,7 @@ jobs:
           - macOS-latest
         rust:
           - stable
-          - $MINIMUM_SUPPORTED_RUST_VERSION
+          - 1.37.0  # Minimum supported Rust version
         # TODO: Add feature matrix too
 
     env:
