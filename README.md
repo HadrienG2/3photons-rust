@@ -1,5 +1,7 @@
 # Rust version of 3photons
 
+![](https://github.com/HadrienG2/3photons-rust/.github/workflows/main.yml/badge.svg)
+
 To run this version, make sure that you have a reasonably recent version of the
 rustc compiler and the Cargo package manager around. You will find installation
 instructions at <https://www.rust-lang.org/install.html>.

@@ -1,0 +1,70 @@
+# Based on templates from https://github.com/actions-rs
+
+on: [push, pull_request]
+
+name: Main continuous integration check
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macOS-latest
+        rust:
+          - stable
+          # TODO: Once workflow's looking good, extract nightly+beta in a nightly.yml
+          #       workflow that's run every 6 weeks
+          - beta
+          - nightly
+          - 1.31.0  # MSRV
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Run type-check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      # TODO: Add unit tests
+      # - name: Run unit tests
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     command: test
+
+      - name: Build the code
+        uses: actions-rs/cargo@v1
+        with:
+          command: build --release
+
+      - name: Check format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Check clippy warnings
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+      # TODO: Add debug build w/ less iterations
+      # TODO: Test multiple features
+      # TODO: Test output with something like numdiff
+      - name: Run the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: run --release
