@@ -95,7 +95,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: run
-          args:  --release
+          args: --release
 
       - name: Upload the result for manual inspection
         uses: actions/upload-artifact@v1
