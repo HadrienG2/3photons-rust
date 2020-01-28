@@ -39,20 +39,26 @@ jobs:
       - name: Cache Cargo registry
         uses: actions/cache@v1
         with:
-          path: /usr/share/rust/.cargo/registry
-          key: cargo_registry-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          path: ~/.cargo/registry
+          key: cargo-registry-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Cache Cargo index
         uses: actions/cache@v1
         with:
-          path: /usr/share/rust/.cargo/git
-          key: cargo_index-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          path: ~/.cargo/git
+          key: cargo-index-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Cache Cargo build
         uses: actions/cache@v1
         with:
           path: target
-          key: cargo_build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys:
+            cargo-build-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
