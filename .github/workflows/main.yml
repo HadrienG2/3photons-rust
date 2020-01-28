@@ -114,9 +114,6 @@ jobs:
           args: --features "${{ matrix.features }}" -- -D warnings
 
 
-  # TODO: Add unit test build, which should get its own target cache
-
-
   # Test that 3photons runs and produces sensible output on all supported
   # combinations of rust version and features.
   run:
