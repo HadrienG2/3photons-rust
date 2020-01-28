@@ -11,8 +11,8 @@ on: [push, pull_request]
 name: Main CI
 
 jobs:
-  # Formatter output should not depend on host OS or cargo features, and only
-  # needs to be tested on stable since we don't care about older format norms
+  # Formatter output doesn't depend on cargo features, and only needs to be
+  # tested on stable since we don't care about older format norms.
   format:
     runs-on: ubuntu-latest
 
@@ -36,8 +36,7 @@ jobs:
           args: --all -- --check
 
 
-  # Clippy and rustc lints depend on cargo features, but shouldn't depend on the
-  # host OS since this crate contains no OS-specific code. We don't care about
+  # Clippy and rustc lints depend on cargo features. We don't care about
   # warnings on the minimum supported version, only about building and running.
   lints:
     runs-on: ubuntu-latest
@@ -74,34 +73,33 @@ jobs:
 
       - name: Make cargo feature set hashable
         run: echo ${{ matrix.features }} > __features.log
-        shell: bash
 
       - name: Cache Cargo registry
         uses: actions/cache@v1
         with:
           path: ~/.cargo/registry
-          key: cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
-            cargo-registry-${{ runner.os }}
+            cargo-registry-features_${{ hashFiles('__features.log') }}
+            cargo-registry
 
       - name: Cache Cargo index
         uses: actions/cache@v1
         with:
           path: ~/.cargo/git
-          key: cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
-            cargo-index-${{ runner.os }}
+            cargo-index-features_${{ hashFiles('__features.log') }}
+            cargo-index
 
       - name: Cache Cargo check target directory
         uses: actions/cache@v1
         with:
           path: target
-          key: cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
-            cargo-target_check-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+            cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
+            cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
@@ -120,16 +118,12 @@ jobs:
 
 
   # Test that 3photons runs and produces sensible output on all supported
-  # combinations of operating system, rust version and features
+  # combinations of rust version and features.
   run:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macOS-latest
         rust:
           - stable
           - 1.37.0  # Minimum supported Rust version
@@ -159,34 +153,33 @@ jobs:
 
       - name: Make cargo feature set hashable
         run: echo ${{ matrix.features }} > __features.log
-        shell: bash
 
       - name: Cache Cargo registry
         uses: actions/cache@v1
         with:
           path: ~/.cargo/registry
-          key: cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
-            cargo-registry-${{ runner.os }}
+            cargo-registry-features_${{ hashFiles('__features.log') }}
+            cargo-registry
 
       - name: Cache Cargo index
         uses: actions/cache@v1
         with:
           path: ~/.cargo/git
-          key: cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-index-${{ runner.os }}-features_${{ hashFiles('__features.log') }}
-            cargo-index-${{ runner.os }}
+            cargo-index-features_${{ hashFiles('__features.log') }}
+            cargo-index
 
       - name: Cache Cargo release target directory
         uses: actions/cache@v1
         with:
           path: target
-          key: cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
-            cargo-target_release-${{ runner.os }}-rust_${{ steps.toolchain.outputs.rustc_hash }}
+            cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
+            cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Roll a build
         uses: actions-rs/cargo@v1
@@ -204,5 +197,5 @@ jobs:
       - name: Upload the result for manual inspection
         uses: actions/upload-artifact@v1
         with:
-          name: result-${{ runner.os }}-rust_${{ matrix.rust }}-features_${{ matrix.features }}
+          name: result-rust_${{ matrix.rust }}-features_${{ matrix.features }}
           path: res.dat
