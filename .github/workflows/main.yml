@@ -7,9 +7,10 @@ on: [push, pull_request]
 name: Main CI
 
 jobs:
-  # TODO: Split into multiple jobs, enabling parallelization
+  # TODO: Split into multiple jobs, to reduce redundancy + increase parallelism
   ci:
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os:
@@ -19,6 +20,9 @@ jobs:
         rust:
           - stable
           - 1.37.0  # Minimum Supported Rust Version
+
+    env:
+      RUSTFLAGS: -D warnings
 
     steps:
       - name: Checkout sources
