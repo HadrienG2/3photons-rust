@@ -26,10 +26,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Cache Rust toolchains
+        if: matrix.rust != 'nightly'
         uses: actions/cache@v1
         with:
           path: $HOME/.rustup
-          key: ${{ runner.os }}-rustup
+          key: ${{ runner.os }}-rustup-${{ matrix.rust }}
 
       - name: Install toolchain
         id: toolchain
@@ -90,12 +91,6 @@ jobs:
           command: build
           args: --release
 
-      - name: Cache pil.mc to ease comparative studies
-        uses: actions/cache@v1
-        with:
-          path: pil.mc
-          key: pil
-
       # TODO: Add debug build w/ less iterations
       # TODO: Test multiple features
       # TODO: Test output with something like numdiff
@@ -105,14 +100,8 @@ jobs:
           command: run
           args:  --release
 
-      - name: Upload the output for manual inspection
+      - name: Upload the result for manual inspection
         uses: actions/upload-artifact@v1
         with:
-          name: result
+          name: result-${{ runner.os }}-rust_${{ matrix.rust }}
           path: res.dat
-
-      - name: Upload accumulated results for manual inspection
-        uses: actions/upload-artifact@v1
-        with:
-          name: pil
-          path: pil.mc
