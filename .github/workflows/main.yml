@@ -33,22 +33,10 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Run type-check
+      - name: Type-check the program
         uses: actions-rs/cargo@v1
         with:
           command: check
-
-      # TODO: Add unit tests
-      # - name: Run unit tests
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: test
-
-      - name: Build the code
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
 
       - name: Check format
         uses: actions-rs/cargo@v1
@@ -56,11 +44,23 @@ jobs:
           command: fmt
           args: --all -- --check
 
-      - name: Check clippy warnings
+      - name: Check clippy lints
         uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- -D warnings
+
+      # TODO: Add unit tests
+      # - name: Run unit tests
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     command: test
+
+      - name: Roll a build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
 
       # TODO: Add debug build w/ less iterations
       # TODO: Test multiple features
