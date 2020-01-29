@@ -1,44 +1,44 @@
  Nombre d'evenements            : 10000000
  ... apres coupure              : 7082165
- energie dans le CdM (GeV)      : 91.186996
- coupure / cos(photon,faisceau) : 0.89999998
- coupure / cos(photon,photon)   : 0.93959999
- coupure / sin(normale,faisceau): 0.0000000
- coupure sur l'energie (GeV)    : 4.5590000
- 1/(constante de structure fine): 137.03600
- 1/(structure fine au pic)      : 128.00000
- facteur de conversion GeV-2/pb : 3.8937965e8
- Masse du Z0 (GeV)              : 91.186996
- Largeur du Z0 (GeV)            : 2.4900000
- Sinus^2 Theta Weinberg         : 0.23190001
- Taux de branchement Z--->e+e-  : 0.033670001
- Beta plus                      : 1.0000000
- Beta moins                     : 1.0000000
+ energie dans le CdM      (GeV) : 91.187
+ coupure / cos(photon,faisceau) : 0.9
+ coupure / cos(photon,photon)   : 0.9396
+ coupure / sin(normale,faisceau): 0
+ coupure sur l'energie    (GeV) : 4.559
+ 1/(constante de structure fine): 137.036
+ 1/(structure fine au pic)      : 128
+ facteur de conversion GeV-2/pb : 3.89380e8
+ Masse du Z0              (GeV) : 91.187
+ Largeur du Z0            (GeV) : 2.49
+ Sinus^2 Theta Weinberg         : 0.2319
+ Taux de branchement Z--->e+e-  : 0.03367
+ Beta plus                      : 1
+ Beta moins                     : 1
  ---------------------------------------------
- Section Efficace (pb)          : 11.303949
- Ecart-Type (pb)                : 0.0028014837
- Precision Relative             : 2.4783230e-4
+ Section Efficace          (pb) : 11.3039
+ Ecart-Type                (pb) : 0.00280148
+ Precision Relative             : 2.47832e-4
  ---------------------------------------------
- Beta minimum                   : 0.41073850
- Stat. Significance  B+(pb-1/2) : 4.9780688
- Incert. Stat. Sign. B+(pb-1/2) : 0.0021426771
- Stat. Significance  B-(pb-1/2) : 7.6418819
- Incert. Stat. Sign. B-(pb-1/2) : 0.0034470006
+ Beta minimum                   : 0.410738
+ Stat. Significance  B+(pb-1/2) : 4.97807
+ Incert. Stat. Sign. B+(pb-1/2) : 0.00214268
+ Stat. Significance  B-(pb-1/2) : 7.64188
+ Incert. Stat. Sign. B-(pb-1/2) : 0.003447
 
-  1  1    1.4106309e0   1.0207938e-3   7.2364346e-4
-  1  2    9.5658960e0   2.3375861e-3   2.4436667e-4
-  1  3    1.4684701e1   4.0127845e-3   2.7326294e-4
-  1  4    0.0000000e0    0.0000000e0   2.5832368e-4
-  1  5  -1.2271403e-4   3.8567133e-4    3.1428463e0
+  1  1    1.41063e0   1.02079e-3   7.23643e-4
+  1  2    9.56590e0   2.33759e-3   2.44367e-4
+  1  3    1.46847e1   4.01278e-3   2.73263e-4
+  1  4    0.00000e0    0.00000e0   2.58324e-4
+  1  5  -1.22714e-4   3.85671e-4    3.14285e0
 
-  2  1    1.4106309e0   1.0207938e-3   7.2364346e-4
-  2  2    7.1570425e0   1.7489427e-3   2.4436667e-4
-  2  3    1.0986846e1   3.0022978e-3   2.7326294e-4
-  2  4    0.0000000e0    0.0000000e0   2.5832368e-4
-  2  5   1.0614467e-4   3.3359637e-4    3.1428463e0
+  2  1    1.41063e0   1.02079e-3   7.23643e-4
+  2  2    7.15704e0   1.74894e-3   2.44367e-4
+  2  3    1.09868e1   3.00230e-3   2.73263e-4
+  2  4    0.00000e0    0.00000e0   2.58324e-4
+  2  5   1.06145e-4   3.33596e-4    3.14285e0
 
-     1   7.0531547e-1   3.6090511e-4   5.1169319e-4
-     2    4.1807346e0   7.2985911e-4   1.7457677e-4
-     3    6.4178867e0   1.2529024e-3   1.9522040e-4
-     4    0.0000000e0    0.0000000e0            NaN
-     5  -4.1423409e-6   1.2748258e-4    3.0775492e1
+     1   7.05315e-1   3.60905e-4   5.11693e-4
+     2    4.18073e0   7.29859e-4   1.74577e-4
+     3    6.41789e0   1.25290e-3   1.95220e-4
+     4    0.00000e0    0.00000e0          NaN
+     5  -4.14234e-6   1.27483e-4    3.07755e1

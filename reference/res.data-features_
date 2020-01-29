@@ -1,29 +1,29 @@
  Nombre d'evenements            : 10000000
  ... apres coupure              : 7082165
- energie dans le CdM (GeV)      : 91.187000
- coupure / cos(photon,faisceau) : 0.90000000
- coupure / cos(photon,photon)   : 0.93960000
- coupure / sin(normale,faisceau): 0.0000000
- coupure sur l'energie (GeV)    : 4.5590000
- 1/(constante de structure fine): 137.03599
- 1/(structure fine au pic)      : 128.00000
- facteur de conversion GeV-2/pb : 3.8937966e8
- Masse du Z0 (GeV)              : 91.187000
- Largeur du Z0 (GeV)            : 2.4900000
- Sinus^2 Theta Weinberg         : 0.23190000
- Taux de branchement Z--->e+e-  : 0.033670000
- Beta plus                      : 1.0000000
- Beta moins                     : 1.0000000
+ energie dans le CdM      (GeV) : 91.187
+ coupure / cos(photon,faisceau) : 0.9
+ coupure / cos(photon,photon)   : 0.9396
+ coupure / sin(normale,faisceau): 0
+ coupure sur l'energie    (GeV) : 4.559
+ 1/(constante de structure fine): 137.0359895
+ 1/(structure fine au pic)      : 128
+ facteur de conversion GeV-2/pb : 389379660
+ Masse du Z0              (GeV) : 91.187
+ Largeur du Z0            (GeV) : 2.49
+ Sinus^2 Theta Weinberg         : 0.2319
+ Taux de branchement Z--->e+e-  : 0.03367
+ Beta plus                      : 1
+ Beta moins                     : 1
  ---------------------------------------------
- Section Efficace (pb)          : 11.303932
- Ecart-Type (pb)                : 0.0028014060
- Precision Relative             : 2.4782580e-4
+ Section Efficace          (pb) : 11.303932414679
+ Ecart-Type                (pb) : 0.0028014060468836
+ Precision Relative             : 2.4782579584832e-4
  ---------------------------------------------
- Beta minimum                   : 0.41073846
- Stat. Significance  B+(pb-1/2) : 4.9780652
- Incert. Stat. Sign. B+(pb-1/2) : 0.0021426410
- Stat. Significance  B-(pb-1/2) : 7.6418832
- Incert. Stat. Sign. B-(pb-1/2) : 0.0034469724
+ Beta minimum                   : 0.41073846079859
+ Stat. Significance  B+(pb-1/2) : 4.9780652351276
+ Incert. Stat. Sign. B+(pb-1/2) : 0.0021426410088249
+ Stat. Significance  B-(pb-1/2) : 7.6418831998141
+ Incert. Stat. Sign. B-(pb-1/2) : 0.0034469724097995
 
   1  1    1.4106285e0   1.0207925e-3   7.2364379e-4
   1  2    9.5658814e0   2.3374880e-3   2.4435679e-4
