@@ -192,10 +192,3 @@ jobs:
 
       - name: Compare result to reference
         run: diff -Nu "reference/res.data-features_${{ matrix.features }}" res.data
-
-      - name: Upload bad result for manual inspection
-        if: failure()
-        uses: actions/upload-artifact@v1
-        with:
-          name: result-rust_${{ matrix.rust }}-features_${{ matrix.features }}
-          path: res.data
