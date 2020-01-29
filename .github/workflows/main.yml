@@ -150,9 +150,16 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
-      # TODO: Consider caching this build, which may require an different prefix
+      - name: Cache numdiff installation
+        id: cache-numdiff
+        uses: actions/cache@v1
+        with:
+          path: $HOME/numdiff
+          key: numdiff-5.9.0
+
       # TODO: Propagate to unstable build
       - name: Install numdiff
+        if: steps.cache-numdiff.outputs.cache-hit != 'true'
         run: |
           curl https://mirrors.up.pt/pub/nongnu/numdiff/numdiff-5.9.0.tar.gz | tar -xz
           cd numdiff-5.9.0
