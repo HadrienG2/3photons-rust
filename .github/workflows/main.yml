@@ -1,8 +1,9 @@
 # Based on templates from https://github.com/actions-rs
 #
-# We don't cache the toolchain because bringing back the cache was measured to
-# take more time than downloading the toolchain on Github's current setup. And
-# it also brought suspicious file permission warnings on unpacking.
+# NOTE: We don't cache the toolchain because bringing back the cache was
+#       measured to take more time than downloading the toolchain on Github's
+#       current setup. And it also brought suspicious file permission warnings
+#       on unpacking...
 #
 # FIXME: For now, must be manually kept in sync with unstable.yml
 
