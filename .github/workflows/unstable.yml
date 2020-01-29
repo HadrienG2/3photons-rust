@@ -205,10 +205,10 @@ jobs:
         run: |
           case "${{ matrix.features }}" in
             "f32")
-              PRECISION="-a 1e-8"
+              PRECISION="-a 1.1e-8"
               ;;
             "standard-random,multi-threading,faster-threading")
-              PRECISION="-a 1e-17"
+              PRECISION="-a 1.1e-17"
               ;;
             *)
               PRECISION=""
