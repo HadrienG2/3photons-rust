@@ -55,9 +55,47 @@ pub fn dump_results(
     res_fin: &FinalResults,
     elapsed_time: Duration,
 ) -> Result<()> {
-    // Get current date and time for result archival purposes
+    // Print out some final results on stdout
+    res_fin.eric();
+    res_fin.fawzi();
+
+    // Create a few closure shorthands for common file writing operations
+    let write_label = |file: &mut File, label: &str| write!(*file, " {:<31}: ", label);
+    let write_usize = |file: &mut File, label: &str, value: usize| {
+        write_label(file, label)?;
+        writeln!(*file, "{}", value)
+    };
+    let write_real = |file: &mut File, label: &str, value: Real| {
+        write_label(file, label)?;
+        write_engineering(file, value, 8)?;
+        writeln!(file)
+    };
+
+    // Compute a timestamp of when the run ended
     let current_time = chrono::Utc::now();
-    let timestamp = current_time.format("%d-%b-%y   %T").to_string();
+    let timestamp = current_time.format("%d-%b-%y   %T");
+
+    // Write execution timings to a file
+    {
+        // Prepare to write our timings into a file
+        let mut tim_file = File::create("res.times")?;
+
+        // Write a timestamp of when the run ended
+        writeln!(tim_file, " {}", timestamp)?;
+
+        // Write program performance stats
+        let elapsed_secs =
+            (elapsed_time.as_secs() as Real) + 1e-9 * (elapsed_time.subsec_nanos() as Real);
+        writeln!(tim_file, " ---------------------------------------------")?;
+        writeln!(tim_file, " Temps ecoule                   : ???")?;
+        write_real(&mut tim_file, "Temps ecoule utilisateur", elapsed_secs)?;
+        writeln!(tim_file, " Temps ecoule systeme           : ???")?;
+        write_real(
+            &mut tim_file,
+            "Temps ecoule par evenement",
+            elapsed_secs / (cfg.num_events as Real),
+        )?;
+    }
 
     // Write main results file. Try to mimick the original C++ format as well as
     // possible to ease comparisons, even where it makes little sense.
@@ -68,109 +106,82 @@ pub fn dump_results(
         let vars = &res_fin.vars;
 
         // Prepare to write our results into a file
-        let mut res_file = File::create("res.dat")?;
-
-        // Create a few closure shorthands for common writing operations
-        let write_label = |file: &mut File, label: &str| write!(*file, " {:<31}: ", label);
-        let write_usize = |file: &mut File, label: &str, value: usize| {
-            write_label(file, label)?;
-            writeln!(*file, "{}", value)
-        };
-        let write_real = |file: &mut File, label: &str, value: Real| {
-            write_label(file, label)?;
-            write_engineering(file, value, 8)?;
-            writeln!(file)
-        };
+        let mut dat_file = File::create("res.data")?;
 
         // Write the results to the file
-        writeln!(res_file, " {}", timestamp.as_str())?;
-        writeln!(res_file)?;
-        write_usize(&mut res_file, "Nombre d'evenements", cfg.num_events)?;
-        write_usize(&mut res_file, "... apres coupure", res_fin.selected_events)?;
-        write_real(&mut res_file, "energie dans le CdM (GeV)", cfg.e_tot)?;
+        write_usize(&mut dat_file, "Nombre d'evenements", cfg.num_events)?;
+        write_usize(&mut dat_file, "... apres coupure", res_fin.selected_events)?;
+        write_real(&mut dat_file, "energie dans le CdM (GeV)", cfg.e_tot)?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "coupure / cos(photon,faisceau)",
             cfg.event_cut.a_cut,
         )?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "coupure / cos(photon,photon)",
             cfg.event_cut.b_cut,
         )?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "coupure / sin(normale,faisceau)",
             cfg.event_cut.sin_cut,
         )?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "coupure sur l'energie (GeV)",
             cfg.event_cut.e_min,
         )?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "1/(constante de structure fine)",
             1. / cfg.alpha,
         )?;
-        write_real(&mut res_file, "1/(structure fine au pic)", 1. / cfg.alpha_z)?;
-        write_real(&mut res_file, "facteur de conversion GeV-2/pb", cfg.convers)?;
-        write_real(&mut res_file, "Masse du Z0 (GeV)", cfg.m_z0)?;
-        write_real(&mut res_file, "Largeur du Z0 (GeV)", cfg.g_z0)?;
-        write_real(&mut res_file, "Sinus^2 Theta Weinberg", cfg.sin2_w)?;
-        write_real(&mut res_file, "Taux de branchement Z--->e+e-", cfg.br_ep_em)?;
-        write_real(&mut res_file, "Beta plus", cfg.beta_plus)?;
-        write_real(&mut res_file, "Beta moins", cfg.beta_minus)?;
-        writeln!(res_file, " ---------------------------------------------")?;
-        write_real(&mut res_file, "Section Efficace (pb)", res_fin.sigma)?;
+        write_real(&mut dat_file, "1/(structure fine au pic)", 1. / cfg.alpha_z)?;
+        write_real(&mut dat_file, "facteur de conversion GeV-2/pb", cfg.convers)?;
+        write_real(&mut dat_file, "Masse du Z0 (GeV)", cfg.m_z0)?;
+        write_real(&mut dat_file, "Largeur du Z0 (GeV)", cfg.g_z0)?;
+        write_real(&mut dat_file, "Sinus^2 Theta Weinberg", cfg.sin2_w)?;
+        write_real(&mut dat_file, "Taux de branchement Z--->e+e-", cfg.br_ep_em)?;
+        write_real(&mut dat_file, "Beta plus", cfg.beta_plus)?;
+        write_real(&mut dat_file, "Beta moins", cfg.beta_minus)?;
+        writeln!(dat_file, " ---------------------------------------------")?;
+        write_real(&mut dat_file, "Section Efficace (pb)", res_fin.sigma)?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "Ecart-Type (pb)",
             res_fin.sigma * res_fin.prec,
         )?;
-        write_real(&mut res_file, "Precision Relative", res_fin.prec)?;
-        writeln!(res_file, " ---------------------------------------------")?;
-        write_real(&mut res_file, "Beta minimum", res_fin.beta_min)?;
+        write_real(&mut dat_file, "Precision Relative", res_fin.prec)?;
+        writeln!(dat_file, " ---------------------------------------------")?;
+        write_real(&mut dat_file, "Beta minimum", res_fin.beta_min)?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "Stat. Significance  B+(pb-1/2)",
             res_fin.ss_p,
         )?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "Incert. Stat. Sign. B+(pb-1/2)",
             res_fin.ss_p * res_fin.inc_ss_p,
         )?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "Stat. Significance  B-(pb-1/2)",
             res_fin.ss_m,
         )?;
         write_real(
-            &mut res_file,
+            &mut dat_file,
             "Incert. Stat. Sign. B-(pb-1/2)",
             res_fin.ss_m * res_fin.inc_ss_m,
         )?;
 
-        // Write program performance stats
-        let elapsed_secs =
-            (elapsed_time.as_secs() as Real) + 1e-9 * (elapsed_time.subsec_nanos() as Real);
-        writeln!(res_file, " ---------------------------------------------")?;
-        writeln!(res_file, " Temps ecoule                   : ???")?;
-        write_real(&mut res_file, "Temps ecoule utilisateur", elapsed_secs)?;
-        writeln!(res_file, " Temps ecoule systeme           : ???")?;
-        write_real(
-            &mut res_file,
-            "Temps ecoule par evenement",
-            elapsed_secs / (cfg.num_events as Real),
-        )?;
-
         // Write more results (nature and purpose unclear in C++ code...)
-        writeln!(res_file)?;
+        writeln!(dat_file)?;
         for sp in 0..NUM_SPINS {
             for k in 0..NUM_RESULTS {
                 writeln!(
-                    res_file,
+                    dat_file,
                     "{:>3}{:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
                     sp + 1,
                     k + 1,
@@ -179,7 +190,7 @@ pub fn dump_results(
                     vars[(sp, k)]
                 )?;
             }
-            writeln!(res_file)?;
+            writeln!(dat_file)?;
         }
         for k in 0..NUM_RESULTS {
             let tmp1 = spm2[(SP_M, k)] + spm2[(SP_P, k)];
@@ -187,7 +198,7 @@ pub fn dump_results(
                 sqr(spm2[(SP_M, k)] * vars[(SP_M, k)]) + sqr(spm2[(SP_P, k)] * vars[(SP_P, k)]),
             );
             writeln!(
-                res_file,
+                dat_file,
                 "   {:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
                 k + 1,
                 tmp1 / 4.,
@@ -197,27 +208,23 @@ pub fn dump_results(
         }
     }
 
-    // Print out some final results on stdout
-    res_fin.eric();
-    res_fin.fawzi();
-
     // Append the results of this run to a cumulative file
     //
     // NOTE: This part is completely broken in the C++ version, I did my best
     //       to fix it in this version.
     {
         assert_eq!(NUM_RESULTS, 5);
-        let mut cum_res_file = OpenOptions::new()
+        let mut cum_dat_file = OpenOptions::new()
             .append(true)
             .create(true)
             .open("pil.mc")?;
-        writeln!(cum_res_file, "{}", timestamp.as_str())?;
+        writeln!(cum_dat_file, "{}", timestamp)?;
         let res1 = res_fin.spm2[(SP_M, A)] + res_fin.spm2[(SP_P, A)];
         let res2 = (res_fin.spm2[(SP_M, B_P)] + res_fin.spm2[(SP_P, B_P)]) * sqr(cfg.beta_plus);
         let res3 = (res_fin.spm2[(SP_M, B_M)] + res_fin.spm2[(SP_P, B_M)]) * sqr(cfg.beta_minus);
         let res4 = (res_fin.spm2[(SP_P, R_MX)] + res_fin.spm2[(SP_P, R_MX)]) * cfg.beta_plus;
         writeln!(
-            cum_res_file,
+            cum_dat_file,
             "{} {} {} {} {} {} {}",
             cfg.e_tot,
             res1 / 4.,
