@@ -1,10 +1,10 @@
 # Rust version of 3photons
 
 ![Build status](https://github.com/HadrienG2/3photons-rust/workflows/Main%20CI/badge.svg)
-![Requires rustc 1.37+](https://img.shields.io/badge/rustc-1.37+-red.svg)
+![Requires rustc 1.38+](https://img.shields.io/badge/rustc-1.38+-red.svg)
 
 To run this version, you will need recent versions of the rustc compiler and
-Cargo package manager, as featured in the Rust v1.37.0 release and newer. You
+Cargo package manager, as featured in the Rust v1.38.0 release and newer. You
 can find installation instructions at <https://www.rust-lang.org/install.html>.
 
 Once you're ready, the program can be built and run with the following command:
