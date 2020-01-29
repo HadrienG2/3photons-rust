@@ -186,7 +186,7 @@ pub fn dump_results(
                     sp + 1,
                     k + 1,
                     spm2[(sp, k)],
-                    spm2[(sp, k)] * vars[(sp, k)],
+                    spm2[(sp, k)].abs() * vars[(sp, k)],
                     vars[(sp, k)]
                 )?;
             }
