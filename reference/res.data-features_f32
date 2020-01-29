@@ -1,0 +1,44 @@
+ Nombre d'evenements            : 10000000
+ ... apres coupure              : 7082165
+ energie dans le CdM (GeV)      : 91.186996
+ coupure / cos(photon,faisceau) : 0.89999998
+ coupure / cos(photon,photon)   : 0.93959999
+ coupure / sin(normale,faisceau): 0.0000000
+ coupure sur l'energie (GeV)    : 4.5590000
+ 1/(constante de structure fine): 137.03600
+ 1/(structure fine au pic)      : 128.00000
+ facteur de conversion GeV-2/pb : 3.8937965e8
+ Masse du Z0 (GeV)              : 91.186996
+ Largeur du Z0 (GeV)            : 2.4900000
+ Sinus^2 Theta Weinberg         : 0.23190001
+ Taux de branchement Z--->e+e-  : 0.033670001
+ Beta plus                      : 1.0000000
+ Beta moins                     : 1.0000000
+ ---------------------------------------------
+ Section Efficace (pb)          : 11.303949
+ Ecart-Type (pb)                : 0.0028014837
+ Precision Relative             : 2.4783230e-4
+ ---------------------------------------------
+ Beta minimum                   : 0.41073850
+ Stat. Significance  B+(pb-1/2) : 4.9780688
+ Incert. Stat. Sign. B+(pb-1/2) : 0.0021426771
+ Stat. Significance  B-(pb-1/2) : 7.6418819
+ Incert. Stat. Sign. B-(pb-1/2) : 0.0034470006
+
+  1  1    1.4106309e0   1.0207938e-3   7.2364346e-4
+  1  2    9.5658960e0   2.3375861e-3   2.4436667e-4
+  1  3    1.4684701e1   4.0127845e-3   2.7326294e-4
+  1  4    0.0000000e0    0.0000000e0   2.5832368e-4
+  1  5  -1.2271403e-4   3.8567133e-4    3.1428463e0
+
+  2  1    1.4106309e0   1.0207938e-3   7.2364346e-4
+  2  2    7.1570425e0   1.7489427e-3   2.4436667e-4
+  2  3    1.0986846e1   3.0022978e-3   2.7326294e-4
+  2  4    0.0000000e0    0.0000000e0   2.5832368e-4
+  2  5   1.0614467e-4   3.3359637e-4    3.1428463e0
+
+     1   7.0531547e-1   3.6090511e-4   5.1169319e-4
+     2    4.1807346e0   7.2985911e-4   1.7457677e-4
+     3    6.4178867e0   1.2529024e-3   1.9522040e-4
+     4    0.0000000e0    0.0000000e0            NaN
+     5  -4.1423409e-6   1.2748258e-4    3.0775492e1

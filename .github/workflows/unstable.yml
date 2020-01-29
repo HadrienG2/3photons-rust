@@ -16,7 +16,7 @@ name: Unstable Rust CI
 
 jobs:
   # Formatter output doesn't depend on cargo features, and only needs to be
-  # tested on stable since we don't care about older format norms.
+  # tested on nightly since we don't care about older format norms.
   format:
     runs-on: ubuntu-latest
 
@@ -79,8 +79,7 @@ jobs:
           components: clippy
 
       - name: Make cargo feature set hashable
-        run: echo ${{ matrix.features }} > __features.log
-        shell: bash
+        run: echo "${{ matrix.features }}" > __features.log
 
       - name: Cache Cargo registry
         uses: actions/cache@v1
@@ -151,8 +150,7 @@ jobs:
           override: true
 
       - name: Make cargo feature set hashable
-        run: echo ${{ matrix.features }} > __features.log
-        shell: bash
+        run: echo "${{ matrix.features }}" > __features.log
 
       - name: Cache Cargo registry
         uses: actions/cache@v1
@@ -172,21 +170,24 @@ jobs:
             cargo-index-features_${{ hashFiles('__features.log') }}
             cargo-index
 
-      - name: Roll a build
+      - name: Build the program
         uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --features "${{ matrix.features }}"
 
-      # TODO: Test output with something like numdiff
       - name: Run the program
         uses: actions-rs/cargo@v1
         with:
           command: run
           args: --release --features "${{ matrix.features }}"
 
-      - name: Upload the result for manual inspection
+      - name: Compare result to reference
+        run: diff -Nu "reference/res.data-features_${{ matrix.features }}" res.data
+
+      - name: Upload bad result for manual inspection
+        if: failure()
         uses: actions/upload-artifact@v1
         with:
           name: result-rust_${{ matrix.rust }}-features_${{ matrix.features }}
-          path: res.dat
+          path: res.data
