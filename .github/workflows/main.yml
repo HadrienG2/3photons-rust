@@ -214,7 +214,6 @@ jobs:
       #       local results. Could be different libm version?
       - name: Compare result to reference
         run: |
-          alias numdiff="$HOME/numdiff/bin/numdiff"
           case "${{ matrix.features }}" in
             "standard-random,multi-threading,faster-threading")
               PRECISION="-r 5e-14"
@@ -223,4 +222,4 @@ jobs:
               PRECISION=""
               ;;
           esac
-          numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
+          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
