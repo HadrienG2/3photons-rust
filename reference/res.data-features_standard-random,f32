@@ -5,9 +5,9 @@
  coupure / cos(photon,photon)   : 0.9396
  coupure / sin(normale,faisceau): 0
  coupure sur l'energie    (GeV) : 4.559
- 1/(constante de structure fine): 137.036
+ 1/(constante de structure fine): 137.04
  1/(structure fine au pic)      : 128
- facteur de conversion GeV-2/pb : 3.89380e8
+ facteur de conversion GeV-2/pb : 3.8938e8
  Masse du Z0              (GeV) : 91.187
  Largeur du Z0            (GeV) : 2.49
  Sinus^2 Theta Weinberg         : 0.2319
@@ -15,30 +15,30 @@
  Beta plus                      : 1
  Beta moins                     : 1
  ---------------------------------------------
- Section Efficace          (pb) : 11.3087
- Ecart-Type                (pb) : 0.00280177
- Precision Relative             : 2.47754e-4
+ Section Efficace          (pb) : 11.309
+ Ecart-Type                (pb) : 0.0028018
+ Precision Relative             : 2.4775e-4
  ---------------------------------------------
- Beta minimum                   : 0.410881
- Stat. Significance  B+(pb-1/2) : 4.97694
- Incert. Stat. Sign. B+(pb-1/2) : 0.00214131
- Stat. Significance  B-(pb-1/2) : 7.64202
- Incert. Stat. Sign. B-(pb-1/2) : 0.00344563
+ Beta minimum                   : 0.41088
+ Stat. Significance  B+(pb-1/2) : 4.9769
+ Incert. Stat. Sign. B+(pb-1/2) : 0.0021413
+ Stat. Significance  B-(pb-1/2) : 7.642
+ Incert. Stat. Sign. B-(pb-1/2) : 0.0034456
 
-  1  1    1.41195e0   1.02117e-3   7.23234e-4
-  1  2    9.56819e0   2.33772e-3   2.44322e-4
-  1  3    1.46918e1   4.01384e-3   2.73202e-4
-  1  4    0.00000e0    0.00000e0   2.58250e-4
-  1  5   3.74346e-4   3.85715e-4    1.03037e0
+  1  1    1.4119e0   1.0212e-3   7.2323e-4
+  1  2    9.5682e0   2.3377e-3   2.4432e-4
+  1  3    1.4692e1   4.0138e-3   2.7320e-4
+  1  4    0.0000e0    0.0000e0   2.5825e-4
+  1  5   3.7435e-4   3.8571e-4    1.0304e0
 
-  2  1    1.41195e0   1.02117e-3   7.23234e-4
-  2  2    7.15876e0   1.74904e-3   2.44322e-4
-  2  3    1.09922e1   3.00309e-3   2.73202e-4
-  2  4    0.00000e0    0.00000e0   2.58250e-4
-  2  5  -3.23800e-4   3.33634e-4    1.03037e0
+  2  1    1.4119e0   1.0212e-3   7.2323e-4
+  2  2    7.1588e0   1.7490e-3   2.4432e-4
+  2  3    1.0992e1   3.0031e-3   2.7320e-4
+  2  4    0.0000e0    0.0000e0   2.5825e-4
+  2  5  -3.2380e-4   3.3363e-4    1.0304e0
 
-     1   7.05974e-1   3.61037e-4   5.11403e-4
-     2    4.18174e0   7.29900e-4   1.74545e-4
-     3    6.42100e0   1.25323e-3   1.95177e-4
-     4    0.00000e0    0.00000e0          NaN
-     5   1.26364e-5   1.27497e-4    1.00896e1
+     1   7.0597e-1   3.6104e-4   5.1140e-4
+     2    4.1817e0   7.2990e-4   1.7454e-4
+     3    6.4210e0   1.2532e-3   1.9518e-4
+     4    0.0000e0    0.0000e0         NaN
+     5   1.2636e-5   1.2750e-4    1.0090e1
