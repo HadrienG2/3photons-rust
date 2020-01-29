@@ -3,7 +3,7 @@
 
 use crate::{
     config::Configuration,
-    numeric::{functions::*, Real},
+    numeric::{functions::*, reals, Real},
     rescont::{A, B_M, B_P, NUM_RESULTS, R_MX},
     resfin::{FinalResults, NUM_SPINS, SP_M, SP_P},
 };
@@ -26,10 +26,15 @@ use std::{
 ///
 pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) -> Result<()> {
     let mut precision = sig_digits - 1;
-    let log_x = x.abs().log10();
-    if (log_x >= -3. && log_x <= (sig_digits as Real)) || x == 0. {
-        // Print using naive notation
-        if x != 0. {
+    if x == 0. {
+        // Zero is special because you can't take its log
+        write!(writer, "0")
+    } else {
+        // Otherwise, use log to evaluate order of magnitude
+        let log_x = x.abs().log10();
+        if log_x >= -3. && log_x <= (sig_digits as Real) {
+            // Print using naive notation
+            //
             // Since Rust's precision controls number of digits after the
             // decimal point, we must adjust it depending on magnitude in order
             // to operate at a constant number of significant digits.
@@ -40,11 +45,23 @@ pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) ->
             if log_x < 0. {
                 precision += 1
             }
+
+            // People don't normally expect trailing zeros or decimal point in
+            // naive notation, but be careful with integer numbers...
+            let str_with_zeros = format!("{:.1$}", x, precision);
+            if str_with_zeros.contains('.') {
+                write!(
+                    writer,
+                    "{}",
+                    str_with_zeros.trim_end_matches('0').trim_end_matches('.')
+                )
+            } else {
+                write!(writer, "{}", str_with_zeros)
+            }
+        } else {
+            // Print using scientific notation
+            write!(writer, "{:.1$e}", x, precision)
         }
-        write!(writer, "{:.1$}", x, precision)
-    } else {
-        // Print using scientific notation
-        write!(writer, "{:.1$e}", x, precision)
     }
 }
 
@@ -59,6 +76,9 @@ pub fn dump_results(
     res_fin.eric();
     res_fin.fawzi();
 
+    // Number of significant digits in file output
+    const SIG_DIGITS: usize = reals::DIGITS as usize;
+
     // Create a few closure shorthands for common file writing operations
     let write_label = |file: &mut File, label: &str| write!(*file, " {:<31}: ", label);
     let write_usize = |file: &mut File, label: &str, value: usize| {
@@ -67,7 +87,7 @@ pub fn dump_results(
     };
     let write_real = |file: &mut File, label: &str, value: Real| {
         write_label(file, label)?;
-        write_engineering(file, value, 8)?;
+        write_engineering(file, value, SIG_DIGITS.min(14))?;
         writeln!(file)
     };
 
@@ -111,7 +131,7 @@ pub fn dump_results(
         // Write the results to the file
         write_usize(&mut dat_file, "Nombre d'evenements", cfg.num_events)?;
         write_usize(&mut dat_file, "... apres coupure", res_fin.selected_events)?;
-        write_real(&mut dat_file, "energie dans le CdM (GeV)", cfg.e_tot)?;
+        write_real(&mut dat_file, "energie dans le CdM      (GeV)", cfg.e_tot)?;
         write_real(
             &mut dat_file,
             "coupure / cos(photon,faisceau)",
@@ -129,7 +149,7 @@ pub fn dump_results(
         )?;
         write_real(
             &mut dat_file,
-            "coupure sur l'energie (GeV)",
+            "coupure sur l'energie    (GeV)",
             cfg.event_cut.e_min,
         )?;
         write_real(
@@ -139,17 +159,21 @@ pub fn dump_results(
         )?;
         write_real(&mut dat_file, "1/(structure fine au pic)", 1. / cfg.alpha_z)?;
         write_real(&mut dat_file, "facteur de conversion GeV-2/pb", cfg.convers)?;
-        write_real(&mut dat_file, "Masse du Z0 (GeV)", cfg.m_z0)?;
-        write_real(&mut dat_file, "Largeur du Z0 (GeV)", cfg.g_z0)?;
+        write_real(&mut dat_file, "Masse du Z0              (GeV)", cfg.m_z0)?;
+        write_real(&mut dat_file, "Largeur du Z0            (GeV)", cfg.g_z0)?;
         write_real(&mut dat_file, "Sinus^2 Theta Weinberg", cfg.sin2_w)?;
         write_real(&mut dat_file, "Taux de branchement Z--->e+e-", cfg.br_ep_em)?;
         write_real(&mut dat_file, "Beta plus", cfg.beta_plus)?;
         write_real(&mut dat_file, "Beta moins", cfg.beta_minus)?;
         writeln!(dat_file, " ---------------------------------------------")?;
-        write_real(&mut dat_file, "Section Efficace (pb)", res_fin.sigma)?;
         write_real(
             &mut dat_file,
-            "Ecart-Type (pb)",
+            "Section Efficace          (pb)",
+            res_fin.sigma,
+        )?;
+        write_real(
+            &mut dat_file,
+            "Ecart-Type                (pb)",
             res_fin.sigma * res_fin.prec,
         )?;
         write_real(&mut dat_file, "Precision Relative", res_fin.prec)?;
@@ -178,16 +202,19 @@ pub fn dump_results(
 
         // Write more results (nature and purpose unclear in C++ code...)
         writeln!(dat_file)?;
+        let decimals = (SIG_DIGITS - 1).min(7);
         for sp in 0..NUM_SPINS {
             for k in 0..NUM_RESULTS {
                 writeln!(
                     dat_file,
-                    "{:>3}{:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
+                    "{:>3}{:>3}{:>width$.decs$e}{:>width$.decs$e}{:>width$.decs$e}",
                     sp + 1,
                     k + 1,
                     spm2[(sp, k)],
                     spm2[(sp, k)].abs() * vars[(sp, k)],
-                    vars[(sp, k)]
+                    vars[(sp, k)],
+                    width = decimals + 8,
+                    decs = decimals,
                 )?;
             }
             writeln!(dat_file)?;
@@ -199,11 +226,13 @@ pub fn dump_results(
             );
             writeln!(
                 dat_file,
-                "   {:>3}{:>15.7e}{:>15.7e}{:>15.7e}",
+                "   {:>3}{:>width$.decs$e}{:>width$.decs$e}{:>width$.decs$e}",
                 k + 1,
                 tmp1 / 4.,
                 tmp2 / 4.,
-                tmp2 / abs(tmp1)
+                tmp2 / abs(tmp1),
+                width = decimals + 8,
+                decs = decimals,
             )?;
         }
     }
