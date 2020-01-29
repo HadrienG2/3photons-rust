@@ -123,7 +123,7 @@ jobs:
       matrix:
         rust:
           - stable
-          - 1.38.0  # Minimum supported Rust version
+          - 1.37.0  # Minimum supported Rust version
         features:
           - ''
           - f32
