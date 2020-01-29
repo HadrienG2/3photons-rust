@@ -13,6 +13,8 @@ on:
 
 name: Unstable Rust CI
 
+env:
+  RUSTFLAGS: -D warnings
 
 jobs:
   # Formatter output doesn't depend on cargo features, and only needs to be
@@ -61,9 +63,6 @@ jobs:
           - standard-random,f32
           - standard-random,multi-threading
           - standard-random,multi-threading,faster-threading
-
-    env:
-      RUSTFLAGS: -D warnings
 
     steps:
       - name: Checkout sources

@@ -10,6 +10,9 @@ on: [push, pull_request]
 
 name: Main CI
 
+env:
+  RUSTFLAGS: -D warnings
+
 jobs:
   # Formatter output doesn't depend on cargo features, and only needs to be
   # tested on stable since we don't care about older format norms.
@@ -54,9 +57,6 @@ jobs:
           - standard-random,f32
           - standard-random,multi-threading
           - standard-random,multi-threading,faster-threading
-
-    env:
-      RUSTFLAGS: -D warnings
 
     steps:
       - name: Checkout sources
