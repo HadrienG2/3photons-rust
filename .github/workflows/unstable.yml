@@ -149,6 +149,23 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
+      - name: Cache numdiff installation
+        id: cache-numdiff
+        uses: actions/cache@v1
+        with:
+          path: $HOME/numdiff
+          key: numdiff-5.9.0
+
+      - name: Install numdiff
+        if: steps.cache-numdiff.outputs.cache-hit != 'true'
+        run: |
+          curl https://mirrors.up.pt/pub/nongnu/numdiff/numdiff-5.9.0.tar.gz | tar -xz
+          cd numdiff-5.9.0
+          ./configure --prefix=$HOME/numdiff
+          make
+          make install
+          cd -
+
       - name: Make cargo feature set hashable
         run: echo "${{ matrix.features }}" > __features.log
 
@@ -182,5 +199,19 @@ jobs:
           command: run
           args: --release --features "${{ matrix.features }}"
 
+      # NOTE: Tolerances needed due to some differences between CI results and
+      #       local results. Could be caused by differences in libm versions?
       - name: Compare result to reference
-        run: diff -Nu "reference/res.data-features_${{ matrix.features }}" res.data
+        run: |
+          case "${{ matrix.features }}" in
+            "f32")
+              PRECISION="-a 1e-8"
+              ;;
+            "standard-random,multi-threading,faster-threading")
+              PRECISION="-a 1e-17"
+              ;;
+            *)
+              PRECISION=""
+              ;;
+          esac
+          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data

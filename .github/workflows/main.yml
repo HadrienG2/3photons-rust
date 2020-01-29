@@ -135,8 +135,6 @@ jobs:
           - standard-random,f32
           - standard-random,multi-threading
           - standard-random,multi-threading,faster-threading
-      # TODO: Added to check numdiff tolerances, remove after use
-      fail-fast: false
 
     steps:
       - name: Checkout sources
@@ -157,7 +155,6 @@ jobs:
           path: $HOME/numdiff
           key: numdiff-5.9.0
 
-      # TODO: Propagate to unstable build
       - name: Install numdiff
         if: steps.cache-numdiff.outputs.cache-hit != 'true'
         run: |
@@ -211,12 +208,15 @@ jobs:
           args: --release --features "${{ matrix.features }}"
 
       # NOTE: Tolerances needed due to some differences between CI results and
-      #       local results. Could be different libm version?
+      #       local results. Could be caused by differences in libm versions?
       - name: Compare result to reference
         run: |
           case "${{ matrix.features }}" in
+            "f32")
+              PRECISION="-a 1e-8"
+              ;;
             "standard-random,multi-threading,faster-threading")
-              PRECISION="-r 5e-14"
+              PRECISION="-a 1e-17"
               ;;
             *)
               PRECISION=""
