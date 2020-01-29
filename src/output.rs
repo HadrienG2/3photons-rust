@@ -77,7 +77,11 @@ pub fn dump_results(
     res_fin.fawzi();
 
     // Number of significant digits in file output
-    const SIG_DIGITS: usize = reals::DIGITS as usize;
+    //
+    // Must print one less than the actual machine type precision to match the
+    // output of the C++ version of 3photons.
+    //
+    const SIG_DIGITS: usize = (reals::DIGITS - 1) as usize;
 
     // Create a few closure shorthands for common file writing operations
     let write_label = |file: &mut File, label: &str| write!(*file, " {:<31}: ", label);
@@ -87,7 +91,7 @@ pub fn dump_results(
     };
     let write_real = |file: &mut File, label: &str, value: Real| {
         write_label(file, label)?;
-        write_engineering(file, value, SIG_DIGITS.min(14))?;
+        write_engineering(file, value, SIG_DIGITS)?;
         writeln!(file)
     };
 
