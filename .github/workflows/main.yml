@@ -204,6 +204,4 @@ jobs:
           args: --release --features "${{ matrix.features }}"
 
       - name: Compare result to reference
-        run: numdiff -V "reference/res.data-features_${{ matrix.features }}" res.data
-        env:
-          PATH: $HOME/numdiff/bin:$PATH
+        run: $HOME/numdiff/bin/numdiff -V "reference/res.data-features_${{ matrix.features }}" res.data
