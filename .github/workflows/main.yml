@@ -203,5 +203,17 @@ jobs:
           command: run
           args: --release --features "${{ matrix.features }}"
 
+      # NOTE: Tolerances needed due to some differences between CI results and
+      #       local results. Could be different libm version?
       - name: Compare result to reference
-        run: $HOME/numdiff/bin/numdiff -V "reference/res.data-features_${{ matrix.features }}" res.data
+        run: |
+          alias numdiff="$HOME/numdiff/bin/numdiff"
+          case "${{ matrix.features }}" in
+            "standard-random,multi-threading,faster-threading")
+              PRECISION="-r 5e-14"
+              ;;
+            *)
+              PRECISION=""
+              ;;
+          esac
+          numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
