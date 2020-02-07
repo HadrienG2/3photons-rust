@@ -1,0 +1,424 @@
+# There are two kinds of continuous integration jobs in this project:
+#
+# - Every code submission or master push passes continuous integration on the
+#   minimal supported Rust version and the current stable Rust version.
+# - Two times a month, a scheduled job makes sure that the code remains
+#   compatible and lint-free on upcoming Rust toolchains (beta and nightly).
+#
+# Here's why we don't cache some things:
+#
+# - Toolchain caching is hard to do correctly (there are permission problems
+#   since the toolchain is not installed in the home directory, we'd need to
+#   override toolchain's defaut directory to avoid that) and was not measured to
+#   be worthwhile on operating systems where it actually seems to work.
+# - There is no point in caching the target directory on unstable Rust releases,
+#   since its contents are invalidated by every compiler update, which happens
+#   relatively frequently at the time scale of scheduled unstable jobs.
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 3,17 * *'
+
+name: Continuous Integration
+
+env:
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # Formatter output doesn't depend on cargo features, and only needs to be
+  # tested on the latest supported release of each CI run.
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        if: github.event_name != 'schedule'
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Install nightly toolchain
+        if: github.event_name == 'schedule'
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+
+      - name: Check format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+
+  # Clippy and rustc lints depend on cargo features. We don't care about
+  # warnings on the minimum supported version, only about building and running.
+  lints-stable:
+    if: github.event_name != 'schedule'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        features:
+          - ''
+          - f32
+          - faster-evgen
+          - multi-threading
+          - multi-threading,faster-threading
+          - no-photon-sorting
+          - standard-random
+          - standard-random,f32
+          - standard-random,multi-threading
+          - standard-random,multi-threading,faster-threading
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - name: Make cargo feature set hashable
+        run: echo "${{ matrix.features }}" > __features.log
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-features_${{ hashFiles('__features.log') }}
+            cargo-registry
+
+      - name: Cache Cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-features_${{ hashFiles('__features.log') }}
+            cargo-index
+
+      - name: Cache Cargo check target directory
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
+            cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}
+
+      - name: Type-check the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features "${{ matrix.features }}"
+
+      - name: Check clippy lints
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --features "${{ matrix.features }}" -- -D warnings
+
+
+  # Variant of the lints-stable job for unstable periodical builds
+  lints-unstable:
+    if: github.event_name == 'schedule'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        features:
+          - ''
+          - f32
+          - faster-evgen
+          - multi-threading
+          - multi-threading,faster-threading
+          - no-photon-sorting
+          - standard-random
+          - standard-random,f32
+          - standard-random,multi-threading
+          - standard-random,multi-threading,faster-threading
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: clippy
+
+      - name: Make cargo feature set hashable
+        run: echo "${{ matrix.features }}" > __features.log
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-features_${{ hashFiles('__features.log') }}
+            cargo-registry
+
+      - name: Cache Cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-features_${{ hashFiles('__features.log') }}
+            cargo-index
+
+      # NOTE: No target directory caching on unstable, see top comment.
+
+      - name: Type-check the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features "${{ matrix.features }}"
+
+      - name: Check clippy lints
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --features "${{ matrix.features }}" -- -D warnings
+
+
+  # Test that 3photons runs and produces sensible output on all supported
+  # combinations of rust version and features.
+  run-stable:
+    if: github.event_name != 'schedule'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - 1.37.0  # Minimum supported Rust version
+        features:
+          - ''
+          - f32
+          - faster-evgen
+          - multi-threading
+          - multi-threading,faster-threading
+          - no-photon-sorting
+          - standard-random
+          - standard-random,f32
+          - standard-random,multi-threading
+          - standard-random,multi-threading,faster-threading
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Cache numdiff installation
+        id: cache-numdiff
+        uses: actions/cache@v1
+        with:
+          path: $HOME/numdiff
+          key: numdiff-5.9.0
+
+      - name: Install numdiff
+        if: steps.cache-numdiff.outputs.cache-hit != 'true'
+        run: |
+          curl https://mirrors.up.pt/pub/nongnu/numdiff/numdiff-5.9.0.tar.gz | tar -xz
+          cd numdiff-5.9.0
+          ./configure --prefix=$HOME/numdiff
+          make
+          make install
+          cd -
+
+      - name: Make cargo feature set hashable
+        run: echo "${{ matrix.features }}" > __features.log
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-features_${{ hashFiles('__features.log') }}
+            cargo-registry
+
+      - name: Cache Cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-features_${{ hashFiles('__features.log') }}
+            cargo-index
+
+      - name: Cache Cargo release target directory
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
+            cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}
+
+      - name: Build the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --features "${{ matrix.features }}"
+
+      - name: Run the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: --release --features "${{ matrix.features }}"
+
+      # NOTE: Tolerances needed due to some differences between CI results and
+      #       local results. Could be caused by differences in libm versions?
+      - name: Compare result to reference
+        run: |
+          case "${{ matrix.features }}" in
+            "f32")
+              PRECISION="-a 1.1e-8"
+              ;;
+            "standard-random,multi-threading,faster-threading")
+              PRECISION="-a 1.1e-17"
+              ;;
+            *)
+              PRECISION=""
+              ;;
+          esac
+          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
+
+
+  run-unstable:
+    if: github.event_name == 'schedule'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust:
+          - beta
+          - nightly
+        features:
+          - ''
+          - f32
+          - faster-evgen
+          - multi-threading
+          - multi-threading,faster-threading
+          - no-photon-sorting
+          - standard-random
+          - standard-random,f32
+          - standard-random,multi-threading
+          - standard-random,multi-threading,faster-threading
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install toolchain
+        id: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Cache numdiff installation
+        id: cache-numdiff
+        uses: actions/cache@v1
+        with:
+          path: $HOME/numdiff
+          key: numdiff-5.9.0
+
+      - name: Install numdiff
+        if: steps.cache-numdiff.outputs.cache-hit != 'true'
+        run: |
+          curl https://mirrors.up.pt/pub/nongnu/numdiff/numdiff-5.9.0.tar.gz | tar -xz
+          cd numdiff-5.9.0
+          ./configure --prefix=$HOME/numdiff
+          make
+          make install
+          cd -
+
+      - name: Make cargo feature set hashable
+        run: echo "${{ matrix.features }}" > __features.log
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-features_${{ hashFiles('__features.log') }}
+            cargo-registry
+
+      - name: Cache Cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-index-features_${{ hashFiles('__features.log') }}
+            cargo-index
+
+      # NOTE: No target directory caching on unstable, see top comment.
+
+      - name: Build the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --features "${{ matrix.features }}"
+
+      - name: Run the program
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: --release --features "${{ matrix.features }}"
+
+      # NOTE: Tolerances needed due to some differences between CI results and
+      #       local results. Could be caused by differences in libm versions?
+      - name: Compare result to reference
+        run: |
+          case "${{ matrix.features }}" in
+            "f32")
+              PRECISION="-a 1.1e-8"
+              ;;
+            "standard-random,multi-threading,faster-threading")
+              PRECISION="-a 1.1e-17"
+              ;;
+            *)
+              PRECISION=""
+              ;;
+          esac
+          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data

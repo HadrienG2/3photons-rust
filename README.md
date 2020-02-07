@@ -1,6 +1,6 @@
 # Rust version of 3photons
 
-![Build status](https://github.com/HadrienG2/3photons-rust/workflows/Main%20CI/badge.svg)
+[![Continuous Integration](https://github.com/HadrienG2/3photons-rust/workflows/Continuous%20Integration/badge.svg)](https://github.com/HadrienG2/3photons-rust/actions?query=workflow%3A%22Continuous+Integration%22)
 ![Requires rustc 1.37+](https://img.shields.io/badge/rustc-1.37+-red.svg)
 
 To run this version, you will need recent versions of the rustc compiler and
