@@ -63,9 +63,7 @@ jobs:
 
   # Clippy and rustc lints depend on cargo features. We don't care about
   # warnings on the minimum supported version, only about building and running.
-  lints-stable:
-    if: github.event_name != 'schedule'
-
+  lints:
     runs-on: ubuntu-latest
 
     strategy:
@@ -86,8 +84,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install toolchain
-        id: toolchain
+      - name: Install stable toolchain
+        id: toolchain-stable
+        if: github.event_name != 'schedule'
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -95,75 +94,8 @@ jobs:
           override: true
           components: clippy
 
-      - name: Make cargo feature set hashable
-        run: echo "${{ matrix.features }}" > __features.log
-
-      - name: Cache Cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            cargo-registry-features_${{ hashFiles('__features.log') }}
-            cargo-registry
-
-      - name: Cache Cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
-            cargo-index-features_${{ hashFiles('__features.log') }}
-            cargo-index
-
-      - name: Cache Cargo check target directory
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
-            cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
-            cargo-target_check-rust_${{ steps.toolchain.outputs.rustc_hash }}
-
-      - name: Type-check the program
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --features "${{ matrix.features }}"
-
-      - name: Check clippy lints
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --features "${{ matrix.features }}" -- -D warnings
-
-
-  # Variant of the lints-stable job for unstable periodical builds
-  lints-unstable:
-    if: github.event_name == 'schedule'
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        features:
-          - ''
-          - f32
-          - faster-evgen
-          - multi-threading
-          - multi-threading,faster-threading
-          - no-photon-sorting
-          - standard-random
-          - standard-random,f32
-          - standard-random,multi-threading
-          - standard-random,multi-threading,faster-threading
-
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install toolchain
-        id: toolchain
+      - name: Install nightly toolchain
+        if: github.event_name == 'schedule'
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -193,6 +125,15 @@ jobs:
             cargo-index
 
       # NOTE: No target directory caching on unstable, see top comment.
+      - name: Cache Cargo check target directory
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: cargo-target_check-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          restore_keys: |
+            cargo-target_check-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
+            cargo-target_check-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
@@ -320,6 +261,11 @@ jobs:
           $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
 
 
+  # Variant of the run-stable job for unstable periodical builds
+  #
+  # FIXME: There should be a way to use conditional build matrices without
+  #        duplicating the whole job recipe...
+  #
   run-unstable:
     if: github.event_name == 'schedule'
 
