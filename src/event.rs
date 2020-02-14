@@ -79,10 +79,10 @@ impl EventGenerator {
         // Compute some numerical constants. Replaces the lazy initialization
         // from the original RAMBO code with something less branchy.
         println!("IBegin");
-        let po2log = ln(FRAC_PI_2);
-        let mut z = po2log; // Replaces Z[INP-1] in the original 3photons code
+        // Replaces Z[INP-1] in the original 3photons code
+        let mut z = ((OUTGOING_COUNT - 1) as Real) * ln(FRAC_PI_2);
         for k in 2..OUTGOING_COUNT {
-            z += po2log - 2. * ln((k - 1) as Real);
+            z -= 2. * ln((k - 1) as Real);
         }
         let z = z - ln((OUTGOING_COUNT - 1) as Real);
 
