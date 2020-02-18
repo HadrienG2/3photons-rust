@@ -312,7 +312,7 @@ impl EventGenerator {
 
 /// Storage for ee -> ppp event data
 ///
-/// Encapsulates a vector of incoming and outgoing 4-momenta
+/// Encapsulates a vector of incoming and outgoing 4-momenta.
 ///
 pub struct Event(EventMatrix);
 //
