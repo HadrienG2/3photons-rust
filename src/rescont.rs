@@ -12,7 +12,7 @@ use crate::{
 pub const NUM_RESULTS: usize = 5;
 
 /// Storage for matrix elements
-pub type ResultVector<T> = Vector5<T>;
+pub type ResultVector = Vector5<Real>;
 
 /// Index of the electromagnetic matrix element
 pub const A: usize = 0;
@@ -76,7 +76,7 @@ impl ResultContribution {
     }
 
     /// Compute the sums of the squared matrix elements for each contribution
-    pub fn m2_sums(&self) -> ResultVector<Real> {
+    pub fn m2_sums(&self) -> ResultVector {
         ResultVector::from_fn(|i, _| self.m2x.fixed_rows::<U1>(i).iter().sum())
     }
 

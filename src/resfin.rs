@@ -34,13 +34,13 @@ pub struct ResultsBuilder<'a> {
     selected_events: usize,
 
     /// Accumulated cross-section for each contribution
-    spm2: ResultVector<Real>,
+    spm2: ResultVector,
 
     /// Accumulated variance for each contribution
-    vars: ResultVector<Real>,
+    vars: ResultVector,
 
     /// Impact of each contribution on the cross-section
-    sigma_contribs: ResultVector<Real>,
+    sigma_contribs: ResultVector,
 
     /// Accumulated total cross-section
     sigma: Real,
