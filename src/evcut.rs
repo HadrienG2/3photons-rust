@@ -44,14 +44,14 @@ impl EventCut {
 
         // Get the incoming electron 4-momentum and outgoing photon 4-momenta
         let p_el = event.electron_momentum();
-        let p_out = event.outgoing_momenta();
-        let p_out_xyz = p_out.fixed_columns::<U3>(X);
-        let p_out_e = p_out.fixed_columns::<U1>(E);
+        let ps_out = event.outgoing_momenta();
+        let ps_out_xyz = ps_out.fixed_columns::<U3>(X);
+        let ps_out_e = ps_out.fixed_columns::<U1>(E);
 
         // Check if the (beam, photon) angles pass the cut
         {
-            let cos_num = p_out_xyz * p_el.xyz();
-            let cos_denom = p_out_e * p_el[E];
+            let cos_num = ps_out_xyz * p_el.xyz();
+            let cos_denom = ps_out_e * p_el[E];
             for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
                 if abs(num) > self.a_cut * denom {
                     return false;
@@ -63,11 +63,11 @@ impl EventCut {
         // FIXME: Turn this back into a loop once const generics allow for it
         assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
         let p_ph1 = event.outgoing_momentum(0);
-        let p_ph23 = p_out.fixed_rows::<U2>(1);
-        let p_ph23_xyz = p_ph23.fixed_columns::<U3>(X);
-        let p_ph23_e = p_ph23.fixed_columns::<U1>(E);
-        let cos_num_1x23 = p_ph23_xyz * p_ph1.xyz();
-        let cos_denom_1x23 = p_ph23_e * p_ph1[E];
+        let ps_ph23 = ps_out.fixed_rows::<U2>(1);
+        let ps_ph23_xyz = ps_ph23.fixed_columns::<U3>(X);
+        let ps_ph23_e = ps_ph23.fixed_columns::<U1>(E);
+        let cos_num_1x23 = ps_ph23_xyz * p_ph1.xyz();
+        let cos_denom_1x23 = ps_ph23_e * p_ph1[E];
         for (&num, denom) in cos_num_1x23.iter().zip(cos_denom_1x23.iter()) {
             if num > self.b_cut * denom {
                 return false;
@@ -76,8 +76,8 @@ impl EventCut {
 
         // Check if the (photon2, photon3) angle passes the cut
         // FIXME: Merge with the above loop once we can have it
-        let p_ph2 = p_ph23.fixed_rows::<U1>(0);
-        let p_ph3 = p_ph23.fixed_rows::<U1>(1);
+        let p_ph2 = ps_ph23.fixed_rows::<U1>(0);
+        let p_ph3 = ps_ph23.fixed_rows::<U1>(1);
         let p_ph2_xyz = p_ph2.fixed_columns::<U3>(X);
         let p_ph3_xyz = p_ph3.fixed_columns::<U3>(X);
         let cos_num_2x3 = p_ph2_xyz.dot(&p_ph3_xyz);
