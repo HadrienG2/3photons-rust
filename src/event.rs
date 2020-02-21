@@ -133,10 +133,10 @@ impl EventGenerator {
 
         // Perform the conformal transformation from Q's to output 4-momenta
         let tr_q = q.transpose();
-        let rq = tr_q.fixed_columns::<U3>(X) * r.xyz();
-        let q_e = tr_q.fixed_columns::<U1>(E);
-        let mut p_e = alpha * (r[E] * q_e - rq);
         let tr_q_xyz = tr_q.fixed_columns::<U3>(X);
+        let q_e = tr_q.fixed_columns::<U1>(E);
+        let rq = tr_q_xyz * r.xyz();
+        let mut p_e = alpha * (r[E] * q_e - rq);
         let b_rq_e = beta * rq - q_e;
         let mut p_xyz = alpha * (r_norm * tr_q_xyz + b_rq_e * r.xyz().transpose());
 
@@ -153,7 +153,7 @@ impl EventGenerator {
         }
 
         // Build the final event: incoming momenta + output 4-momenta
-        assert_eq!(PARTICLE_COUNT, 5, "This part assumes 5-particle events");
+        assert_eq!(PARTICLE_COUNT, 5, "This part assumes 5-particles events");
         Event(Matrix5x4::from_fn(|par, coord| {
             if par < INCOMING_COUNT {
                 self.incoming_momenta[(par, coord)]
