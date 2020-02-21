@@ -50,9 +50,9 @@ impl EventCut {
 
         // Check if the (beam, photon) angles pass the cut
         {
-            let cos_num = ps_out_xyz * p_el.xyz();
-            let cos_denom = ps_out_e * p_el[E];
-            for (&num, denom) in cos_num.iter().zip(cos_denom.iter()) {
+            let cos_nums = ps_out_xyz * p_el.xyz();
+            let cos_denoms = ps_out_e * p_el[E];
+            for (&num, denom) in cos_nums.iter().zip(cos_denoms.iter()) {
                 if abs(num) > self.a_cut * denom {
                     return false;
                 }
@@ -66,9 +66,9 @@ impl EventCut {
         let ps_ph23 = ps_out.fixed_rows::<U2>(1);
         let ps_ph23_xyz = ps_ph23.fixed_columns::<U3>(X);
         let ps_ph23_e = ps_ph23.fixed_columns::<U1>(E);
-        let cos_num_1x23 = ps_ph23_xyz * p_ph1.xyz();
-        let cos_denom_1x23 = ps_ph23_e * p_ph1[E];
-        for (&num, denom) in cos_num_1x23.iter().zip(cos_denom_1x23.iter()) {
+        let cos_nums_1x23 = ps_ph23_xyz * p_ph1.xyz();
+        let cos_denoms_1x23 = ps_ph23_e * p_ph1[E];
+        for (&num, denom) in cos_nums_1x23.iter().zip(cos_denoms_1x23.iter()) {
             if num > self.b_cut * denom {
                 return false;
             }
