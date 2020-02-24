@@ -2,8 +2,8 @@
 
 use crate::{
     event::{
-        Event, ParticleMatrix, ParticleVector, NUM_INCOMING, INCOMING_E_M as E_M,
-        INCOMING_E_P as E_P, NUM_OUTGOING,
+        Event, ParticleMatrix, ParticleVector, INCOMING_E_M as E_M, INCOMING_E_P as E_P,
+        NUM_INCOMING, NUM_OUTGOING,
     },
     linalg::{
         dimension::*,
