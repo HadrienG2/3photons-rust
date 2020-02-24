@@ -48,9 +48,9 @@ impl SpinorProducts {
         let xx = (ps_e + ps_z).map(sqrt);
         let fx = ParticleVector::from_fn(|par, _| {
             if xx[par] > MIN_POSITIVE {
-                Complex::new(ps_x[par] / xx[par], ps_y[par] / xx[par])
+                Complex::new(ps_x[par], ps_y[par]) / xx[par]
             } else {
-                Complex::new(sqrt(2. * ps_e[par]), 0.)
+                Complex::from(sqrt(2. * ps_e[par]))
             }
         });
 
