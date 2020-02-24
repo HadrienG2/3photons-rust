@@ -63,7 +63,6 @@ impl SpinorProducts {
 
     // ### GRAM MATRIX ACCESSORS ###
 
-    /// Quickly access the underlying Gram matrix of spinor products
     #[inline]
     fn s(&self, i: usize, j: usize) -> Complex {
         self.sx[(i, j)]
