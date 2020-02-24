@@ -38,19 +38,19 @@ impl SpinorProducts {
         assert_eq!(NUM_OUTGOING, 3);
 
         // Access the array of incoming and outgoing particle 4-momenta
-        let p = event.all_momenta();
-        let p_x = p.fixed_columns::<U1>(X);
-        let p_y = p.fixed_columns::<U1>(Y);
-        let p_z = p.fixed_columns::<U1>(Z);
-        let p_e = p.fixed_columns::<U1>(E);
+        let ps = event.all_momenta();
+        let ps_x = ps.fixed_columns::<U1>(X);
+        let ps_y = ps.fixed_columns::<U1>(Y);
+        let ps_z = ps.fixed_columns::<U1>(Z);
+        let ps_e = ps.fixed_columns::<U1>(E);
 
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let xx = (p_e + p_z).map(sqrt);
+        let xx = (ps_e + ps_z).map(sqrt);
         let fx = ParticleVector::from_fn(|par, _| {
             if xx[par] > MIN_POSITIVE {
-                Complex::new(p_x[par] / xx[par], p_y[par] / xx[par])
+                Complex::new(ps_x[par] / xx[par], ps_y[par] / xx[par])
             } else {
-                Complex::new(sqrt(2. * p_e[par]), 0.)
+                Complex::new(sqrt(2. * ps_e[par]), 0.)
             }
         });
 
