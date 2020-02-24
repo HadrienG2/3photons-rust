@@ -1,7 +1,7 @@
 //! Mechanism to apply a cut to generated events
 
 use crate::{
-    event::{Event, OUTGOING_COUNT},
+    event::{Event, NUM_OUTGOING},
     linalg::{
         dimension::*,
         momentum::{E, X},
@@ -61,7 +61,7 @@ impl EventCut {
 
         // Check if the (photon1, photon{2, 3}) angles pass the cut
         // FIXME: Turn this back into a loop once const generics allow for it
-        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
+        assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
         let p_ph1 = event.outgoing_momentum(0);
         let ps_ph23 = ps_out.fixed_rows::<U2>(1);
         let ps_ph23_xyz = ps_ph23.fixed_columns::<U3>(X);
@@ -88,7 +88,7 @@ impl EventCut {
 
         // Compute a vector which is normal to the outgoing photon plane
         // NOTE: This notion is only valid because we have three output photons
-        assert_eq!(OUTGOING_COUNT, 3, "This part assumes 3 outgoing particles");
+        assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
         let n_ppp = event
             .outgoing_momentum(0)
             .xyz()

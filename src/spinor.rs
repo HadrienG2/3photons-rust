@@ -2,8 +2,8 @@
 
 use crate::{
     event::{
-        Event, ParticleMatrix, ParticleVector, INCOMING_COUNT, INCOMING_E_M as E_M,
-        INCOMING_E_P as E_P, OUTGOING_COUNT,
+        Event, ParticleMatrix, ParticleVector, NUM_INCOMING, INCOMING_E_M as E_M,
+        INCOMING_E_P as E_P, NUM_OUTGOING,
     },
     linalg::{
         dimension::*,
@@ -34,8 +34,8 @@ impl SpinorProducts {
     pub fn new(event: &Event) -> Self {
         // The underlying Gram matrix is not specific to the physics of
         // e+e- -> ppp collisions, but our methods are specific to it.
-        assert_eq!(INCOMING_COUNT, 2);
-        assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_INCOMING, 2);
+        assert_eq!(NUM_OUTGOING, 3);
 
         // Access the array of incoming and outgoing particle 4-momenta
         let p = event.all_momenta();

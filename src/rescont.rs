@@ -2,7 +2,7 @@
 
 use crate::{
     coupling::Couplings,
-    event::{Event, OUTGOING_COUNT},
+    event::{Event, NUM_OUTGOING},
     linalg::{dimension::*, vecmat::*},
     numeric::{functions::*, Real},
     spinor::SpinorProducts,
@@ -47,7 +47,7 @@ impl ResultContribution {
     /// Construct the matrix element from the spinor products
     pub fn new(couplings: &Couplings, event: &Event) -> Self {
         // This code is very specific to the current problem definition
-        assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_OUTGOING, 3);
         assert_eq!(NUM_RESULTS, 5);
 
         // Compute spinor inner products
@@ -83,7 +83,7 @@ impl ResultContribution {
     /// Display the results in human-readable form
     #[allow(dead_code)]
     pub fn display(&self) {
-        assert_eq!(OUTGOING_COUNT, 3);
+        assert_eq!(NUM_OUTGOING, 3);
 
         for index in 0..NUM_RESULTS {
             println!("Contribution {}", index);

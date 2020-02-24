@@ -3,7 +3,7 @@
 
 use crate::{
     config::Configuration,
-    event::OUTGOING_COUNT,
+    event::NUM_OUTGOING,
     linalg::{dimension::*, vecmat::*},
     numeric::{functions::*, reals::consts::PI, Complex, Real},
     rescont::{ResultContribution, ResultVector, A, B_M, B_P, I_MX, NUM_RESULTS, R_MX},
@@ -93,7 +93,7 @@ impl<'a> ResultsBuilder<'a> {
 
         // Apply total phase space normalization to the event weight
         let n_ev = cfg.num_events as Real;
-        let norm = powi(2. * PI, 4 - 3 * (OUTGOING_COUNT as i32)) / n_ev;
+        let norm = powi(2. * PI, 4 - 3 * (NUM_OUTGOING as i32)) / n_ev;
         // NOTE: This replaces the original WTEV, previously reset every event
         let norm_weight = event_weight * norm;
 
