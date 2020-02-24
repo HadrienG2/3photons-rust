@@ -3,16 +3,13 @@
 
 use crate::{
     config::Configuration,
-    event::NUM_OUTGOING,
+    event::{NUM_OUTGOING, NUM_SPINS},
     linalg::{dimension::*, vecmat::*},
     numeric::{functions::*, reals::consts::PI, Complex, Real},
     rescont::{ResultContribution, ResultVector, A, B_M, B_P, I_MX, NUM_RESULTS, R_MX},
 };
 
 use num_traits::Zero;
-
-/// Number of spins
-pub const NUM_SPINS: usize = 2;
 
 /// Matrix of per-spin result contributions
 ///

@@ -3,9 +3,10 @@
 
 use crate::{
     config::Configuration,
+    event::NUM_SPINS,
     numeric::{functions::*, reals, Real},
     rescont::{A, B_M, B_P, NUM_RESULTS, R_MX},
-    resfin::{FinalResults, NUM_SPINS, SP_M, SP_P},
+    resfin::{FinalResults, SP_M, SP_P},
 };
 
 use chrono;

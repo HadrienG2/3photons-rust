@@ -44,8 +44,8 @@ pub const INCOMING_E_M: usize = 0;
 /// Index of the incoming positron in the 4-momentum array
 pub const INCOMING_E_P: usize = 1;
 
-/// Index of the first outgoing photon in the 4-momentum array
-pub const OUTGOING_SHIFT: usize = NUM_INCOMING;
+/// Number of possible spin values of the outgoing particles
+pub const NUM_SPINS: usize = 2;
 
 /// Generator of ee -> ppp events
 pub struct EventGenerator {
@@ -342,12 +342,12 @@ impl Event {
 
     /// Extract a photon's 4-momentum
     pub fn outgoing_momentum(&self, par: usize) -> Momentum {
-        self.momentum(OUTGOING_SHIFT + par)
+        self.momentum(NUM_INCOMING + par)
     }
 
     /// Access the outgoing 4-momenta
     pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
-        self.0.fixed_rows::<U3>(OUTGOING_SHIFT)
+        self.0.fixed_rows::<U3>(NUM_INCOMING)
     }
 
     /// Minimal outgoing photon energy
