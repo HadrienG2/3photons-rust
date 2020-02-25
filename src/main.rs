@@ -83,7 +83,7 @@ fn main() -> Result<()> {
 
     // NOTE: Unlike the C++ version, we start the clock after configuration I/O,
     //       to avoid IO-induced timing fluctuations
-    let saved_time = Instant::now();
+    let start_time = Instant::now();
 
     // NOTE: Removed final particle mass array. Since we are simulating photons,
     //       we know the masses to be zero at compile time.
@@ -132,7 +132,7 @@ fn main() -> Result<()> {
     // ### RESULTS DISPLAY AND STORAGE ###
 
     // Measure how much time has elapsed
-    let elapsed_time = saved_time.elapsed();
+    let elapsed_time = start_time.elapsed();
 
     // Send the results to the standard output and to disk and we're done
     output::dump_results(&cfg, &result, elapsed_time).context("Failed to output the results")?;
