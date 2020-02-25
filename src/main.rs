@@ -134,7 +134,7 @@ fn main() -> Result<()> {
     // Measure how much time has elapsed
     let elapsed_time = start_time.elapsed();
 
-    // Send the results to the standard output and to disk and we're done
+    // Send the results to the standard output and to disk
     output::dump_results(&cfg, &result, elapsed_time).context("Failed to output the results")?;
 
     // ...and we're done
