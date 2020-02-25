@@ -31,10 +31,10 @@ const EVENT_BATCH_SIZE: usize = 10_000;
 ///
 /// Returns the finalized simulation results
 ///
-pub fn run_simulation<'a>(
+pub fn run_simulation<'cfg>(
     num_events: usize,
-    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'a>,
-) -> FinalResults<'a> {
+    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'cfg>,
+) -> FinalResults<'cfg> {
     // Check that the user is being reasonable (should have already been checked
     // at configuration time, but bugs can happen...)
     assert!(num_events > 0, "Must simulate at least one event");

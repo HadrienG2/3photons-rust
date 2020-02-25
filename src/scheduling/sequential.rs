@@ -12,11 +12,11 @@ use crate::{random::RandomGenerator, resfin::ResultsBuilder, scheduling::EVENT_B
 /// larger than the accumulated values and numerical accumulation errors
 /// will start to blow up.
 ///
-pub fn run_simulation_impl<'a>(
+pub fn run_simulation_impl<'cfg>(
     mut num_events: usize,
     mut rng: RandomGenerator,
-    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'a>,
-) -> ResultsBuilder<'a> {
+    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'cfg>,
+) -> ResultsBuilder<'cfg> {
     // Some double-checking cannot hurt...
     assert!(num_events > 0, "Must simulate at least one event");
 

@@ -25,7 +25,7 @@ pub const SP_P: usize = 1;
 
 /// This struct will accumulate intermediary results during integration, and
 /// ultimately compute the final results (see FinalResults below).
-pub struct ResultsBuilder<'a> {
+pub struct ResultsBuilder<'cfg> {
     // ### RESULT ACCUMULATORS ###
     /// Number of integrated events
     selected_events: usize,
@@ -47,7 +47,7 @@ pub struct ResultsBuilder<'a> {
 
     // ### PHYSICAL CONSTANTS (CACHED FOR FINALIZATION) ###
     /// Configuration of the simulation
-    cfg: &'a Configuration,
+    cfg: &'cfg Configuration,
 
     /// Common factor, non-averaged over spins=1
     ///                  /(symmetry factor)
@@ -66,9 +66,9 @@ pub struct ResultsBuilder<'a> {
     ecart_pic: Real,
 }
 //
-impl<'a> ResultsBuilder<'a> {
+impl<'cfg> ResultsBuilder<'cfg> {
     /// Prepare for results integration
-    pub fn new(cfg: &'a Configuration, event_weight: Real) -> Self {
+    pub fn new(cfg: &'cfg Configuration, event_weight: Real) -> Self {
         // Common factor (see definition and remarks above)
         let fact_com = 1. / 6. * cfg.convers;
         let gzr = cfg.g_z0 / cfg.m_z0;
@@ -148,7 +148,7 @@ impl<'a> ResultsBuilder<'a> {
     }
 
     /// Turn integrated simulation data into finalized results
-    pub fn finalize(mut self) -> FinalResults<'a> {
+    pub fn finalize(mut self) -> FinalResults<'cfg> {
         // This code depends on some aspects of the problem definition
         assert_eq!(NUM_SPINS, 2);
         assert_eq!(NUM_RESULTS, 5);
@@ -236,13 +236,13 @@ impl<'a> ResultsBuilder<'a> {
             inc_ss_p,
             ss_m,
             inc_ss_m,
-            config: cfg,
+            cfg,
         }
     }
 }
 
 /// This struct will hold the final results of the simulation
-pub struct FinalResults<'a> {
+pub struct FinalResults<'cfg> {
     /// Number of integrated events
     pub selected_events: usize,
 
@@ -277,16 +277,16 @@ pub struct FinalResults<'a> {
     pub inc_ss_m: Real,
 
     /// Configuration of the simulation (for further derivation)
-    config: &'a Configuration,
+    cfg: &'cfg Configuration,
 }
 //
-impl<'a> FinalResults<'a> {
+impl<'cfg> FinalResults<'cfg> {
     /// Display results using Eric's (???) parametrization
     pub fn eric(&self) {
         assert_eq!(NUM_SPINS, 2);
         assert_eq!(NUM_RESULTS, 5);
 
-        let cfg = self.config;
+        let cfg = self.cfg;
 
         let mu_th = cfg.br_ep_em * cfg.convers / (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
         let lambda0_m = (-self.spm2[(SP_M, B_P)] + self.spm2[(SP_M, B_M)]) / 2.;
@@ -334,7 +334,7 @@ impl<'a> FinalResults<'a> {
         assert_eq!(NUM_SPINS, 2);
         assert_eq!(NUM_RESULTS, 5);
 
-        let cfg = self.config;
+        let cfg = self.cfg;
         let ev_cut = &cfg.event_cut;
 
         let mre = cfg.m_z0 / cfg.e_tot;

@@ -36,7 +36,7 @@ pub type ParticleMatrix<T> = Matrix5<T>;
 type EventMatrix = Matrix5x4<Real>;
 
 /// Slice of the event data matrix containing only outgoing particles
-type OutgoingMomentaSlice<'a> = MatrixSlice<'a, Real, U3, U4, U1, U5>;
+type OutgoingMomentaSlice<'matrix> = MatrixSlice<'matrix, Real, U3, U4, U1, U5>;
 
 /// Row of the incoming electron in the event data matrix
 pub const INCOMING_E_M: usize = 0;

@@ -158,14 +158,14 @@ impl Configuration {
 
 /// A value from the configuration file, tagged with the struct field which it
 /// is supposed to map for error reporting purposes.
-struct ConfigItem<'a> {
+struct ConfigItem<'data> {
     name: &'static str,
-    data: &'a str,
+    data: &'data str,
 }
 //
-impl<'a> ConfigItem<'a> {
+impl<'data> ConfigItem<'data> {
     /// Build a config item from a struct field tag and raw iterator data
-    fn new(name: &'static str, data: &'a str) -> Self {
+    fn new(name: &'static str, data: &'data str) -> Self {
         Self { name, data }
     }
 
