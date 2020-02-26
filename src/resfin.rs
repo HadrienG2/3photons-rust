@@ -211,11 +211,11 @@ impl<'cfg> ResultsBuilder<'cfg> {
                 / (2. * abs(ss_denom));
 
         let inc_ss_p = sqrt(
-            sqr(spm2[(SP_M, B_P)] * vars[(SP_M, B_P)]) + sqr(spm2[(SP_P, B_P)] * vars[(SP_P, B_P)])
+            sqr(spm2[(SP_M, B_P)] * vars[(SP_M, B_P)]) + sqr(spm2[(SP_P, B_P)] * vars[(SP_P, B_P)]),
         ) / abs(spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)])
             + inc_ss_common;
         let inc_ss_m = sqrt(
-            sqr(spm2[(SP_M, B_M)] * vars[(SP_M, B_M)]) + sqr(spm2[(SP_P, B_M)] * vars[(SP_P, B_M)])
+            sqr(spm2[(SP_M, B_M)] * vars[(SP_M, B_M)]) + sqr(spm2[(SP_P, B_M)] * vars[(SP_P, B_M)]),
         ) / abs(spm2[(SP_M, B_M)] + spm2[(SP_P, B_M)])
             + inc_ss_common;
 
