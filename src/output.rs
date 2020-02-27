@@ -125,8 +125,7 @@ pub fn dump_results(
     // Write main results file. Try to mimick the original C++ format as well as
     // possible to ease comparisons, even where it makes little sense.
     {
-        // Shorthands for spm2 and var are still convenient, but now we only
-        // need read-only access to these quantities.
+        // Some convenience shorthand
         let spm2 = &res_fin.spm2;
         let vars = &res_fin.vars;
 
