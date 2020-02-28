@@ -371,10 +371,12 @@ impl Event {
     #[allow(dead_code)]
     pub fn display(&self) {
         let p_out = self.outgoing_momenta();
-        for ip in p_out.iter().enumerate() {
-            let (i, p) = ip;
-            println!("p{}: {}", i + 1, p);
+        for coord in 0..4 {
+            print!("{}\t", coord);
+            for part in 0..NUM_OUTGOING {
+                print!("{}\t", p_out[(part, coord)]);
+            }
+            println!();
         }
-        println!();
     }
 }

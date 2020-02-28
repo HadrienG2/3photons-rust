@@ -110,11 +110,7 @@ impl Configuration {
         config.print();
 
         // A sensible simulation must run for at least one event
-        ensure!(
-            config.num_events > 0,
-            "Invalid event count: {}",
-            config.num_events
-        );
+        ensure!(config.num_events > 0, "Please simulate at least one event");
 
         // NOTE: We don't support the original code's PAW-based plotting
         //       features, so we make sure that it was not enabled.

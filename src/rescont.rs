@@ -86,7 +86,7 @@ impl ResultContribution {
         assert_eq!(NUM_OUTGOING, 3);
 
         for index in 0..NUM_RESULTS {
-            println!("Contribution {}", index);
+            println!("Matrix element #{}", index);
             println!("---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++");
             let contribution = self.m2x.fixed_rows::<U1>(index);
             for &matrix_elem in contribution.iter() {
