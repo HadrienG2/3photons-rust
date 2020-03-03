@@ -23,7 +23,7 @@ standard-random = ["rand", "rand_xoshiro"]
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4"
-nalgebra = "0.19"
+nalgebra = "0.20"
 num-complex = "0.2"
 num-traits = "0.2"
 # These deps are only needed when some features are enabled
