@@ -4,7 +4,7 @@ use crate::{
     coupling::Couplings,
     event::{Event, NUM_OUTGOING, NUM_SPINS},
     linalg::{dimension::*, vecmat::*},
-    numeric::{functions::*, Real},
+    numeric::{functions::*, Float},
     spinor::SpinorProducts,
 };
 
@@ -12,7 +12,7 @@ use crate::{
 pub const NUM_RESULTS: usize = 5;
 
 /// Storage for matrix elements
-pub type ResultVector = Vector5<Real>;
+pub type ResultVector = Vector5<Float>;
 
 /// Index of the electromagnetic matrix element
 pub const A: usize = 0;
@@ -40,7 +40,7 @@ pub struct ResultContribution {
     ///     - Configuration 1 (0b001) is --+
     ///     - And so on...
     ///
-    m2x: Matrix5x8<Real>,
+    m2x: Matrix5x8<Float>,
 }
 //
 impl ResultContribution {

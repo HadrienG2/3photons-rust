@@ -1,11 +1,11 @@
 //! Random number generation, from Knuth's ranf (in Seminumerical Algorithm)
 
-use crate::numeric::Real;
+use crate::numeric::Float;
 
 // Generated random numbers will have a granularity of 1/MODULO
 type RanfInt = i32;
 const MODULO: RanfInt = 1_000_000_000;
-const INV_MODULO: Real = 1e-9;
+const INV_MODULO: Float = 1e-9;
 
 /// Random number generator
 #[derive(Clone)]
@@ -67,7 +67,7 @@ impl RanfGenerator {
 
     /// Generate a random number between 0 and 1, with INV_MODULO granularity
     /// Roughly maps to the RN() method in the original code.
-    pub fn random(&mut self) -> Real {
+    pub fn random(&mut self) -> Float {
         let mut buffer = [0.; 1];
         self.random_slice(&mut buffer[..]);
         buffer[0]
@@ -77,7 +77,7 @@ impl RanfGenerator {
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    pub fn random2(&mut self) -> [Real; 2] {
+    pub fn random2(&mut self) -> [Float; 2] {
         let mut buffer = [0.; 2];
         self.random_slice(&mut buffer[..]);
         buffer
@@ -87,7 +87,7 @@ impl RanfGenerator {
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    pub fn random6(&mut self) -> [Real; 6] {
+    pub fn random6(&mut self) -> [Float; 6] {
         let mut buffer = [0.; 6];
         self.random_slice(&mut buffer[..]);
         buffer
@@ -97,7 +97,7 @@ impl RanfGenerator {
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    pub fn random9(&mut self) -> [Real; 9] {
+    pub fn random9(&mut self) -> [Float; 9] {
         let mut buffer = [0.; 9];
         self.random_slice(&mut buffer[..]);
         buffer
@@ -109,7 +109,7 @@ impl RanfGenerator {
     ///
     #[inline(always)]
     #[allow(clippy::cast_lossless)]
-    fn random_slice(&mut self, storage: &mut [Real]) {
+    fn random_slice(&mut self, storage: &mut [Float]) {
         // Assuming that we will never need more than a round of numbers at a
         // time allows us to take implementation and performance shortcuts.
         let request_len = storage.len();
@@ -130,7 +130,7 @@ impl RanfGenerator {
         self.index -= request_len;
         let numbers = &self.numbers[self.index + 1..self.index + 1 + request_len];
         for (dst, src) in storage.iter_mut().zip(numbers) {
-            *dst = (*src as Real) * INV_MODULO;
+            *dst = (*src as Float) * INV_MODULO;
         }
     }
 

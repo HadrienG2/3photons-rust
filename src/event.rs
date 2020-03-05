@@ -12,7 +12,7 @@ use crate::{
             consts::{FRAC_PI_2, PI},
             MIN_POSITIVE,
         },
-        Real,
+        Float,
     },
     random::RandomGenerator,
 };
@@ -33,10 +33,10 @@ pub type ParticleVector<T> = Vector5<T>;
 pub type ParticleMatrix<T> = Matrix5<T>;
 
 /// Event data matrix type (columns are 4-coordinates, rows are particles)
-type EventMatrix = Matrix5x4<Real>;
+type EventMatrix = Matrix5x4<Float>;
 
 /// Slice of the event data matrix containing only outgoing particles
-type OutgoingMomentaSlice<'matrix> = MatrixSlice<'matrix, Real, U3, U4, U1, U5>;
+type OutgoingMomentaSlice<'matrix> = MatrixSlice<'matrix, Float, U3, U4, U1, U5>;
 
 /// Row of the incoming electron in the event data matrix
 pub const INCOMING_E_M: usize = 0;
@@ -50,13 +50,13 @@ pub const NUM_SPINS: usize = 2;
 /// Generator of ee -> ppp events
 pub struct EventGenerator {
     /// Total center-of-mass energy of the collision
-    e_tot: Real,
+    e_tot: Float,
 
     /// Weight of generated events
-    ev_weight: Real,
+    ev_weight: Float,
 
     /// Incoming electron and positron momenta
-    incoming_momenta: Matrix2x4<Real>,
+    incoming_momenta: Matrix2x4<Float>,
 }
 //
 impl EventGenerator {
@@ -68,7 +68,7 @@ impl EventGenerator {
     /// initialization from the original C++ 3photons code.
     ///
     #[rustfmt::skip]
-    pub fn new(e_tot: Real) -> Self {
+    pub fn new(e_tot: Float) -> Self {
         // Check on the number of particles. The check for N<101 is gone since
         // unlike the original RAMBO, we don't use arrays of hardcoded size.
         assert!(NUM_OUTGOING > 1);
@@ -80,18 +80,18 @@ impl EventGenerator {
         // from the original RAMBO code with something less branchy.
         println!("IBegin");
         // Replaces Z[INP-1] in the original 3photons code
-        let mut z = ((NUM_OUTGOING - 1) as Real) * ln(FRAC_PI_2);
+        let mut z = ((NUM_OUTGOING - 1) as Float) * ln(FRAC_PI_2);
         for k in 2..NUM_OUTGOING {
-            z -= 2. * ln((k - 1) as Real);
+            z -= 2. * ln((k - 1) as Float);
         }
-        let z = z - ln((NUM_OUTGOING - 1) as Real);
+        let z = z - ln((NUM_OUTGOING - 1) as Float);
 
         // NOTE: The check on total energy is gone, because we only generate
         //       massless photons and so the total energy will always be enough.
         //       Counting of nonzero masses is also gone because it was unused.
 
         // All generated events will have the same weight: pre-compute it
-        let ln_weight = (2. * (NUM_OUTGOING as Real) - 4.) * ln(e_tot) + z;
+        let ln_weight = (2. * (NUM_OUTGOING as Float) - 4.) * ln(e_tot) + z;
         assert!((ln_weight >= -180.) && (ln_weight <= 174.));
         let ev_weight = exp(ln_weight);
 
@@ -172,7 +172,7 @@ impl EventGenerator {
     /// The output momenta are provided as a matrix where rows are 4-momentum
     /// components (Px, Py, Pz, E) and columns are particles.
     ///
-    fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Real> {
+    fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Float> {
         assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
 
         // In all operating modes, random number generation is kept
@@ -258,7 +258,7 @@ impl EventGenerator {
     ///       - Statistics force us to discard more points and call the RNG more
     ///
     #[allow(clippy::needless_range_loop)]
-    fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Real> {
+    fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Float> {
         assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
 
         // Grab three random points on the unit square
@@ -268,7 +268,7 @@ impl EventGenerator {
         // too close to the origin (otherwise we'll get floating-point issues)
         let mut radius2 = Vector3::from_fn(|par, _| points.fixed_rows::<U1>(par).norm_squared());
         for par in 0..NUM_OUTGOING {
-            const MIN_POSITIVE_2: Real = MIN_POSITIVE * MIN_POSITIVE;
+            const MIN_POSITIVE_2: Float = MIN_POSITIVE * MIN_POSITIVE;
             while radius2[par] > 1. || radius2[par] < MIN_POSITIVE_2 {
                 let new_point = Vector2::from_iterator(rng.random2().iter().map(|r| 2. * r - 1.));
                 points.set_row(par, &new_point.transpose());
@@ -305,7 +305,7 @@ impl EventGenerator {
     // ### EVENT PROPERTIES ###
 
     /// Access the event weight (identical for all generated events)
-    pub fn event_weight(&self) -> Real {
+    pub fn event_weight(&self) -> Float {
         self.ev_weight
     }
 }
@@ -354,7 +354,7 @@ impl Event {
     }
 
     /// Minimal outgoing photon energy
-    pub fn min_photon_energy(&self) -> Real {
+    pub fn min_photon_energy(&self) -> Float {
         if cfg!(feature = "no-photon-sorting") {
             let first_out_e = self.outgoing_momenta()[(0, E)];
             self.outgoing_momenta()

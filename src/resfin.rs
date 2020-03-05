@@ -5,7 +5,7 @@ use crate::{
     config::Configuration,
     event::{NUM_OUTGOING, NUM_SPINS},
     linalg::{dimension::*, vecmat::*},
-    numeric::{functions::*, reals::consts::PI, Complex, Real},
+    numeric::{functions::*, reals::consts::PI, Complex, Float},
     rescont::{ResultContribution, ResultVector, A, B_M, B_P, I_MX, NUM_RESULTS, R_MX},
 };
 
@@ -15,7 +15,7 @@ use num_traits::Zero;
 ///
 /// Rows are spins, columns are result contributions (in the rescont.rs sense)
 ///
-pub type PerSpinResults = Matrix2x5<Real>;
+pub type PerSpinResults = Matrix2x5<Float>;
 
 /// Index of negative spin data
 pub const SP_M: usize = 0;
@@ -40,10 +40,10 @@ pub struct ResultsBuilder<'cfg> {
     sigma_contribs: ResultVector,
 
     /// Accumulated total cross-section
-    sigma: Real,
+    sigma: Float,
 
     /// Accumulated total variance
-    variance: Real,
+    variance: Float,
 
     // ### PHYSICAL CONSTANTS (CACHED FOR FINALIZATION) ###
     /// Configuration of the simulation
@@ -54,21 +54,21 @@ pub struct ResultsBuilder<'cfg> {
     ///                  *(conversion factor GeV^-2->pb)
     /// To average over spins, add :
     ///                  /(number of incoming helicities)
-    fact_com: Real,
+    fact_com: Float,
 
     /// Event weight, with total phase space normalization
-    norm_weight: Real,
+    norm_weight: Float,
 
     /// Z° propagator
-    propag: Real,
+    propag: Float,
 
     /// ??? (Ask Vincent Lafage)
-    ecart_pic: Real,
+    ecart_pic: Float,
 }
 //
 impl<'cfg> ResultsBuilder<'cfg> {
     /// Prepare for results integration
-    pub fn new(cfg: &'cfg Configuration, event_weight: Real) -> Self {
+    pub fn new(cfg: &'cfg Configuration, event_weight: Float) -> Self {
         // This code depends on some aspects of the problem definition
         assert_eq!(NUM_RESULTS, 5);
 
@@ -92,7 +92,7 @@ impl<'cfg> ResultsBuilder<'cfg> {
         let propag = 1. / (1. + sqr(ecart_pic));
 
         // Apply total phase space normalization to the event weight
-        let n_ev = cfg.num_events as Real;
+        let n_ev = cfg.num_events as Float;
         let norm = powi(2. * PI, 4 - 3 * (NUM_OUTGOING as i32)) / n_ev;
         // NOTE: This replaces the original WTEV, previously reset every event
         let norm_weight = event_weight * norm;
@@ -104,11 +104,11 @@ impl<'cfg> ResultsBuilder<'cfg> {
         let bb_contrib = com_contrib * c_bb * propag / sqr(gzr);
         let ab_contrib = com_contrib * c_ab * 2. * cfg.beta_plus * propag / gzr;
         let sigma_contribs = ResultVector::new(
-            aa_contrib,                        // A
-            bb_contrib * sqr(cfg.beta_plus),   // B_P
-            bb_contrib * sqr(cfg.beta_minus),  // B_M
-            ab_contrib * ecart_pic,            // R_MX
-            -ab_contrib,                       // I_MX
+            aa_contrib,                       // A
+            bb_contrib * sqr(cfg.beta_plus),  // B_P
+            bb_contrib * sqr(cfg.beta_minus), // B_M
+            ab_contrib * ecart_pic,           // R_MX
+            -ab_contrib,                      // I_MX
         );
 
         // Return a complete results builder
@@ -160,7 +160,7 @@ impl<'cfg> ResultsBuilder<'cfg> {
         let cfg = self.cfg;
 
         // Keep around a floating-point version of the total event count
-        let n_ev = cfg.num_events as Real;
+        let n_ev = cfg.num_events as Float;
 
         // Compute the relative uncertainties for one spin
         for (&v_spm2, v_var) in self.spm2.iter().zip(self.vars.iter_mut()) {
@@ -258,28 +258,28 @@ pub struct FinalResults<'cfg> {
     pub vars: PerSpinResults,
 
     /// Total cross-section
-    pub sigma: Real,
+    pub sigma: Float,
 
     /// Relative precision
-    pub prec: Real,
+    pub prec: Float,
 
     /// Total variance
-    pub variance: Real,
+    pub variance: Float,
 
     /// Beta minimum (???)
-    pub beta_min: Real,
+    pub beta_min: Float,
 
     /// Statistical significance B+(pb-1/2) (???)
-    pub ss_p: Real,
+    pub ss_p: Float,
 
     /// Incertitide associated with ss_p
-    pub inc_ss_p: Real,
+    pub inc_ss_p: Float,
 
     /// Statistical significance B-(pb-1/2) (???)
-    pub ss_m: Real,
+    pub ss_m: Float,
 
     /// Incertitude associated with ss_m
-    pub inc_ss_m: Real,
+    pub inc_ss_m: Float,
 
     /// Configuration of the simulation (for further derivation)
     cfg: &'cfg Configuration,

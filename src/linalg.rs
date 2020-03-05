@@ -26,12 +26,12 @@ pub mod vecmat {
 
 /// Handling of relativistic 4-momenta
 pub mod momentum {
-    use crate::numeric::Real;
+    use crate::numeric::Float;
 
     use nalgebra::Vector4;
 
     /// Relativistic 4-momentum
-    pub type Momentum = Vector4<Real>;
+    pub type Momentum = Vector4<Float>;
 
     /// Convenience const for accessing the X coordinate of a 4-vector
     pub const X: usize = 0;

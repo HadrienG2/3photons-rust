@@ -6,18 +6,18 @@ use num_complex;
 
 // Floating-point precision is configured here
 #[cfg(feature = "f32")]
-pub type Real = f32;
+pub type Float = f32;
 #[cfg(feature = "f32")]
 pub use std::f32 as reals;
 #[cfg(not(feature = "f32"))]
-pub type Real = f64;
+pub type Float = f64;
 #[cfg(not(feature = "f32"))]
 pub use std::f64 as reals;
-pub type Complex = num_complex::Complex<Real>;
+pub type Complex = num_complex::Complex<Float>;
 
 /// Mathematical functions
 pub mod functions {
-    use super::Real;
+    use super::Float;
     use num_traits::One;
     use std::ops::{Div, Mul};
 
@@ -27,7 +27,7 @@ pub mod functions {
     macro_rules! prefix_unary_funcs {
         ( $( $name:ident ),* ) => ( $(
             #[inline]
-            pub fn $name(x: Real) -> Real {
+            pub fn $name(x: Float) -> Float {
                 x.$name()
             }
         )* )

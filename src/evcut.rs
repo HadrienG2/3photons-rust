@@ -6,27 +6,27 @@ use crate::{
         dimension::*,
         momentum::{E, X},
     },
-    numeric::{functions::*, Real},
+    numeric::{functions::*, Float},
 };
 
 /// Cuts on generated events
 pub struct EventCut {
     /// Cut on maximum cosine of (beam, photons) angle
-    pub a_cut: Real,
+    pub a_cut: Float,
 
     /// Cut on maximum cosine of (photon, photon) angle
-    pub b_cut: Real,
+    pub b_cut: Float,
 
     /// Cut on minimum photon energy
-    pub e_min: Real,
+    pub e_min: Float,
 
     /// Cut on minimum cosine of (beam, normal to the photon plane) angle
-    pub sin_cut: Real,
+    pub sin_cut: Float,
 }
 //
 impl EventCut {
     /// Setup the cuts on generated events
-    pub fn new(a_cut: Real, b_cut: Real, e_min: Real, sin_cut: Real) -> Self {
+    pub fn new(a_cut: Float, b_cut: Float, e_min: Float, sin_cut: Float) -> Self {
         EventCut {
             a_cut,
             b_cut,

@@ -1,7 +1,7 @@
 //! This module mimicks the interface of RanfGenerator on top of the
 //! abstractions of the standard "random" crate.
 
-use crate::numeric::Real;
+use crate::numeric::Float;
 use rand::{Rng, SeedableRng};
 
 // Select random number generation engine in use
@@ -25,7 +25,7 @@ impl RandGenerator {
     }
 
     // Generate a random floating-point number between 0 and 1
-    pub fn random(&mut self) -> Real {
+    pub fn random(&mut self) -> Float {
         self.rng.gen()
     }
 
@@ -33,7 +33,7 @@ impl RandGenerator {
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    pub fn random2(&mut self) -> [Real; 2] {
+    pub fn random2(&mut self) -> [Float; 2] {
         self.rng.gen()
     }
 
@@ -41,7 +41,7 @@ impl RandGenerator {
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    pub fn random6(&mut self) -> [Real; 6] {
+    pub fn random6(&mut self) -> [Float; 6] {
         self.rng.gen()
     }
 
@@ -49,7 +49,7 @@ impl RandGenerator {
     ///
     /// TODO: Clean up this API once Rust has const generics
     ///
-    pub fn random9(&mut self) -> [Real; 9] {
+    pub fn random9(&mut self) -> [Float; 9] {
         self.rng.gen()
     }
 

@@ -12,14 +12,14 @@ use crate::{
     numeric::{
         functions::*,
         reals::{consts::SQRT_2, MIN_POSITIVE},
-        Complex, Real,
+        Complex, Float,
     },
 };
 
 use num_traits::Zero;
 
 /// Square root of eight
-const RAC8: Real = 2. * SQRT_2;
+const RAC8: Float = 2. * SQRT_2;
 
 /// Massless 4-momenta spinor inner products
 pub struct SpinorProducts {

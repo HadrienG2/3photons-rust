@@ -2,19 +2,19 @@
 
 use crate::{
     config::Configuration,
-    numeric::{functions::*, reals::consts::PI, Real},
+    numeric::{functions::*, reals::consts::PI, Float},
 };
 
 /// Set of physical couplings
 pub struct Couplings {
     /// Standard Model contribution electromagnetic coupling √(4𝜋𝛼)³
-    pub g_a: Real,
+    pub g_a: Float,
 
     /// 𝛽₊ anomalous contribution electroweak coupling
-    pub g_bp: Real,
+    pub g_bp: Float,
 
     /// 𝛽₋ anomalous contribution electroweak coupling
-    pub g_bm: Real,
+    pub g_bm: Float,
 }
 //
 impl Couplings {

@@ -4,7 +4,7 @@
 use crate::{
     config::Configuration,
     event::NUM_SPINS,
-    numeric::{functions::*, reals, Real},
+    numeric::{functions::*, reals, Float},
     rescont::{A, B_M, B_P, NUM_RESULTS, R_MX},
     resfin::{FinalResults, SP_M, SP_P},
 };
@@ -41,7 +41,7 @@ pub fn dump_results(
         write_label(file, label)?;
         writeln!(*file, "{}", value)
     };
-    let write_real = |file: &mut File, label: &str, value: Real| {
+    let write_real = |file: &mut File, label: &str, value: Float| {
         write_label(file, label)?;
         write_engineering(file, value, SIG_DIGITS)?;
         writeln!(file)
@@ -61,7 +61,7 @@ pub fn dump_results(
 
         // Write program performance stats
         let elapsed_secs =
-            (elapsed_time.as_secs() as Real) + 1e-9 * (elapsed_time.subsec_nanos() as Real);
+            (elapsed_time.as_secs() as Float) + 1e-9 * (elapsed_time.subsec_nanos() as Float);
         writeln!(tim_file, " ---------------------------------------------")?;
         writeln!(tim_file, " Temps ecoule                   : ???")?;
         write_real(&mut tim_file, "Temps ecoule utilisateur", elapsed_secs)?;
@@ -69,7 +69,7 @@ pub fn dump_results(
         write_real(
             &mut tim_file,
             "Temps ecoule par evenement",
-            elapsed_secs / (cfg.num_events as Real),
+            elapsed_secs / (cfg.num_events as Float),
         )?;
     }
 
@@ -236,7 +236,7 @@ pub fn dump_results(
 /// up larger than the scientific notation, or so large that we would be forced
 /// to print more significant digits than requested.
 ///
-fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) -> Result<()> {
+fn write_engineering(writer: &mut impl Write, x: Float, sig_digits: usize) -> Result<()> {
     let mut precision = sig_digits - 1;
     if x == 0. {
         // Zero is special because you can't take its log
@@ -244,7 +244,7 @@ fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) -> Res
     } else {
         // Otherwise, use log to evaluate order of magnitude
         let log_x = x.abs().log10();
-        if log_x >= -3. && log_x <= (sig_digits as Real) {
+        if log_x >= -3. && log_x <= (sig_digits as Float) {
             // Print using naive notation
             //
             // Since Rust's precision controls number of digits after the

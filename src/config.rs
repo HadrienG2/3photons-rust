@@ -1,6 +1,6 @@
 //! Mechanism for loading and sharing the simulation configuration
 
-use crate::{evcut::EventCut, numeric::Real, Result};
+use crate::{evcut::EventCut, numeric::Float, Result};
 
 use anyhow::{ensure, format_err, Context, Error};
 
@@ -12,37 +12,37 @@ pub struct Configuration {
     pub num_events: usize,
 
     /// Collision energy at center of mass (GeV)
-    pub e_tot: Real,
+    pub e_tot: Float,
 
     /// Cuts on the angles and energies of generated photons
     pub event_cut: EventCut,
 
     /// Fine structure constant
-    pub alpha: Real,
+    pub alpha: Float,
 
     /// Fine structure constant at the Z peak
-    pub alpha_z: Real,
+    pub alpha_z: Float,
 
     /// Conversion factor from GeV^(-2) to pb
-    pub convers: Real,
+    pub convers: Float,
 
     /// Z⁰ boson mass (GeV)
-    pub m_z0: Real,
+    pub m_z0: Float,
 
     /// Z⁰ boson width (GeV)
-    pub g_z0: Real,
+    pub g_z0: Float,
 
     /// Square sine of Weinberg's Theta
-    pub sin2_w: Real,
+    pub sin2_w: Float,
 
     /// Branching factor from Z to e+/e-
-    pub br_ep_em: Real,
+    pub br_ep_em: Float,
 
     /// Beta + (???)
-    pub beta_plus: Real,
+    pub beta_plus: Float,
 
     /// Beta - (???)
-    pub beta_minus: Real,
+    pub beta_minus: Float,
 
     /// Number of histogram bins (UNUSED)
     n_bin: i32,
@@ -85,22 +85,22 @@ impl Configuration {
         // Decode the configuration items into concrete values
         let config = Configuration {
             num_events: next_item("num_events")?.parse::<usize>()?,
-            e_tot: next_item("e_tot")?.parse::<Real>()?,
+            e_tot: next_item("e_tot")?.parse::<Float>()?,
             event_cut: EventCut::new(
-                next_item("a_cut")?.parse::<Real>()?,
-                next_item("b_cut")?.parse::<Real>()?,
-                next_item("e_min")?.parse::<Real>()?,
-                next_item("sin_cut")?.parse::<Real>()?,
+                next_item("a_cut")?.parse::<Float>()?,
+                next_item("b_cut")?.parse::<Float>()?,
+                next_item("e_min")?.parse::<Float>()?,
+                next_item("sin_cut")?.parse::<Float>()?,
             ),
-            alpha: next_item("alpha")?.parse::<Real>()?,
-            alpha_z: next_item("alpha_z")?.parse::<Real>()?,
-            convers: next_item("convers")?.parse::<Real>()?,
-            m_z0: next_item("m_z0")?.parse::<Real>()?,
-            g_z0: next_item("g_z0")?.parse::<Real>()?,
-            sin2_w: next_item("sin2_w")?.parse::<Real>()?,
-            br_ep_em: next_item("br_ep_em")?.parse::<Real>()?,
-            beta_plus: next_item("beta_plus")?.parse::<Real>()?,
-            beta_minus: next_item("beta_moins")?.parse::<Real>()?,
+            alpha: next_item("alpha")?.parse::<Float>()?,
+            alpha_z: next_item("alpha_z")?.parse::<Float>()?,
+            convers: next_item("convers")?.parse::<Float>()?,
+            m_z0: next_item("m_z0")?.parse::<Float>()?,
+            g_z0: next_item("g_z0")?.parse::<Float>()?,
+            sin2_w: next_item("sin2_w")?.parse::<Float>()?,
+            br_ep_em: next_item("br_ep_em")?.parse::<Float>()?,
+            beta_plus: next_item("beta_plus")?.parse::<Float>()?,
+            beta_minus: next_item("beta_moins")?.parse::<Float>()?,
             n_bin: next_item("n_bin")?.parse::<i32>()?,
             impr: next_item("impr")?.parse_bool()?,
             plot: next_item("plot")?.parse_bool()?,
