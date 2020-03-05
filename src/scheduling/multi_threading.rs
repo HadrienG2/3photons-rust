@@ -68,7 +68,7 @@ pub fn run_simulation_impl<'cfg>(
             // results reproducible, but slows down the scheduling
             // thread and may thus reduce performance and scalability.
             #[cfg(not(feature = "faster-threading"))]
-            crate::event::EventGenerator::simulate_event_batch(&mut rng, batch_size);
+            crate::evgen::EventGenerator::simulate_event_batch(&mut rng, batch_size);
 
             // In non-reproducible mode, we instead ask the RNG to
             // switch to a wildly different state as quickly as it can.
