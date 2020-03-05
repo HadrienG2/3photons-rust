@@ -5,8 +5,8 @@ use crate::{
     config::Configuration,
     event::{NUM_OUTGOING, NUM_SPINS},
     linalg::{dimension::*, vecmat::*},
+    matelems::{MEsContributions, MEsVector, A, B_M, B_P, I_MX, NUM_MAT_ELEMS, R_MX},
     numeric::{functions::*, reals::consts::PI, Complex, Float},
-    rescont::{ResultContribution, ResultVector, A, B_M, B_P, I_MX, NUM_RESULTS, R_MX},
 };
 
 use num_traits::Zero;
@@ -31,13 +31,13 @@ pub struct ResultsAccumulator<'cfg> {
     selected_events: usize,
 
     /// Accumulated cross-section for each contribution
-    spm2: ResultVector,
+    spm2: MEsVector,
 
     /// Accumulated variance for each contribution
-    vars: ResultVector,
+    vars: MEsVector,
 
     /// Impact of each contribution on the cross-section
-    sigma_contribs: ResultVector,
+    sigma_contribs: MEsVector,
 
     /// Accumulated total cross-section
     sigma: Float,
@@ -70,7 +70,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
     /// Prepare for results integration
     pub fn new(cfg: &'cfg Configuration, event_weight: Float) -> Self {
         // This code depends on some aspects of the problem definition
-        assert_eq!(NUM_RESULTS, 5);
+        assert_eq!(NUM_MAT_ELEMS, 5);
 
         // Common factor (see definition and remarks above)
         let fact_com = 1. / 6. * cfg.convers;
@@ -103,7 +103,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         let aa_contrib = com_contrib * c_aa;
         let bb_contrib = com_contrib * c_bb * propag / sqr(gzr);
         let ab_contrib = com_contrib * c_ab * 2. * cfg.beta_plus * propag / gzr;
-        let sigma_contribs = ResultVector::new(
+        let sigma_contribs = MEsVector::new(
             aa_contrib,                       // A
             bb_contrib * sqr(cfg.beta_plus),  // B_P
             bb_contrib * sqr(cfg.beta_minus), // B_M
@@ -114,8 +114,8 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         // Return a complete results builder
         ResultsAccumulator {
             selected_events: 0,
-            spm2: ResultVector::zero(),
-            vars: ResultVector::zero(),
+            spm2: MEsVector::zero(),
+            vars: MEsVector::zero(),
             sigma_contribs,
             sigma: 0.,
             variance: 0.,
@@ -130,7 +130,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
 
     /// Integrate one intermediary result into the simulation results
     #[allow(clippy::needless_pass_by_value)]
-    pub fn integrate(&mut self, result: ResultContribution) {
+    pub fn integrate(&mut self, result: MEsContributions) {
         self.selected_events += 1;
         let spm2_dif = result.m2_sums();
         self.spm2 += spm2_dif;
@@ -154,7 +154,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
     pub fn finalize(mut self) -> FinalResults<'cfg> {
         // This code depends on some aspects of the problem definition
         assert_eq!(NUM_SPINS, 2);
-        assert_eq!(NUM_RESULTS, 5);
+        assert_eq!(NUM_MAT_ELEMS, 5);
 
         // Simulation configuration shorthand
         let cfg = self.cfg;
@@ -289,7 +289,7 @@ impl<'cfg> FinalResults<'cfg> {
     /// Display results using Eric's (???) parametrization
     pub fn eric(&self) {
         assert_eq!(NUM_SPINS, 2);
-        assert_eq!(NUM_RESULTS, 5);
+        assert_eq!(NUM_MAT_ELEMS, 5);
 
         let cfg = self.cfg;
 
@@ -338,7 +338,7 @@ impl<'cfg> FinalResults<'cfg> {
     /// Carlo results that we have computed
     pub fn fawzi(&self) {
         assert_eq!(NUM_SPINS, 2);
-        assert_eq!(NUM_RESULTS, 5);
+        assert_eq!(NUM_MAT_ELEMS, 5);
 
         let cfg = self.cfg;
         let ev_cut = &cfg.event_cut;

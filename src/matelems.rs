@@ -1,4 +1,4 @@
-//! Intermediary results of the computation for one event
+//! Manipulation of matrix elements
 
 use crate::{
     coupling::Couplings,
@@ -8,29 +8,33 @@ use crate::{
     spinor::SpinorProducts,
 };
 
-/// Number of results (matrix elements)
-pub const NUM_RESULTS: usize = 5;
+// ### MATRIX ELEMENTS ###
 
-/// Storage for matrix elements
-pub type ResultVector = Vector5<Float>;
+/// Number of matrix elements
+pub const NUM_MAT_ELEMS: usize = 5;
 
-/// Index of the electromagnetic matrix element
+/// Storage for per-matrix element data
+pub type MEsVector = Vector5<Float>;
+
+/// Index of the electromagnetic element
 pub const A: usize = 0;
 
-/// Index of the positive electroweak matrix element
+/// Index of the positive electroweak element
 pub const B_P: usize = 1;
 
-/// Index of the negative electroweak matrix element
+/// Index of the negative electroweak element
 pub const B_M: usize = 2;
 
-/// Index of the real part of the mixed matrix element
+/// Index of the real part of the mixed element
 pub const R_MX: usize = 3;
 
-/// Index of the imaginary part of the mixed matrix element
+/// Index of the imaginary part of the mixed element
 pub const I_MX: usize = 4;
 
+// ### PER-HELICITY CONTRIBUTIONS TO MATRIX ELEMENTS ###
+
 /// Array of square matrix elements contribution with detail of helicities
-pub struct ResultContribution {
+pub struct MEsContributions {
     /// Array of squared matrix elements, featuring five contributions with the
     /// detail of outgoing helicities configuration
     ///
@@ -43,12 +47,12 @@ pub struct ResultContribution {
     m2x: Matrix5x8<Float>,
 }
 //
-impl ResultContribution {
-    /// Construct the matrix element from the spinor products
+impl MEsContributions {
+    /// Construct the matrix element contributions from the spinor products
     pub fn new(couplings: &Couplings, event: &Event) -> Self {
         // This code is very specific to the current problem definition
         assert_eq!(NUM_OUTGOING, 3);
-        assert_eq!(NUM_RESULTS, 5);
+        assert_eq!(NUM_MAT_ELEMS, 5);
 
         // Compute spinor inner products
         let spinor = SpinorProducts::new(&event);
@@ -63,7 +67,7 @@ impl ResultContribution {
         let mixed_amps = a_amps.zip_map(&bp_amps, |a, b_p| 2. * a * conj(b_p));
 
         // Compute the matrix elements
-        ResultContribution {
+        MEsContributions {
             m2x: Matrix5x8::from_fn(|contrib, hel| match contrib {
                 A => a_amps[hel].norm_sqr(),
                 B_P => bp_amps[hel].norm_sqr(),
@@ -76,8 +80,8 @@ impl ResultContribution {
     }
 
     /// Compute the sums of the squared matrix elements for each contribution
-    pub fn m2_sums(&self) -> ResultVector {
-        ResultVector::from_fn(|i, _| self.m2x.fixed_rows::<U1>(i).iter().sum())
+    pub fn m2_sums(&self) -> MEsVector {
+        MEsVector::from_fn(|i, _| self.m2x.fixed_rows::<U1>(i).iter().sum())
     }
 
     /// Display the results in human-readable form
@@ -86,7 +90,7 @@ impl ResultContribution {
         assert_eq!(NUM_OUTGOING, 3);
         assert_eq!(NUM_SPINS, 2);
 
-        for index in 0..NUM_RESULTS {
+        for index in 0..NUM_MAT_ELEMS {
             println!("Matrix element #{}", index);
             println!("---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++");
             let contribution = self.m2x.fixed_rows::<U1>(index);

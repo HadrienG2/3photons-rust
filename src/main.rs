@@ -51,10 +51,10 @@ mod coupling;
 mod evcut;
 mod event;
 mod linalg;
+mod matelems;
 mod numeric;
 mod output;
 mod random;
-mod rescont;
 mod resfin;
 mod scheduling;
 mod spinor;
@@ -62,8 +62,8 @@ mod spinor;
 use anyhow::Context;
 
 use crate::{
-    config::Configuration, coupling::Couplings, event::EventGenerator, random::RandomGenerator,
-    rescont::ResultContribution, resfin::ResultsAccumulator,
+    config::Configuration, coupling::Couplings, event::EventGenerator, matelems::MEsContributions,
+    random::RandomGenerator, resfin::ResultsAccumulator,
 };
 
 use std::time::Instant;
@@ -112,7 +112,7 @@ fn main() -> Result<()> {
             // If the event passes the cut...
             if cfg.event_cut.keep(&event) {
                 // Compute the total weight, including matrix elements
-                let res_contrib = ResultContribution::new(&couplings, &event);
+                let res_contrib = MEsContributions::new(&couplings, &event);
 
                 // NOTE: The original code would display the result here
 

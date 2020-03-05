@@ -4,8 +4,8 @@
 use crate::{
     config::Configuration,
     event::NUM_SPINS,
+    matelems::{A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
     numeric::{functions::*, reals, Float},
-    rescont::{A, B_M, B_P, NUM_RESULTS, R_MX},
     resfin::{FinalResults, SP_M, SP_P},
 };
 
@@ -159,7 +159,7 @@ pub fn dump_results(
         writeln!(dat_file)?;
         let decimals = (SIG_DIGITS - 1).min(7);
         for sp in 0..NUM_SPINS {
-            for k in 0..NUM_RESULTS {
+            for k in 0..NUM_MAT_ELEMS {
                 writeln!(
                     dat_file,
                     "{:>3}{:>3}{:>width$.decs$e}{:>width$.decs$e}{:>width$.decs$e}",
@@ -174,7 +174,7 @@ pub fn dump_results(
             }
             writeln!(dat_file)?;
         }
-        for k in 0..NUM_RESULTS {
+        for k in 0..NUM_MAT_ELEMS {
             // FIXME: Vectorize sums across spins once const generics enable
             //        more ergonomic small matrix manipulations.
             let tmp1 = spm2[(SP_M, k)] + spm2[(SP_P, k)];
@@ -199,7 +199,7 @@ pub fn dump_results(
     // NOTE: This part is completely broken in the C++ version, I did my best
     //       to fix it in this version.
     {
-        assert_eq!(NUM_RESULTS, 5);
+        assert_eq!(NUM_MAT_ELEMS, 5);
         let mut cum_dat_file = OpenOptions::new()
             .append(true)
             .create(true)
