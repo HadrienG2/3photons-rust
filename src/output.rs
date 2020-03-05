@@ -55,6 +55,7 @@ pub fn dump_results(
     {
         // Prepare to write our timings into a file
         let mut tim_file = File::create("res.times")?;
+        let tim_file = &mut tim_file;
 
         // Write a timestamp of when the run ended
         writeln!(tim_file, " {}", timestamp)?;
@@ -64,96 +65,54 @@ pub fn dump_results(
             (elapsed_time.as_secs() as Float) + 1e-9 * (elapsed_time.subsec_nanos() as Float);
         writeln!(tim_file, " ---------------------------------------------")?;
         writeln!(tim_file, " Temps ecoule                   : ???")?;
-        write_real(&mut tim_file, "Temps ecoule utilisateur", elapsed_secs)?;
+        write_real(tim_file, "Temps ecoule utilisateur", elapsed_secs)?;
         writeln!(tim_file, " Temps ecoule systeme           : ???")?;
-        write_real(
-            &mut tim_file,
-            "Temps ecoule par evenement",
-            elapsed_secs / (cfg.num_events as Float),
-        )?;
+        let secs_per_ev = elapsed_secs / (cfg.num_events as Float);
+        write_real(tim_file, "Temps ecoule par evenement", secs_per_ev)?;
     }
 
     // Write main results file. Try to mimick the original C++ format as well as
     // possible to ease comparisons, even where it makes little sense.
     {
         // Some convenience shorthands
+        let ev_cut = &cfg.event_cut;
         let spm2 = &res_fin.spm2;
         let vars = &res_fin.vars;
 
         // Prepare to write our results into a file
         let mut dat_file = File::create("res.data")?;
+        let dat_file = &mut dat_file;
 
         // Write the results to the file
-        write_usize(&mut dat_file, "Nombre d'evenements", cfg.num_events)?;
-        write_usize(&mut dat_file, "... apres coupure", res_fin.selected_events)?;
-        write_real(&mut dat_file, "energie dans le CdM      (GeV)", cfg.e_tot)?;
-        write_real(
-            &mut dat_file,
-            "coupure / cos(photon,faisceau)",
-            cfg.event_cut.a_cut,
-        )?;
-        write_real(
-            &mut dat_file,
-            "coupure / cos(photon,photon)",
-            cfg.event_cut.b_cut,
-        )?;
-        write_real(
-            &mut dat_file,
-            "coupure / sin(normale,faisceau)",
-            cfg.event_cut.sin_cut,
-        )?;
-        write_real(
-            &mut dat_file,
-            "coupure sur l'energie    (GeV)",
-            cfg.event_cut.e_min,
-        )?;
-        write_real(
-            &mut dat_file,
-            "1/(constante de structure fine)",
-            1. / cfg.alpha,
-        )?;
-        write_real(&mut dat_file, "1/(structure fine au pic)", 1. / cfg.alpha_z)?;
-        write_real(&mut dat_file, "facteur de conversion GeV-2/pb", cfg.convers)?;
-        write_real(&mut dat_file, "Masse du Z0              (GeV)", cfg.m_z0)?;
-        write_real(&mut dat_file, "Largeur du Z0            (GeV)", cfg.g_z0)?;
-        write_real(&mut dat_file, "Sinus^2 Theta Weinberg", cfg.sin2_w)?;
-        write_real(&mut dat_file, "Taux de branchement Z--->e+e-", cfg.br_ep_em)?;
-        write_real(&mut dat_file, "Beta plus", cfg.beta_plus)?;
-        write_real(&mut dat_file, "Beta moins", cfg.beta_minus)?;
+        write_usize(dat_file, "Nombre d'evenements", cfg.num_events)?;
+        write_usize(dat_file, "... apres coupure", res_fin.selected_events)?;
+        write_real(dat_file, "energie dans le CdM      (GeV)", cfg.e_tot)?;
+        write_real(dat_file, "coupure / cos(photon,faisceau)", ev_cut.a_cut)?;
+        write_real(dat_file, "coupure / cos(photon,photon)", ev_cut.b_cut)?;
+        write_real(dat_file, "coupure / sin(normale,faisceau)", ev_cut.sin_cut)?;
+        write_real(dat_file, "coupure sur l'energie    (GeV)", ev_cut.e_min)?;
+        write_real(dat_file, "1/(constante de structure fine)", 1. / cfg.alpha)?;
+        write_real(dat_file, "1/(structure fine au pic)", 1. / cfg.alpha_z)?;
+        write_real(dat_file, "facteur de conversion GeV-2/pb", cfg.convers)?;
+        write_real(dat_file, "Masse du Z0              (GeV)", cfg.m_z0)?;
+        write_real(dat_file, "Largeur du Z0            (GeV)", cfg.g_z0)?;
+        write_real(dat_file, "Sinus^2 Theta Weinberg", cfg.sin2_w)?;
+        write_real(dat_file, "Taux de branchement Z--->e+e-", cfg.br_ep_em)?;
+        write_real(dat_file, "Beta plus", cfg.beta_plus)?;
+        write_real(dat_file, "Beta moins", cfg.beta_minus)?;
         writeln!(dat_file, " ---------------------------------------------")?;
-        write_real(
-            &mut dat_file,
-            "Section Efficace          (pb)",
-            res_fin.sigma,
-        )?;
-        write_real(
-            &mut dat_file,
-            "Ecart-Type                (pb)",
-            res_fin.sigma * res_fin.prec,
-        )?;
-        write_real(&mut dat_file, "Precision Relative", res_fin.prec)?;
+        write_real(dat_file, "Section Efficace          (pb)", res_fin.sigma)?;
+        let stddev_res = res_fin.sigma * res_fin.prec;
+        write_real(dat_file, "Ecart-Type                (pb)", stddev_res)?;
+        write_real(dat_file, "Precision Relative", res_fin.prec)?;
         writeln!(dat_file, " ---------------------------------------------")?;
-        write_real(&mut dat_file, "Beta minimum", res_fin.beta_min)?;
-        write_real(
-            &mut dat_file,
-            "Stat. Significance  B+(pb-1/2)",
-            res_fin.ss_p,
-        )?;
-        write_real(
-            &mut dat_file,
-            "Incert. Stat. Sign. B+(pb-1/2)",
-            res_fin.ss_p * res_fin.inc_ss_p,
-        )?;
-        write_real(
-            &mut dat_file,
-            "Stat. Significance  B-(pb-1/2)",
-            res_fin.ss_m,
-        )?;
-        write_real(
-            &mut dat_file,
-            "Incert. Stat. Sign. B-(pb-1/2)",
-            res_fin.ss_m * res_fin.inc_ss_m,
-        )?;
+        write_real(dat_file, "Beta minimum", res_fin.beta_min)?;
+        write_real(dat_file, "Stat. Significance  B+(pb-1/2)", res_fin.ss_p)?;
+        let incert_ss_p = res_fin.ss_p * res_fin.inc_ss_p;
+        write_real(dat_file, "Incert. Stat. Sign. B+(pb-1/2)", incert_ss_p)?;
+        write_real(dat_file, "Stat. Significance  B-(pb-1/2)", res_fin.ss_m)?;
+        let incert_ss_m = res_fin.ss_m * res_fin.inc_ss_m;
+        write_real(dat_file, "Incert. Stat. Sign. B-(pb-1/2)", incert_ss_m)?;
 
         // Write more results (nature and purpose unclear in C++ code...)
         writeln!(dat_file)?;
