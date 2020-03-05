@@ -7,6 +7,7 @@ use crate::{
     numeric::{functions::*, Float},
     spinor::SpinorProducts,
 };
+use std::fmt::Display;
 
 // ### MATRIX ELEMENTS ###
 
@@ -83,21 +84,22 @@ impl MEsContributions {
     pub fn m2_sums(&self) -> MEsVector {
         MEsVector::from_fn(|i, _| self.m2x.fixed_rows::<U1>(i).iter().sum())
     }
+}
 
-    /// Display the results in human-readable form
-    #[allow(dead_code)]
-    pub fn display(&self) {
+impl Display for MEsContributions {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         assert_eq!(NUM_OUTGOING, 3);
         assert_eq!(NUM_SPINS, 2);
 
         for index in 0..NUM_MAT_ELEMS {
-            println!("Matrix element #{}", index);
-            println!("---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++");
+            writeln!(fmt, "Matrix element #{}", index)?;
+            writeln!(fmt, "---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++")?;
             let contribution = self.m2x.fixed_rows::<U1>(index);
             for &matrix_elem in contribution.iter() {
-                print!("{}  \t", matrix_elem);
+                write!(fmt, "{}  \t", matrix_elem)?;
             }
-            println!();
+            writeln!(fmt)?;
         }
+        Ok(())
     }
 }
