@@ -8,6 +8,7 @@ use crate::{
     },
     numeric::Float,
 };
+use std::fmt::Display;
 
 /// Number of incoming particles
 pub const NUM_INCOMING: usize = 2;
@@ -46,14 +47,10 @@ pub const NUM_SPINS: usize = 2;
 pub struct Event(EventMatrix);
 //
 impl Event {
-    // ### CONSTRUCTOR ###
-
     /// Build an event from an event data matrix
     pub fn new(matrix: EventMatrix) -> Self {
         Self(matrix)
     }
-
-    // ### ACCESSORS ###
 
     // FIXME: Remove a big bunch of those and use direct matrix access instead
     //        once const generics allow us to have elegant matrix slicing.
@@ -103,19 +100,19 @@ impl Event {
             self.outgoing_momenta()[(NUM_OUTGOING - 1, E)]
         }
     }
+}
 
-    // ### DEBUGGING TOOLS ###
-
+impl Display for Event {
     /// Dump 4-momenta of the 3 outgoing photons
-    #[allow(dead_code)]
-    pub fn display(&self) {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let p_out = self.outgoing_momenta();
         for coord in 0..4 {
-            print!("{}\t", coord);
+            write!(fmt, "{}\t", coord)?;
             for part in 0..NUM_OUTGOING {
-                print!("{}\t", p_out[(part, coord)]);
+                write!(fmt, "{}\t", p_out[(part, coord)])?;
             }
-            println!();
+            writeln!(fmt)?;
         }
+        Ok(())
     }
 }
