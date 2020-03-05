@@ -69,6 +69,9 @@ pub struct ResultsBuilder<'cfg> {
 impl<'cfg> ResultsBuilder<'cfg> {
     /// Prepare for results integration
     pub fn new(cfg: &'cfg Configuration, event_weight: Real) -> Self {
+        // This code depends on some aspects of the problem definition
+        assert_eq!(NUM_RESULTS, 5);
+
         // Common factor (see definition and remarks above)
         let fact_com = 1. / 6. * cfg.convers;
         let gzr = cfg.g_z0 / cfg.m_z0;
@@ -101,11 +104,11 @@ impl<'cfg> ResultsBuilder<'cfg> {
         let bb_contrib = com_contrib * c_bb * propag / sqr(gzr);
         let ab_contrib = com_contrib * c_ab * 2. * cfg.beta_plus * propag / gzr;
         let sigma_contribs = ResultVector::new(
-            aa_contrib,
-            bb_contrib * sqr(cfg.beta_plus),
-            bb_contrib * sqr(cfg.beta_minus),
-            ab_contrib * ecart_pic,
-            -ab_contrib,
+            aa_contrib,                        // A
+            bb_contrib * sqr(cfg.beta_plus),   // B_P
+            bb_contrib * sqr(cfg.beta_minus),  // B_M
+            ab_contrib * ecart_pic,            // R_MX
+            -ab_contrib,                       // I_MX
         );
 
         // Return a complete results builder
@@ -175,6 +178,7 @@ impl<'cfg> ResultsBuilder<'cfg> {
         let pol_m = 1. + pol_p;
 
         // Take polarisations into account
+        // FIXME: Revisit those ugly slices once const generics allow for it
         spm2.fixed_slice_mut::<U1, U2>(SP_M, B_P)
             .apply(|x| x * sqr(pol_m));
         spm2.fixed_slice_mut::<U1, U2>(SP_P, B_P)
@@ -197,6 +201,7 @@ impl<'cfg> ResultsBuilder<'cfg> {
             .apply(|x| x * self.ecart_pic);
 
         // Compute other parts of the result
+        // FIXME: Vectorize over spins once const generics make it less ugly
         let beta_min =
             sqrt((spm2[(SP_M, A)] + spm2[(SP_P, A)]) / (spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)]));
 
@@ -288,6 +293,7 @@ impl<'cfg> FinalResults<'cfg> {
 
         let cfg = self.cfg;
 
+        // FIXME: Vectorize over spins once const generics make it less ugly
         let mu_th = cfg.br_ep_em * cfg.convers / (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
         let lambda0_m = (-self.spm2[(SP_M, B_P)] + self.spm2[(SP_M, B_M)]) / 2.;
         let lambda0_p = (-self.spm2[(SP_P, B_P)] + self.spm2[(SP_P, B_M)]) / 2.;
@@ -377,6 +383,7 @@ impl<'cfg> FinalResults<'cfg> {
         let sig_p = sig * (ff + 2. * gg);
         let sig_m = sig_p + 2. * sig * gg;
 
+        // FIXME: Vectorize over spins once const generics make it less ugly
         let mc_p = (self.spm2[(SP_M, B_P)] + self.spm2[(SP_P, B_P)]) / 4.;
         let mc_m = (self.spm2[(SP_M, B_M)] + self.spm2[(SP_P, B_M)]) / 4.;
         let incr_p = sqrt(

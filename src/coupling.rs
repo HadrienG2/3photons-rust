@@ -18,7 +18,7 @@ pub struct Couplings {
 }
 //
 impl Couplings {
-    /// Fill in the parameters using data from the configuration file:
+    /// Fill in the parameters using data from the configuration file
     pub fn new(cfg: &Configuration) -> Self {
         let e2 = 4. * PI * cfg.alpha;
         let e2_z = 4. * PI * cfg.alpha_z;

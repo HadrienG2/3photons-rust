@@ -75,8 +75,7 @@ type Result<T> = anyhow::Result<T>;
 fn main() -> Result<()> {
     // ### CONFIGURATION READOUT ###
 
-    // The work of loading, parsing, and checking the configuration has now been
-    // offloaded to a dedicated struct
+    // Load the configuration from its file
     let cfg = Configuration::load("valeurs").context("Failed to load the configuration")?;
 
     // ### SIMULATION INITIALIZATION ###
@@ -110,12 +109,16 @@ fn main() -> Result<()> {
             // Generate an event
             let event = evgen.generate(rng);
 
-            // If the event passes the cut, compute the total weight (incl.
-            // matrix elements) and integrate it into the final results.
+            // If the event passes the cut...
             if cfg.event_cut.keep(&event) {
+                // Compute the total weight, including matrix elements
                 let res_contrib = ResultContribution::new(&couplings, &event);
+
                 // NOTE: The original code would display the result here
+
+                // Integrate the event's contribution into the results
                 res_builder.integrate(res_contrib);
+
                 // NOTE: The FORTRAN code would fill histograms here
             }
         }

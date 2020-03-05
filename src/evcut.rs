@@ -60,7 +60,10 @@ impl EventCut {
         }
 
         // Check if the (photon1, photon{2, 3}) angles pass the cut
-        // FIXME: Turn this back into a loop once const generics allow for it
+        //
+        // FIXME: Turn this back into a loop once const generics allow for it,
+        //        see Julia version for the non-unrolled logic.
+        //
         assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
         let p_ph1 = event.outgoing_momentum(0);
         let ps_ph23 = ps_out.fixed_rows::<U2>(1);
@@ -75,7 +78,9 @@ impl EventCut {
         }
 
         // Check if the (photon2, photon3) angle passes the cut
-        // FIXME: Merge with the above loop once we can have it
+        //
+        // FIXME: Will be part of the above loop once we can have it
+        //
         let p_ph2 = ps_ph23.fixed_rows::<U1>(0);
         let p_ph3 = ps_ph23.fixed_rows::<U1>(1);
         let p_ph2_xyz = p_ph2.fixed_columns::<U3>(X);
@@ -87,7 +92,7 @@ impl EventCut {
         }
 
         // Compute a vector which is normal to the outgoing photon plane
-        // NOTE: This notion is only valid because we have three output photons
+        // This notion is only valid because we have three output photons
         assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
         let n_ppp = event
             .outgoing_momentum(0)

@@ -6,7 +6,7 @@ use anyhow::{ensure, format_err, Context, Error};
 
 use std::{fs::File, io::Read, str::FromStr};
 
-/// This struct gives access to the simulation's configuration
+/// Simulation configuration
 pub struct Configuration {
     /// Number of events to be simulated
     pub num_events: usize,
@@ -112,13 +112,13 @@ impl Configuration {
         // A sensible simulation must run for at least one event
         ensure!(config.num_events > 0, "Please simulate at least one event");
 
-        // NOTE: We don't support the original code's PAW-based plotting
-        //       features, so we make sure that it was not enabled.
+        // We don't support the original code's PAW-based plotting features,
+        // so we make sure that it was not enabled.
         ensure!(!config.plot, "Plotting is not supported by this version");
 
-        // NOTE: We do not support the initial code's debugging feature which
-        //       displays all intermediary results during sampling. Such a
-        //       feature should be set up at build time to avoid run-time costs.
+        // We do not support the initial code's debugging feature which displays
+        // all intermediary results during sampling. Such a feature should be
+        // set up at build time to avoid run-time costs.
         ensure!(
             !config.impr,
             "Individual result printing is not supported. This debugging feature has a run-time \
@@ -178,6 +178,11 @@ impl<'data> ConfigItem<'data> {
     }
 
     /// Parse this data using special logic which handles Fortran's bool syntax
+    //
+    // TODO: Once Rust has specialization, try to make parse_bool a special case
+    //       of parse that's invoked for bool arguments, and ideally use that to
+    //       simplify the caller code to just a call to parse().
+    //
     fn parse_bool(self) -> Result<bool> {
         match self.data.to_lowercase().as_str() {
             // Handle FORTRAN booleans as a special case

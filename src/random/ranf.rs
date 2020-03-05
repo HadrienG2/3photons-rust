@@ -3,18 +3,18 @@
 use crate::numeric::Real;
 
 // Generated random numbers will have a granularity of 1/MODULO
-type Integer = i32;
-const MODULO: Integer = 1_000_000_000;
+type RanfInt = i32;
+const MODULO: RanfInt = 1_000_000_000;
 const INV_MODULO: Real = 1e-9;
 
 /// Random number generator
 #[derive(Clone)]
 pub struct RanfGenerator {
     /// Seed which this generator was initialized with
-    seed: Integer,
+    seed: RanfInt,
 
     /// Current set of random numbers, maps to IA in original code
-    numbers: [Integer; 56],
+    numbers: [RanfInt; 56],
 
     /// Index of the current random number, maps to MCALL in original code
     index: usize,
@@ -32,7 +32,7 @@ impl RanfGenerator {
 
     /// Create a new generator with an arbitrary seed.
     /// This roughly maps to the IN55 method in the original code.
-    fn seeded_new(seed: Integer) -> RanfGenerator {
+    fn seeded_new(seed: RanfInt) -> RanfGenerator {
         // Start by zero-initializing the generator state
         let mut result = RanfGenerator {
             seed,

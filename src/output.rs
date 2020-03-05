@@ -17,55 +17,6 @@ use std::{
     time::Duration,
 };
 
-/// Write a floating-point number using "engineering" notation
-///
-/// Analogous to the %g format of the C printf function, this method switches
-/// between naive and scientific notation for floating-point numbers when the
-/// number being printed becomes so small that printing leading zeroes could end
-/// up larger than the scientific notation, or so large that we would be forced
-/// to print more significant digits than requested.
-///
-pub fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) -> Result<()> {
-    let mut precision = sig_digits - 1;
-    if x == 0. {
-        // Zero is special because you can't take its log
-        write!(writer, "0")
-    } else {
-        // Otherwise, use log to evaluate order of magnitude
-        let log_x = x.abs().log10();
-        if log_x >= -3. && log_x <= (sig_digits as Real) {
-            // Print using naive notation
-            //
-            // Since Rust's precision controls number of digits after the
-            // decimal point, we must adjust it depending on magnitude in order
-            // to operate at a constant number of significant digits.
-            precision = (precision as isize - log_x.trunc() as isize) as usize;
-
-            // Numbers smaller than 1 must get one extra digit since the leading
-            // zero does not count as a significant digit.
-            if log_x < 0. {
-                precision += 1
-            }
-
-            // People don't normally expect trailing zeros or decimal point in
-            // naive notation, but be careful with integer numbers...
-            let str_with_zeros = format!("{:.1$}", x, precision);
-            if str_with_zeros.contains('.') {
-                write!(
-                    writer,
-                    "{}",
-                    str_with_zeros.trim_end_matches('0').trim_end_matches('.')
-                )
-            } else {
-                write!(writer, "{}", str_with_zeros)
-            }
-        } else {
-            // Print using scientific notation
-            write!(writer, "{:.1$e}", x, precision)
-        }
-    }
-}
-
 /// Output the simulation results to the console and to disk
 #[allow(clippy::cast_lossless)]
 pub fn dump_results(
@@ -125,7 +76,7 @@ pub fn dump_results(
     // Write main results file. Try to mimick the original C++ format as well as
     // possible to ease comparisons, even where it makes little sense.
     {
-        // Some convenience shorthand
+        // Some convenience shorthands
         let spm2 = &res_fin.spm2;
         let vars = &res_fin.vars;
 
@@ -224,6 +175,8 @@ pub fn dump_results(
             writeln!(dat_file)?;
         }
         for k in 0..NUM_RESULTS {
+            // FIXME: Vectorize sums across spins once const generics enable
+            //        more ergonomic small matrix manipulations.
             let tmp1 = spm2[(SP_M, k)] + spm2[(SP_P, k)];
             let tmp2 = sqrt(
                 sqr(spm2[(SP_M, k)] * vars[(SP_M, k)]) + sqr(spm2[(SP_P, k)] * vars[(SP_P, k)]),
@@ -252,6 +205,8 @@ pub fn dump_results(
             .create(true)
             .open("pil.mc")?;
         writeln!(cum_dat_file, "{}", timestamp)?;
+        // FIXME: Vectorize sums across spins once const generics enable more
+        //        ergonomic small matrix manipulations.
         let res1 = res_fin.spm2[(SP_M, A)] + res_fin.spm2[(SP_P, A)];
         let res2 = (res_fin.spm2[(SP_M, B_P)] + res_fin.spm2[(SP_P, B_P)]) * sqr(cfg.beta_plus);
         let res3 = (res_fin.spm2[(SP_M, B_M)] + res_fin.spm2[(SP_P, B_M)]) * sqr(cfg.beta_minus);
@@ -271,4 +226,53 @@ pub fn dump_results(
 
     // ...and we're done
     Ok(())
+}
+
+/// Write a floating-point number using "engineering" notation
+///
+/// Analogous to the %g format of the C printf function, this method switches
+/// between naive and scientific notation for floating-point numbers when the
+/// number being printed becomes so small that printing leading zeroes could end
+/// up larger than the scientific notation, or so large that we would be forced
+/// to print more significant digits than requested.
+///
+fn write_engineering(writer: &mut impl Write, x: Real, sig_digits: usize) -> Result<()> {
+    let mut precision = sig_digits - 1;
+    if x == 0. {
+        // Zero is special because you can't take its log
+        write!(writer, "0")
+    } else {
+        // Otherwise, use log to evaluate order of magnitude
+        let log_x = x.abs().log10();
+        if log_x >= -3. && log_x <= (sig_digits as Real) {
+            // Print using naive notation
+            //
+            // Since Rust's precision controls number of digits after the
+            // decimal point, we must adjust it depending on magnitude in order
+            // to operate at a constant number of significant digits.
+            precision = (precision as isize - log_x.trunc() as isize) as usize;
+
+            // Numbers smaller than 1 must get one extra digit since the leading
+            // zero does not count as a significant digit.
+            if log_x < 0. {
+                precision += 1
+            }
+
+            // People don't normally expect trailing zeros or decimal point in
+            // naive notation, but be careful with integer numbers...
+            let str_with_zeros = format!("{:.1$}", x, precision);
+            if str_with_zeros.contains('.') {
+                write!(
+                    writer,
+                    "{}",
+                    str_with_zeros.trim_end_matches('0').trim_end_matches('.')
+                )
+            } else {
+                write!(writer, "{}", str_with_zeros)
+            }
+        } else {
+            // Print using scientific notation
+            write!(writer, "{:.1$e}", x, precision)
+        }
+    }
 }

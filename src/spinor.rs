@@ -3,7 +3,7 @@
 use crate::{
     event::{
         Event, ParticleMatrix, ParticleVector, INCOMING_E_M as E_M, INCOMING_E_P as E_P,
-        NUM_INCOMING, NUM_OUTGOING,
+        NUM_INCOMING, NUM_OUTGOING, NUM_SPINS,
     },
     linalg::{
         dimension::*,
@@ -36,6 +36,7 @@ impl SpinorProducts {
         // e+e- -> ppp collisions, but our methods are specific to it.
         assert_eq!(NUM_INCOMING, 2);
         assert_eq!(NUM_OUTGOING, 3);
+        assert_eq!(NUM_SPINS, 2);
 
         // Access the array of incoming and outgoing particle 4-momenta
         let ps = event.all_momenta();

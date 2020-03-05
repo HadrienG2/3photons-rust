@@ -2,7 +2,7 @@
 
 use crate::{
     coupling::Couplings,
-    event::{Event, NUM_OUTGOING},
+    event::{Event, NUM_OUTGOING, NUM_SPINS},
     linalg::{dimension::*, vecmat::*},
     numeric::{functions::*, Real},
     spinor::SpinorProducts,
@@ -84,6 +84,7 @@ impl ResultContribution {
     #[allow(dead_code)]
     pub fn display(&self) {
         assert_eq!(NUM_OUTGOING, 3);
+        assert_eq!(NUM_SPINS, 2);
 
         for index in 0..NUM_RESULTS {
             println!("Matrix element #{}", index);
