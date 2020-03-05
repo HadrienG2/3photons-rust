@@ -8,7 +8,7 @@ mod sequential;
 
 use crate::{
     random::RandomGenerator,
-    resfin::{FinalResults, ResultsBuilder},
+    resfin::{FinalResults, ResultsAccumulator},
 };
 
 /// Size of the simulated event batches
@@ -33,7 +33,7 @@ const EVENT_BATCH_SIZE: usize = 10_000;
 ///
 pub fn run_simulation<'cfg>(
     num_events: usize,
-    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'cfg>,
+    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsAccumulator<'cfg>,
 ) -> FinalResults<'cfg> {
     // Check that the user is being reasonable (should have already been checked
     // at configuration time, but bugs can happen...)

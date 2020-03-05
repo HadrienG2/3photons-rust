@@ -25,7 +25,7 @@ pub const SP_P: usize = 1;
 
 /// This struct will accumulate intermediary results during integration, and
 /// ultimately compute the final results (see FinalResults below).
-pub struct ResultsBuilder<'cfg> {
+pub struct ResultsAccumulator<'cfg> {
     // ### RESULT ACCUMULATORS ###
     /// Number of integrated events
     selected_events: usize,
@@ -66,7 +66,7 @@ pub struct ResultsBuilder<'cfg> {
     ecart_pic: Float,
 }
 //
-impl<'cfg> ResultsBuilder<'cfg> {
+impl<'cfg> ResultsAccumulator<'cfg> {
     /// Prepare for results integration
     pub fn new(cfg: &'cfg Configuration, event_weight: Float) -> Self {
         // This code depends on some aspects of the problem definition
@@ -112,7 +112,7 @@ impl<'cfg> ResultsBuilder<'cfg> {
         );
 
         // Return a complete results builder
-        ResultsBuilder {
+        ResultsAccumulator {
             selected_events: 0,
             spm2: ResultVector::zero(),
             vars: ResultVector::zero(),
@@ -140,7 +140,7 @@ impl<'cfg> ResultsBuilder<'cfg> {
         self.variance += sqr(weight);
     }
 
-    /// Integrate simulation results from another ResultsBuilder
+    /// Integrate simulation results from another ResultsAccumulator
     #[allow(clippy::needless_pass_by_value)]
     pub fn merge(&mut self, other: Self) {
         self.selected_events += other.selected_events;

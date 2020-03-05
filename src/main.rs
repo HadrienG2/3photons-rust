@@ -63,7 +63,7 @@ use anyhow::Context;
 
 use crate::{
     config::Configuration, coupling::Couplings, event::EventGenerator, random::RandomGenerator,
-    rescont::ResultContribution, resfin::ResultsBuilder,
+    rescont::ResultContribution, resfin::ResultsAccumulator,
 };
 
 use std::time::Instant;
@@ -100,9 +100,9 @@ fn main() -> Result<()> {
 
     // This kernel simulates a number of events, given an initial random number
     // generator state, and return the accumulated intermediary results
-    let simulate_events = |num_events: usize, rng: &mut RandomGenerator| -> ResultsBuilder {
+    let simulate_events = |num_events: usize, rng: &mut RandomGenerator| -> ResultsAccumulator {
         // Setup a results accumulator
-        let mut res_builder = ResultsBuilder::new(&cfg, evgen.event_weight());
+        let mut res_builder = ResultsAccumulator::new(&cfg, evgen.event_weight());
 
         // Simulate the requested number of events
         for _ in 0..num_events {

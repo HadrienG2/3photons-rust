@@ -3,7 +3,7 @@
 #[cfg(feature = "faster-threading")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::{random::RandomGenerator, resfin::ResultsBuilder, scheduling::EVENT_BATCH_SIZE};
+use crate::{random::RandomGenerator, resfin::ResultsAccumulator, scheduling::EVENT_BATCH_SIZE};
 
 use rayon;
 
@@ -18,8 +18,8 @@ use std::sync::Mutex;
 pub fn run_simulation_impl<'cfg>(
     mut num_events: usize,
     mut rng: RandomGenerator,
-    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsBuilder<'cfg>,
-) -> ResultsBuilder<'cfg> {
+    simulate_events: impl Send + Sync + Fn(usize, &mut RandomGenerator) -> ResultsAccumulator<'cfg>,
+) -> ResultsAccumulator<'cfg> {
     // Some double-checking cannot hurt...
     assert!(num_events > 0, "Must simulate at least one event");
 
@@ -85,7 +85,7 @@ pub fn run_simulation_impl<'cfg>(
 #[cfg(not(feature = "faster-threading"))]
 struct ReproducibleAccumulator<'cfg> {
     /// Storage for the intermediary simulation results of parallel tasks
-    results: Box<[Mutex<Option<ResultsBuilder<'cfg>>>]>,
+    results: Box<[Mutex<Option<ResultsAccumulator<'cfg>>>]>,
 }
 //
 #[cfg(not(feature = "faster-threading"))]
@@ -102,7 +102,7 @@ impl<'cfg> ReproducibleAccumulator<'cfg> {
     }
 
     /// Integrate the results of the n-th simulation task
-    fn set_task_result(&self, task_id: usize, result: ResultsBuilder<'cfg>) {
+    fn set_task_result(&self, task_id: usize, result: ResultsAccumulator<'cfg>) {
         let mut lock = self.results[task_id]
             .lock()
             .expect("Mutex data should be valid");
@@ -111,7 +111,7 @@ impl<'cfg> ReproducibleAccumulator<'cfg> {
     }
 
     /// Aggregate the results in a reproducible fashion
-    fn get_merged_result(self) -> ResultsBuilder<'cfg> {
+    fn get_merged_result(self) -> ResultsAccumulator<'cfg> {
         // Start iterating over the task results
         let mut results_iter = self.results.into_vec().into_iter().map(|entry| {
             entry
@@ -137,7 +137,7 @@ impl<'cfg> ReproducibleAccumulator<'cfg> {
 #[cfg(feature = "faster-threading")]
 struct FastAccumulator<'cfg> {
     /// Storage location in which results will be merged out of order
-    merged_result: Mutex<Option<ResultsBuilder<'cfg>>>,
+    merged_result: Mutex<Option<ResultsAccumulator<'cfg>>>,
 
     /// Truth that each task has reported its results
     task_finished: Box<[AtomicBool]>,
@@ -158,7 +158,7 @@ impl<'cfg> FastAccumulator<'cfg> {
     }
 
     /// Integrate the results of the n-th simulation task
-    fn set_task_result(&self, task_id: usize, result: ResultsBuilder<'cfg>) {
+    fn set_task_result(&self, task_id: usize, result: ResultsAccumulator<'cfg>) {
         // Initialize the accumulator or merge the task result into it
         match *self
             .merged_result
@@ -178,7 +178,7 @@ impl<'cfg> FastAccumulator<'cfg> {
     }
 
     /// Aggregate the results in a reproducible fashion
-    fn get_merged_result(self) -> ResultsBuilder<'cfg> {
+    fn get_merged_result(self) -> ResultsAccumulator<'cfg> {
         // Check that all tasks have completed their work
         for ready in self.task_finished.into_vec().into_iter() {
             assert!(
