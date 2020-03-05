@@ -4,7 +4,7 @@ use crate::{evcut::EventCut, numeric::Float, Result};
 
 use anyhow::{ensure, format_err, Context, Error};
 
-use std::{fs::File, io::Read, str::FromStr};
+use std::{fmt::Display, fs::File, io::Read, str::FromStr};
 
 /// Simulation configuration
 pub struct Configuration {
@@ -107,7 +107,7 @@ impl Configuration {
         };
 
         // Display it the way the C++ version used to (this eases comparisons)
-        config.print();
+        print!("{}", config);
 
         // A sensible simulation must run for at least one event
         ensure!(config.num_events > 0, "Please simulate at least one event");
@@ -128,27 +128,30 @@ impl Configuration {
         // If nothing bad occured, we can now return the configuration
         Ok(config)
     }
+}
 
+impl Display for Configuration {
     /// Display the configuration, following formatting of the original version
-    pub fn print(&self) {
-        println!("ITOT           : {}", self.num_events);
-        println!("ETOT           : {}", self.e_tot);
-        println!("oCutpar.ACUT   : {}", self.event_cut.a_cut);
-        println!("oCutpar.BCUT   : {}", self.event_cut.b_cut);
-        println!("oCutpar.EMIN   : {}", self.event_cut.e_min);
-        println!("oCutpar.SINCUT : {}", self.event_cut.sin_cut);
-        println!("ALPHA          : {}", self.alpha);
-        println!("ALPHAZ         : {}", self.alpha_z);
-        println!("CONVERS        : {}", self.convers);
-        println!("oParam.MZ0     : {}", self.m_z0);
-        println!("oParam.GZ0     : {}", self.g_z0);
-        println!("SIN2W          : {}", self.sin2_w);
-        println!("BREPEM         : {}", self.br_ep_em);
-        println!("BETAPLUS       : {}", self.beta_plus);
-        println!("BETAMOINS      : {}", self.beta_minus);
-        println!("NBIN           : {}", self.n_bin);
-        println!("oParam.IMPR    : {}", self.impr);
-        println!("PLOT           : {}", self.plot);
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(fmt, "ITOT           : {}", self.num_events)?;
+        writeln!(fmt, "ETOT           : {}", self.e_tot)?;
+        writeln!(fmt, "oCutpar.ACUT   : {}", self.event_cut.a_cut)?;
+        writeln!(fmt, "oCutpar.BCUT   : {}", self.event_cut.b_cut)?;
+        writeln!(fmt, "oCutpar.EMIN   : {}", self.event_cut.e_min)?;
+        writeln!(fmt, "oCutpar.SINCUT : {}", self.event_cut.sin_cut)?;
+        writeln!(fmt, "ALPHA          : {}", self.alpha)?;
+        writeln!(fmt, "ALPHAZ         : {}", self.alpha_z)?;
+        writeln!(fmt, "CONVERS        : {}", self.convers)?;
+        writeln!(fmt, "oParam.MZ0     : {}", self.m_z0)?;
+        writeln!(fmt, "oParam.GZ0     : {}", self.g_z0)?;
+        writeln!(fmt, "SIN2W          : {}", self.sin2_w)?;
+        writeln!(fmt, "BREPEM         : {}", self.br_ep_em)?;
+        writeln!(fmt, "BETAPLUS       : {}", self.beta_plus)?;
+        writeln!(fmt, "BETAMOINS      : {}", self.beta_minus)?;
+        writeln!(fmt, "NBIN           : {}", self.n_bin)?;
+        writeln!(fmt, "oParam.IMPR    : {}", self.impr)?;
+        writeln!(fmt, "PLOT           : {}", self.plot)?;
+        Ok(())
     }
 }
 
