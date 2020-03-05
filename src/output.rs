@@ -62,10 +62,8 @@ pub fn dump_results(
     // Write main results file. Try to mimick the original C++ format as well as
     // possible to ease comparisons, even where it makes little sense.
     {
-        // Some convenience shorthands
+        // Shorthands
         let ev_cut = &cfg.event_cut;
-        let spm2 = &res_fin.spm2;
-        let vars = &res_fin.vars;
 
         // Prepare to write our results into a file
         let mut dat_file = File::create("res.data")?;
@@ -77,15 +75,11 @@ pub fn dump_results(
         writeln_3p(dat_file, ("energie dans le CdM      (GeV)", cfg.e_tot))?;
         writeln_3p(dat_file, ("coupure / cos(photon,faisceau)", ev_cut.a_cut))?;
         writeln_3p(dat_file, ("coupure / cos(photon,photon)", ev_cut.b_cut))?;
-        writeln_3p(
-            dat_file,
-            ("coupure / sin(normale,faisceau)", ev_cut.sin_cut),
-        )?;
+        let sin_cut = ev_cut.sin_cut;
+        writeln_3p(dat_file, ("coupure / sin(normale,faisceau)", sin_cut))?;
         writeln_3p(dat_file, ("coupure sur l'energie    (GeV)", ev_cut.e_min))?;
-        writeln_3p(
-            dat_file,
-            ("1/(constante de structure fine)", 1. / cfg.alpha),
-        )?;
+        let inv_alpha = 1. / cfg.alpha;
+        writeln_3p(dat_file, ("1/(constante de structure fine)", inv_alpha))?;
         writeln_3p(dat_file, ("1/(structure fine au pic)", 1. / cfg.alpha_z))?;
         writeln_3p(dat_file, ("facteur de conversion GeV-2/pb", cfg.convers))?;
         writeln_3p(dat_file, ("Masse du Z0              (GeV)", cfg.m_z0))?;
@@ -118,9 +112,9 @@ pub fn dump_results(
                     "{:>3}{:>3}{:>width$.decs$e}{:>width$.decs$e}{:>width$.decs$e}",
                     sp + 1,
                     k + 1,
-                    spm2[(sp, k)],
-                    spm2[(sp, k)].abs() * vars[(sp, k)],
-                    vars[(sp, k)],
+                    res_fin.spm2[(sp, k)],
+                    res_fin.spm2[(sp, k)].abs() * res_fin.vars[(sp, k)],
+                    res_fin.vars[(sp, k)],
                     width = decimals + 8,
                     decs = decimals,
                 )?;
@@ -130,6 +124,8 @@ pub fn dump_results(
         for k in 0..NUM_MAT_ELEMS {
             // FIXME: Vectorize sums across spins once const generics enable
             //        more ergonomic small matrix manipulations.
+            let spm2 = &res_fin.spm2;
+            let vars = &res_fin.vars;
             let tmp1 = spm2[(SP_M, k)] + spm2[(SP_P, k)];
             let tmp2 = sqrt(
                 sqr(spm2[(SP_M, k)] * vars[(SP_M, k)]) + sqr(spm2[(SP_P, k)] * vars[(SP_P, k)]),
@@ -163,10 +159,11 @@ pub fn dump_results(
 
         // FIXME: Vectorize sums across spins once const generics enable more
         //        ergonomic small matrix manipulations.
-        let res1 = res_fin.spm2[(SP_M, A)] + res_fin.spm2[(SP_P, A)];
-        let res2 = (res_fin.spm2[(SP_M, B_P)] + res_fin.spm2[(SP_P, B_P)]) * sqr(cfg.beta_plus);
-        let res3 = (res_fin.spm2[(SP_M, B_M)] + res_fin.spm2[(SP_P, B_M)]) * sqr(cfg.beta_minus);
-        let res4 = (res_fin.spm2[(SP_P, R_MX)] + res_fin.spm2[(SP_P, R_MX)]) * cfg.beta_plus;
+        let spm2 = &res_fin.spm2;
+        let res1 = spm2[(SP_M, A)] + spm2[(SP_P, A)];
+        let res2 = (spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)]) * sqr(cfg.beta_plus);
+        let res3 = (spm2[(SP_M, B_M)] + spm2[(SP_P, B_M)]) * sqr(cfg.beta_minus);
+        let res4 = (spm2[(SP_P, R_MX)] + spm2[(SP_P, R_MX)]) * cfg.beta_plus;
         writeln!(
             cum_dat_file,
             "{} {} {} {} {} {} {}",
