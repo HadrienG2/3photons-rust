@@ -1,6 +1,6 @@
 //! Sequential back-end of the simulation
 
-use crate::{random::RandomGenerator, resfin::ResultsAccumulator, scheduling::EVENT_BATCH_SIZE};
+use crate::{random::RandomGenerator, resacc::ResultsAccumulator, scheduling::EVENT_BATCH_SIZE};
 
 /// Simulate events in sequential mode
 ///

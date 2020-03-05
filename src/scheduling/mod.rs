@@ -6,10 +6,7 @@ mod multi_threading;
 #[cfg(not(feature = "multi-threading"))]
 mod sequential;
 
-use crate::{
-    random::RandomGenerator,
-    resfin::{FinalResults, ResultsAccumulator},
-};
+use crate::{random::RandomGenerator, resacc::ResultsAccumulator, resfin::FinalResults};
 
 /// Size of the simulated event batches
 ///

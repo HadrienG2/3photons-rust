@@ -1,12 +1,7 @@
 //! This module provides event generation facilities
 
 use crate::{
-    event::{
-        Event,
-        NUM_INCOMING,
-        NUM_OUTGOING,
-        NUM_PARTICLES,
-    },
+    event::{Event, NUM_INCOMING, NUM_OUTGOING, NUM_PARTICLES},
     linalg::{
         dimension::*,
         momentum::{Momentum, E, X, Y, Z},

@@ -56,6 +56,7 @@ mod matelems;
 mod numeric;
 mod output;
 mod random;
+mod resacc;
 mod resfin;
 mod scheduling;
 mod spinor;
@@ -64,7 +65,7 @@ use anyhow::Context;
 
 use crate::{
     config::Configuration, coupling::Couplings, evgen::EventGenerator, matelems::MEsContributions,
-    random::RandomGenerator, resfin::ResultsAccumulator,
+    random::RandomGenerator, resacc::ResultsAccumulator,
 };
 
 use std::time::Instant;
