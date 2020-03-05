@@ -17,6 +17,13 @@ use std::{
     time::Duration,
 };
 
+// Number of significant digits in file output
+//
+// Must print one less than the actual machine type precision to match the
+// output of the C++ version of 3photons.
+//
+const SIG_DIGITS: usize = (reals::DIGITS - 1) as usize;
+
 /// Output the simulation results to the console and to disk
 #[allow(clippy::cast_lossless)]
 pub fn dump_results(
@@ -28,28 +35,9 @@ pub fn dump_results(
     res_fin.eric();
     res_fin.fawzi();
 
-    // Number of significant digits in file output
-    //
-    // Must print one less than the actual machine type precision to match the
-    // output of the C++ version of 3photons.
-    //
-    const SIG_DIGITS: usize = (reals::DIGITS - 1) as usize;
-
-    // Create a few closure shorthands for common file writing operations
-    let write_label = |file: &mut File, label: &str| write!(*file, " {:<31}: ", label);
-    let write_usize = |file: &mut File, label: &str, value: usize| {
-        write_label(file, label)?;
-        writeln!(*file, "{}", value)
-    };
-    let write_real = |file: &mut File, label: &str, value: Float| {
-        write_label(file, label)?;
-        write_engineering(file, value, SIG_DIGITS)?;
-        writeln!(file)
-    };
-
     // Compute a timestamp of when the run ended
     let current_time = chrono::Utc::now();
-    let timestamp = current_time.format("%d-%b-%y   %T");
+    let timestamp = current_time.format("%d-%b-%y   %T").to_string();
 
     // Write execution timings to a file
     {
@@ -58,17 +46,17 @@ pub fn dump_results(
         let tim_file = &mut tim_file;
 
         // Write a timestamp of when the run ended
-        writeln!(tim_file, " {}", timestamp)?;
+        writeln_3p(tim_file, &timestamp[..])?;
 
         // Write program performance stats
         let elapsed_secs =
             (elapsed_time.as_secs() as Float) + 1e-9 * (elapsed_time.subsec_nanos() as Float);
-        writeln!(tim_file, " ---------------------------------------------")?;
-        writeln!(tim_file, " Temps ecoule                   : ???")?;
-        write_real(tim_file, "Temps ecoule utilisateur", elapsed_secs)?;
-        writeln!(tim_file, " Temps ecoule systeme           : ???")?;
+        writeln_3p(tim_file, "---------------------------------------------")?;
+        writeln_3p(tim_file, ("Temps ecoule", "???"))?;
+        writeln_3p(tim_file, ("Temps ecoule utilisateur", elapsed_secs))?;
+        writeln_3p(tim_file, ("Temps ecoule systeme", "???"))?;
         let secs_per_ev = elapsed_secs / (cfg.num_events as Float);
-        write_real(tim_file, "Temps ecoule par evenement", secs_per_ev)?;
+        writeln_3p(tim_file, ("Temps ecoule par evenement", secs_per_ev))?;
     }
 
     // Write main results file. Try to mimick the original C++ format as well as
@@ -84,35 +72,41 @@ pub fn dump_results(
         let dat_file = &mut dat_file;
 
         // Write the results to the file
-        write_usize(dat_file, "Nombre d'evenements", cfg.num_events)?;
-        write_usize(dat_file, "... apres coupure", res_fin.selected_events)?;
-        write_real(dat_file, "energie dans le CdM      (GeV)", cfg.e_tot)?;
-        write_real(dat_file, "coupure / cos(photon,faisceau)", ev_cut.a_cut)?;
-        write_real(dat_file, "coupure / cos(photon,photon)", ev_cut.b_cut)?;
-        write_real(dat_file, "coupure / sin(normale,faisceau)", ev_cut.sin_cut)?;
-        write_real(dat_file, "coupure sur l'energie    (GeV)", ev_cut.e_min)?;
-        write_real(dat_file, "1/(constante de structure fine)", 1. / cfg.alpha)?;
-        write_real(dat_file, "1/(structure fine au pic)", 1. / cfg.alpha_z)?;
-        write_real(dat_file, "facteur de conversion GeV-2/pb", cfg.convers)?;
-        write_real(dat_file, "Masse du Z0              (GeV)", cfg.m_z0)?;
-        write_real(dat_file, "Largeur du Z0            (GeV)", cfg.g_z0)?;
-        write_real(dat_file, "Sinus^2 Theta Weinberg", cfg.sin2_w)?;
-        write_real(dat_file, "Taux de branchement Z--->e+e-", cfg.br_ep_em)?;
-        write_real(dat_file, "Beta plus", cfg.beta_plus)?;
-        write_real(dat_file, "Beta moins", cfg.beta_minus)?;
-        writeln!(dat_file, " ---------------------------------------------")?;
-        write_real(dat_file, "Section Efficace          (pb)", res_fin.sigma)?;
+        writeln_3p(dat_file, ("Nombre d'evenements", cfg.num_events))?;
+        writeln_3p(dat_file, ("... apres coupure", res_fin.selected_events))?;
+        writeln_3p(dat_file, ("energie dans le CdM      (GeV)", cfg.e_tot))?;
+        writeln_3p(dat_file, ("coupure / cos(photon,faisceau)", ev_cut.a_cut))?;
+        writeln_3p(dat_file, ("coupure / cos(photon,photon)", ev_cut.b_cut))?;
+        writeln_3p(
+            dat_file,
+            ("coupure / sin(normale,faisceau)", ev_cut.sin_cut),
+        )?;
+        writeln_3p(dat_file, ("coupure sur l'energie    (GeV)", ev_cut.e_min))?;
+        writeln_3p(
+            dat_file,
+            ("1/(constante de structure fine)", 1. / cfg.alpha),
+        )?;
+        writeln_3p(dat_file, ("1/(structure fine au pic)", 1. / cfg.alpha_z))?;
+        writeln_3p(dat_file, ("facteur de conversion GeV-2/pb", cfg.convers))?;
+        writeln_3p(dat_file, ("Masse du Z0              (GeV)", cfg.m_z0))?;
+        writeln_3p(dat_file, ("Largeur du Z0            (GeV)", cfg.g_z0))?;
+        writeln_3p(dat_file, ("Sinus^2 Theta Weinberg", cfg.sin2_w))?;
+        writeln_3p(dat_file, ("Taux de branchement Z--->e+e-", cfg.br_ep_em))?;
+        writeln_3p(dat_file, ("Beta plus", cfg.beta_plus))?;
+        writeln_3p(dat_file, ("Beta moins", cfg.beta_minus))?;
+        writeln_3p(dat_file, "---------------------------------------------")?;
+        writeln_3p(dat_file, ("Section Efficace          (pb)", res_fin.sigma))?;
         let stddev_res = res_fin.sigma * res_fin.prec;
-        write_real(dat_file, "Ecart-Type                (pb)", stddev_res)?;
-        write_real(dat_file, "Precision Relative", res_fin.prec)?;
-        writeln!(dat_file, " ---------------------------------------------")?;
-        write_real(dat_file, "Beta minimum", res_fin.beta_min)?;
-        write_real(dat_file, "Stat. Significance  B+(pb-1/2)", res_fin.ss_p)?;
+        writeln_3p(dat_file, ("Ecart-Type                (pb)", stddev_res))?;
+        writeln_3p(dat_file, ("Precision Relative", res_fin.prec))?;
+        writeln_3p(dat_file, "---------------------------------------------")?;
+        writeln_3p(dat_file, ("Beta minimum", res_fin.beta_min))?;
+        writeln_3p(dat_file, ("Stat. Significance  B+(pb-1/2)", res_fin.ss_p))?;
         let incert_ss_p = res_fin.ss_p * res_fin.inc_ss_p;
-        write_real(dat_file, "Incert. Stat. Sign. B+(pb-1/2)", incert_ss_p)?;
-        write_real(dat_file, "Stat. Significance  B-(pb-1/2)", res_fin.ss_m)?;
+        writeln_3p(dat_file, ("Incert. Stat. Sign. B+(pb-1/2)", incert_ss_p))?;
+        writeln_3p(dat_file, ("Stat. Significance  B-(pb-1/2)", res_fin.ss_m))?;
         let incert_ss_m = res_fin.ss_m * res_fin.inc_ss_m;
-        write_real(dat_file, "Incert. Stat. Sign. B-(pb-1/2)", incert_ss_m)?;
+        writeln_3p(dat_file, ("Incert. Stat. Sign. B-(pb-1/2)", incert_ss_m))?;
 
         // Write more results (nature and purpose unclear in C++ code...)
         writeln!(dat_file)?;
@@ -159,11 +153,14 @@ pub fn dump_results(
     //       to fix it in this version.
     {
         assert_eq!(NUM_MAT_ELEMS, 5);
+
         let mut cum_dat_file = OpenOptions::new()
             .append(true)
             .create(true)
             .open("pil.mc")?;
+
         writeln!(cum_dat_file, "{}", timestamp)?;
+
         // FIXME: Vectorize sums across spins once const generics enable more
         //        ergonomic small matrix manipulations.
         let res1 = res_fin.spm2[(SP_M, A)] + res_fin.spm2[(SP_P, A)];
@@ -185,6 +182,49 @@ pub fn dump_results(
 
     // ...and we're done
     Ok(())
+}
+
+/// Text output facility that mimicks 3photons' file output styling
+fn writeln_3p(file: &mut File, data: impl Write3p) -> Result<()> {
+    write!(file, " ")?;
+    data.write(file)?;
+    writeln!(file)
+}
+
+/// Trait implemented by things which can be printed The 3photons Way (tm)
+trait Write3p: Sized {
+    /// Write down `self` to the output file using 3photons style
+    fn write(self, file: &mut File) -> Result<()>;
+}
+
+impl Write3p for &str {
+    // Strings work in the usual way
+    fn write(self, file: &mut File) -> Result<()> {
+        write!(file, "{}", self)
+    }
+}
+
+impl Write3p for usize {
+    // Integers work in the usual way too
+    // FIXME: Simplify and generalize this once Rust has specialization
+    fn write(self, file: &mut File) -> Result<()> {
+        write!(file, "{}", self)
+    }
+}
+
+impl Write3p for Float {
+    // 3photons used %g for floats, this is a close approximation
+    fn write(self, file: &mut File) -> Result<()> {
+        write_engineering(file, self, SIG_DIGITS)
+    }
+}
+
+impl<T: Write3p> Write3p for (&str, T) {
+    // Key-value output that uses fixed-size columns for better readability
+    fn write(self, file: &mut File) -> Result<()> {
+        write!(*file, "{:<31}: ", self.0)?;
+        self.1.write(file)
+    }
 }
 
 /// Write a floating-point number using "engineering" notation
