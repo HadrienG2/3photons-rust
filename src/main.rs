@@ -50,6 +50,7 @@ mod config;
 mod coupling;
 mod evcut;
 mod event;
+mod evgen;
 mod linalg;
 mod matelems;
 mod numeric;
@@ -62,7 +63,7 @@ mod spinor;
 use anyhow::Context;
 
 use crate::{
-    config::Configuration, coupling::Couplings, event::EventGenerator, matelems::MEsContributions,
+    config::Configuration, coupling::Couplings, evgen::EventGenerator, matelems::MEsContributions,
     random::RandomGenerator, resfin::ResultsAccumulator,
 };
 
