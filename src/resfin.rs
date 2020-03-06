@@ -4,7 +4,7 @@
 use crate::{
     config::Configuration,
     event::NUM_SPINS,
-    linalg::vecmat::*,
+    linalg::{dimension::*, vecmat::*},
     matelems::{A, B_M, B_P, I_MX, NUM_MAT_ELEMS, R_MX},
     numeric::{functions::*, reals::consts::PI, Complex, Float},
 };
@@ -66,43 +66,28 @@ impl<'cfg> FinalResults<'cfg> {
         assert_eq!(NUM_SPINS, 2);
         assert_eq!(NUM_MAT_ELEMS, 5);
 
+        let spm2 = &self.spm2;
         let cfg = self.cfg;
 
-        // FIXME: Vectorize over spins once const generics make it less ugly
         let mu_th = cfg.br_ep_em * cfg.convers / (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
-        let lambda0_m = (-self.spm2[(SP_M, B_P)] + self.spm2[(SP_M, B_M)]) / 2.;
-        let lambda0_p = (-self.spm2[(SP_P, B_P)] + self.spm2[(SP_P, B_M)]) / 2.;
-        let mu0_m = (self.spm2[(SP_M, B_P)] + self.spm2[(SP_M, B_M)]) / 2.;
-        let mu0_p = (self.spm2[(SP_P, B_P)] + self.spm2[(SP_P, B_M)]) / 2.;
-        let mu_num = (self.spm2[(SP_M, B_P)]
-            + self.spm2[(SP_M, B_M)]
-            + self.spm2[(SP_P, B_P)]
-            + self.spm2[(SP_P, B_M)])
-            / 4.;
+        let sigma0 = spm2.column(A) / 2.;
+        let alpha0 = spm2.column(I_MX) / 2.;
+        let beta0 = -spm2.column(R_MX) / 2.;
+        let lambda0 = (spm2.column(B_M) - spm2.column(B_P)) / 2.;
+        let mu0 = (spm2.column(B_M) + spm2.column(B_P)) / 2.;
+        let mu_num = spm2.fixed_columns::<U2>(B_P).sum() / 4.;
 
         println!();
         println!("       :        -          +");
-        println!(
-            "sigma0  : {:.6} | {:.6}",
-            self.spm2[(SP_M, A)] / 2.,
-            self.spm2[(SP_P, A)] / 2.
-        );
-        println!(
-            "alpha0  : {:.5e} | {:.4e}",
-            self.spm2[(SP_M, I_MX)] / 2.,
-            self.spm2[(SP_P, I_MX)] / 2.
-        );
-        println!(
-            "beta0   : {:} | {:}",
-            -self.spm2[(SP_M, R_MX)] / 2.,
-            -self.spm2[(SP_P, R_MX)] / 2.
-        );
-        println!("lambda0 : {:.4} | {:.4}", lambda0_m, lambda0_p);
-        println!("mu0     : {:.4} | {:.5}", mu0_m, mu0_p);
+        println!("sigma0  : {:.6} | {:.6}", sigma0[SP_M], sigma0[SP_P]);
+        println!("alpha0  : {:.5e} | {:.4e}", alpha0[SP_M], alpha0[SP_P]);
+        println!("beta0   : {:} | {:}", beta0[SP_M], beta0[SP_P]);
+        println!("lambda0 : {:.4} | {:.4}", lambda0[SP_M], lambda0[SP_P]);
+        println!("mu0     : {:.4} | {:.5}", mu0[SP_M], mu0[SP_P]);
         println!(
             "mu/lamb : {:.5} | {:.5}",
-            mu0_m / lambda0_m,
-            mu0_p / lambda0_p
+            mu0[SP_M] / lambda0[SP_M],
+            mu0[SP_P] / lambda0[SP_P]
         );
         println!("mu (num): {:.4}", mu_num);
         println!("rapport : {:.6}", mu_num / mu_th);
@@ -117,6 +102,8 @@ impl<'cfg> FinalResults<'cfg> {
 
         let cfg = self.cfg;
         let ev_cut = &cfg.event_cut;
+        let spm2 = &self.spm2;
+        let vars = &self.vars;
 
         let mre = cfg.m_z0 / cfg.e_tot;
         let gre = cfg.g_z0 * cfg.m_z0 / sqr(cfg.e_tot);
@@ -158,17 +145,14 @@ impl<'cfg> FinalResults<'cfg> {
         let sig_p = sig * (ff + 2. * gg);
         let sig_m = sig_p + 2. * sig * gg;
 
-        // FIXME: Vectorize over spins once const generics make it less ugly
-        let mc_p = (self.spm2[(SP_M, B_P)] + self.spm2[(SP_P, B_P)]) / 4.;
-        let mc_m = (self.spm2[(SP_M, B_M)] + self.spm2[(SP_P, B_M)]) / 4.;
-        let incr_p = sqrt(
-            sqr(self.spm2[(SP_M, B_P)] * self.vars[(SP_M, B_P)])
-                + sqr(self.spm2[(SP_P, B_P)] * self.vars[(SP_P, B_P)]),
-        ) / abs(self.spm2[(SP_M, B_P)] + self.spm2[(SP_P, B_P)]);
-        let incr_m = sqrt(
-            sqr(self.spm2[(SP_M, B_M)] * self.vars[(SP_M, B_M)])
-                + sqr(self.spm2[(SP_P, B_M)] * self.vars[(SP_P, B_M)]),
-        ) / abs(self.spm2[(SP_M, B_M)] + self.spm2[(SP_P, B_M)]);
+        let mc_p = spm2.column(B_P).sum() / 4.;
+        let mc_m = spm2.column(B_M).sum() / 4.;
+
+        let incr = |col| {
+            spm2.column(col).component_mul(&vars.column(col)).norm() / abs(spm2.column(col).sum())
+        };
+        let incr_p = incr(B_P);
+        let incr_m = incr(B_M);
 
         println!();
         println!("s (pb) :   Sig_cut_Th    Sig_Th      Rapport");

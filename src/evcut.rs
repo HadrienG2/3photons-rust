@@ -42,16 +42,15 @@ impl EventCut {
             return false;
         }
 
-        // Get the incoming electron 4-momentum and outgoing photon 4-momenta
+        // Get the incoming electron 4-momentum
         let p_el = event.electron_momentum();
-        let ps_out = event.outgoing_momenta();
-        let ps_out_xyz = ps_out.fixed_columns::<U3>(X);
-        let ps_out_e = ps_out.fixed_columns::<U1>(E);
 
         // Check if the (beam, photon) angles pass the cut
         {
+            let ps_out = event.outgoing_momenta();
+            let ps_out_xyz = ps_out.fixed_columns::<U3>(X);
             let cos_nums = ps_out_xyz * p_el.xyz();
-            let cos_denoms = ps_out_e * p_el[E];
+            let cos_denoms = ps_out.column(E) * p_el[E];
             for (&num, denom) in cos_nums.iter().zip(cos_denoms.iter()) {
                 if abs(num) > self.a_cut * denom {
                     return false;
@@ -60,35 +59,18 @@ impl EventCut {
         }
 
         // Check if the (photon1, photon{2, 3}) angles pass the cut
-        //
-        // FIXME: Turn this back into a loop once const generics allow for it,
-        //        see Julia version for the non-unrolled logic.
-        //
-        assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
-        let p_ph1 = event.outgoing_momentum(0);
-        let ps_ph23 = ps_out.fixed_rows::<U2>(1);
-        let ps_ph23_xyz = ps_ph23.fixed_columns::<U3>(X);
-        let ps_ph23_e = ps_ph23.fixed_columns::<U1>(E);
-        let cos_nums_1x23 = ps_ph23_xyz * p_ph1.xyz();
-        let cos_denoms_1x23 = ps_ph23_e * p_ph1[E];
-        for (&num, denom) in cos_nums_1x23.iter().zip(cos_denoms_1x23.iter()) {
-            if num > self.b_cut * denom {
-                return false;
+        for ph1 in 0..NUM_OUTGOING - 1 {
+            // FIXME: Consider re-vectorizing this inner loop once const
+            //        generics make it ergonomic to do so.
+            for ph2 in ph1 + 1..NUM_OUTGOING {
+                let p_ph1 = event.outgoing_momentum(ph1);
+                let p_ph2 = event.outgoing_momentum(ph2);
+                let cos_num = p_ph1.xyz().dot(&p_ph2.xyz());
+                let cos_denom = p_ph1[E] * p_ph2[E];
+                if cos_num > self.b_cut * cos_denom {
+                    return false;
+                }
             }
-        }
-
-        // Check if the (photon2, photon3) angle passes the cut
-        //
-        // FIXME: Will be part of the above loop once we can have it
-        //
-        let p_ph2 = ps_ph23.fixed_rows::<U1>(0);
-        let p_ph3 = ps_ph23.fixed_rows::<U1>(1);
-        let p_ph2_xyz = p_ph2.fixed_columns::<U3>(X);
-        let p_ph3_xyz = p_ph3.fixed_columns::<U3>(X);
-        let cos_num_2x3 = p_ph2_xyz.dot(&p_ph3_xyz);
-        let cos_denom_2x3 = p_ph2[E] * p_ph3[E];
-        if cos_num_2x3 > self.b_cut * cos_denom_2x3 {
-            return false;
         }
 
         // Compute a vector which is normal to the outgoing photon plane

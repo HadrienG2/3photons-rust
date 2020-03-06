@@ -6,7 +6,7 @@ use crate::{
     event::NUM_SPINS,
     matelems::{A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
     numeric::{functions::*, reals, Float},
-    resfin::{FinalResults, SP_M, SP_P},
+    resfin::FinalResults,
 };
 
 use chrono;
@@ -26,14 +26,10 @@ const SIG_DIGITS: usize = (reals::DIGITS - 1) as usize;
 
 /// Output the simulation results to the console and to disk
 #[allow(clippy::cast_lossless)]
-pub fn dump_results(
-    cfg: &Configuration,
-    res_fin: &FinalResults,
-    elapsed_time: Duration,
-) -> Result<()> {
+pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Duration) -> Result<()> {
     // Print out some final results on stdout
-    res_fin.eric();
-    res_fin.fawzi();
+    res.eric();
+    res.fawzi();
 
     // Compute a timestamp of when the run ended
     let current_time = chrono::Utc::now();
@@ -71,7 +67,7 @@ pub fn dump_results(
 
         // Write the results to the file
         writeln_3p(dat_file, ("Nombre d'evenements", cfg.num_events))?;
-        writeln_3p(dat_file, ("... apres coupure", res_fin.selected_events))?;
+        writeln_3p(dat_file, ("... apres coupure", res.selected_events))?;
         writeln_3p(dat_file, ("energie dans le CdM      (GeV)", cfg.e_tot))?;
         writeln_3p(dat_file, ("coupure / cos(photon,faisceau)", ev_cut.a_cut))?;
         writeln_3p(dat_file, ("coupure / cos(photon,photon)", ev_cut.b_cut))?;
@@ -89,17 +85,17 @@ pub fn dump_results(
         writeln_3p(dat_file, ("Beta plus", cfg.beta_plus))?;
         writeln_3p(dat_file, ("Beta moins", cfg.beta_minus))?;
         writeln_3p(dat_file, "---------------------------------------------")?;
-        writeln_3p(dat_file, ("Section Efficace          (pb)", res_fin.sigma))?;
-        let stddev_res = res_fin.sigma * res_fin.prec;
+        writeln_3p(dat_file, ("Section Efficace          (pb)", res.sigma))?;
+        let stddev_res = res.sigma * res.prec;
         writeln_3p(dat_file, ("Ecart-Type                (pb)", stddev_res))?;
-        writeln_3p(dat_file, ("Precision Relative", res_fin.prec))?;
+        writeln_3p(dat_file, ("Precision Relative", res.prec))?;
         writeln_3p(dat_file, "---------------------------------------------")?;
-        writeln_3p(dat_file, ("Beta minimum", res_fin.beta_min))?;
-        writeln_3p(dat_file, ("Stat. Significance  B+(pb-1/2)", res_fin.ss_p))?;
-        let incert_ss_p = res_fin.ss_p * res_fin.inc_ss_p;
+        writeln_3p(dat_file, ("Beta minimum", res.beta_min))?;
+        writeln_3p(dat_file, ("Stat. Significance  B+(pb-1/2)", res.ss_p))?;
+        let incert_ss_p = res.ss_p * res.inc_ss_p;
         writeln_3p(dat_file, ("Incert. Stat. Sign. B+(pb-1/2)", incert_ss_p))?;
-        writeln_3p(dat_file, ("Stat. Significance  B-(pb-1/2)", res_fin.ss_m))?;
-        let incert_ss_m = res_fin.ss_m * res_fin.inc_ss_m;
+        writeln_3p(dat_file, ("Stat. Significance  B-(pb-1/2)", res.ss_m))?;
+        let incert_ss_m = res.ss_m * res.inc_ss_m;
         writeln_3p(dat_file, ("Incert. Stat. Sign. B-(pb-1/2)", incert_ss_m))?;
 
         // Write more results (nature and purpose unclear in C++ code...)
@@ -112,9 +108,9 @@ pub fn dump_results(
                     "{:>3}{:>3}{:>width$.decs$e}{:>width$.decs$e}{:>width$.decs$e}",
                     sp + 1,
                     k + 1,
-                    res_fin.spm2[(sp, k)],
-                    res_fin.spm2[(sp, k)].abs() * res_fin.vars[(sp, k)],
-                    res_fin.vars[(sp, k)],
+                    res.spm2[(sp, k)],
+                    res.spm2[(sp, k)].abs() * res.vars[(sp, k)],
+                    res.vars[(sp, k)],
                     width = decimals + 8,
                     decs = decimals,
                 )?;
@@ -122,14 +118,8 @@ pub fn dump_results(
             writeln!(dat_file)?;
         }
         for k in 0..NUM_MAT_ELEMS {
-            // FIXME: Vectorize sums across spins once const generics enable
-            //        more ergonomic small matrix manipulations.
-            let spm2 = &res_fin.spm2;
-            let vars = &res_fin.vars;
-            let tmp1 = spm2[(SP_M, k)] + spm2[(SP_P, k)];
-            let tmp2 = sqrt(
-                sqr(spm2[(SP_M, k)] * vars[(SP_M, k)]) + sqr(spm2[(SP_P, k)] * vars[(SP_P, k)]),
-            );
+            let tmp1 = res.spm2.column(k).sum();
+            let tmp2 = res.spm2.column(k).component_mul(&res.vars.column(k)).norm();
             writeln!(
                 dat_file,
                 "   {:>3}{:>width$.decs$e}{:>width$.decs$e}{:>width$.decs$e}",
@@ -157,13 +147,10 @@ pub fn dump_results(
 
         writeln!(cum_dat_file, "{}", timestamp)?;
 
-        // FIXME: Vectorize sums across spins once const generics enable more
-        //        ergonomic small matrix manipulations.
-        let spm2 = &res_fin.spm2;
-        let res1 = spm2[(SP_M, A)] + spm2[(SP_P, A)];
-        let res2 = (spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)]) * sqr(cfg.beta_plus);
-        let res3 = (spm2[(SP_M, B_M)] + spm2[(SP_P, B_M)]) * sqr(cfg.beta_minus);
-        let res4 = (spm2[(SP_P, R_MX)] + spm2[(SP_P, R_MX)]) * cfg.beta_plus;
+        let res1 = res.spm2.column(A).sum();
+        let res2 = res.spm2.column(B_P).sum() * sqr(cfg.beta_plus);
+        let res3 = res.spm2.column(B_M).sum() * sqr(cfg.beta_minus);
+        let res4 = res.spm2.column(R_MX).sum() * cfg.beta_plus;
         writeln!(
             cum_dat_file,
             "{} {} {} {} {} {} {}",
@@ -173,7 +160,7 @@ pub fn dump_results(
             res3 / 4.,
             res4 / 4.,
             (res1 + res2 + res3 + res4) / 4.,
-            res_fin.sigma
+            res.sigma
         )?;
     }
 

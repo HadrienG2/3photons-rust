@@ -4,7 +4,7 @@ use crate::{
     event::{Event, NUM_INCOMING, NUM_OUTGOING, NUM_PARTICLES},
     linalg::{
         dimension::*,
-        momentum::{Momentum, E, X, Y, Z},
+        momentum::{E, X, Y, Z},
         vecmat::*,
     },
     numeric::{
@@ -96,7 +96,7 @@ impl EventGenerator {
         let q = Self::generate_raw(rng);
 
         // Calculate the parameters of the conformal transformation
-        let r = &Momentum::from_fn(|coord, _| q.fixed_rows::<U1>(coord).iter().sum());
+        let r = q.column_sum();
         let r_norm_2 = r[E] * r[E] - r.xyz().norm_squared();
         let alpha = self.e_tot / r_norm_2;
         let r_norm = sqrt(r_norm_2);
@@ -105,10 +105,9 @@ impl EventGenerator {
         // Perform the conformal transformation from Q's to output 4-momenta
         let tr_q = q.transpose();
         let tr_q_xyz = tr_q.fixed_columns::<U3>(X);
-        let q_e = tr_q.fixed_columns::<U1>(E);
         let rq = tr_q_xyz * r.xyz();
-        let mut p_e = alpha * (r[E] * q_e - rq);
-        let b_rq_e = beta * rq - q_e;
+        let mut p_e = alpha * (r[E] * tr_q.column(E) - rq);
+        let b_rq_e = beta * rq - tr_q.column(E);
         let mut p_xyz = alpha * (r_norm * tr_q_xyz + b_rq_e * r.xyz().transpose());
 
         // Sort the output 4-momenta in order of decreasing energy (if enabled)
@@ -156,10 +155,8 @@ impl EventGenerator {
 
             // Generate the basic random parameters of the particles
             let params = Matrix3::from_column_slice(&rng.random9()[..]);
-            let cos_theta = params.fixed_columns::<U1>(0).map(|r| 2. * r - 1.);
-            let exp_min_e = params
-                .fixed_columns::<U1>(1)
-                .component_mul(&params.fixed_columns::<U1>(2));
+            let cos_theta = params.column(0).map(|r| 2. * r - 1.);
+            let exp_min_e = params.column(1).component_mul(&params.column(2));
             let sincos_phi = Self::random_unit_2d_outgoing(rng);
 
             // Compute the outgoing momenta
@@ -195,9 +192,9 @@ impl EventGenerator {
                 EXP_MIN_E => rng.random() * rng.random(),
                 _ => unreachable!(),
             });
-            let cos_theta = params.fixed_rows::<U1>(COS_THETA);
-            let phi = params.fixed_rows::<U1>(PHI);
-            let exp_min_e = params.fixed_rows::<U1>(EXP_MIN_E);
+            let cos_theta = params.row(COS_THETA);
+            let phi = params.row(PHI);
+            let exp_min_e = params.row(EXP_MIN_E);
 
             // Compute the outgoing momenta
             let cos_phi = phi.map(cos);
@@ -228,7 +225,6 @@ impl EventGenerator {
     ///         more computations close to them.
     ///       - Statistics force us to discard more points and call the RNG more
     ///
-    #[allow(clippy::needless_range_loop)]
     fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Float> {
         assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
 
@@ -237,20 +233,20 @@ impl EventGenerator {
 
         // Re-roll each point until it falls on the unit disc, and is not
         // too close to the origin (otherwise we'll get floating-point issues)
-        let mut radius2 = Vector3::from_fn(|par, _| points.fixed_rows::<U1>(par).norm_squared());
-        for par in 0..NUM_OUTGOING {
+        let mut radii2 = Vector3::from_iterator(points.row_iter().map(|row| row.norm_squared()));
+        for (point_idx, radius2) in radii2.iter_mut().enumerate() {
             const MIN_POSITIVE_2: Float = MIN_POSITIVE * MIN_POSITIVE;
-            while radius2[par] > 1. || radius2[par] < MIN_POSITIVE_2 {
+            while *radius2 > 1. || *radius2 < MIN_POSITIVE_2 {
                 let new_point = Vector2::from_iterator(rng.random2().iter().map(|r| 2. * r - 1.));
-                points.set_row(par, &new_point.transpose());
-                radius2[par] = new_point.norm_squared();
+                points.set_row(point_idx, &new_point.transpose());
+                *radius2 = new_point.norm_squared();
             }
         }
 
         // Now you only need to normalize to get points on the unit circle
-        let norm = radius2.map(|r2| 1. / sqrt(r2));
-        for par in 0..NUM_OUTGOING {
-            points.fixed_rows_mut::<U1>(par).apply(|c| c * norm[par]);
+        let norms = radii2.map(|r2| 1. / sqrt(r2));
+        for (mut point, norm) in points.row_iter_mut().zip(norms.iter()) {
+            point.apply(|coord| coord * norm);
         }
         points
     }

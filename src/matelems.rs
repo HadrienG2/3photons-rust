@@ -3,7 +3,7 @@
 use crate::{
     coupling::Couplings,
     event::{Event, NUM_OUTGOING, NUM_SPINS},
-    linalg::{dimension::*, vecmat::*},
+    linalg::vecmat::*,
     numeric::{functions::*, Float},
     spinor::SpinorProducts,
 };
@@ -82,7 +82,7 @@ impl MEsContributions {
 
     /// Compute the sums of the squared matrix elements for each contribution
     pub fn m2_sums(&self) -> MEsVector {
-        MEsVector::from_fn(|i, _| self.m2x.fixed_rows::<U1>(i).iter().sum())
+        self.m2x.column_sum()
     }
 }
 
@@ -94,7 +94,7 @@ impl Display for MEsContributions {
         for index in 0..NUM_MAT_ELEMS {
             writeln!(fmt, "Matrix element #{}", index)?;
             writeln!(fmt, "---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++")?;
-            let contribution = self.m2x.fixed_rows::<U1>(index);
+            let contribution = self.m2x.row(index);
             for &matrix_elem in contribution.iter() {
                 write!(fmt, "{}  \t", matrix_elem)?;
             }

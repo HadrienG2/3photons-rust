@@ -2,10 +2,10 @@
 use crate::{
     config::Configuration,
     event::{NUM_OUTGOING, NUM_SPINS},
-    linalg::dimension::*,
+    linalg::{dimension::*, vecmat::*},
     matelems::{MEsContributions, MEsVector, A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
     numeric::{functions::*, reals::consts::PI, Float},
-    resfin::{FinalResults, PerSpinMEs, SP_M, SP_P},
+    resfin::{FinalResults, PerSpinMEs},
 };
 
 use num_traits::Zero;
@@ -163,17 +163,15 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         // contribution
         let pol_p = -2. * cfg.sin2_w;
         let pol_m = 1. + pol_p;
+        let pols = Vector2::new(pol_m, pol_p);
 
         // Take polarisations into account
-        // FIXME: Revisit those ugly slices once const generics allow for it
-        spm2.fixed_slice_mut::<U1, U2>(SP_M, B_P)
-            .apply(|x| x * sqr(pol_m));
-        spm2.fixed_slice_mut::<U1, U2>(SP_P, B_P)
-            .apply(|x| x * sqr(pol_p));
-        spm2.fixed_slice_mut::<U1, U2>(SP_M, R_MX)
-            .apply(|x| x * pol_m);
-        spm2.fixed_slice_mut::<U1, U2>(SP_P, R_MX)
-            .apply(|x| x * pol_p);
+        spm2.fixed_columns_mut::<U4>(B_P)
+            .column_iter_mut()
+            .for_each(|mut col| col.component_mul_assign(&pols));
+        spm2.fixed_columns_mut::<U2>(B_P)
+            .column_iter_mut()
+            .for_each(|mut col| col.component_mul_assign(&pols));
 
         // Flux factor (=1/2s for 2 initial massless particles)
         let flux = 1. / (2. * sqr(cfg.e_tot));
@@ -184,32 +182,22 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         spm2.fixed_columns_mut::<U4>(B_P)
             .apply(|x| x * self.propag / gm_z0);
         spm2.fixed_columns_mut::<U2>(B_P).apply(|x| x / gm_z0);
-        spm2.fixed_columns_mut::<U1>(R_MX)
-            .apply(|x| x * self.ecart_pic);
+        spm2.column_mut(R_MX).apply(|x| x * self.ecart_pic);
 
         // Compute other parts of the result
-        // FIXME: Vectorize over spins once const generics make it less ugly
-        let beta_min =
-            sqrt((spm2[(SP_M, A)] + spm2[(SP_P, A)]) / (spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)]));
+        let beta_min = sqrt(spm2.column(A).sum() / spm2.column(B_P).sum());
 
-        let ss_denom = spm2[(SP_M, A)] + spm2[(SP_P, A)];
+        let ss_denom = spm2.column(A).sum();
         let ss_norm = 1. / (2. * sqrt(ss_denom));
 
-        let ss_p = (spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)]) * ss_norm;
-        let ss_m = (spm2[(SP_M, B_M)] + spm2[(SP_P, B_M)]) * ss_norm;
+        let ss_p = spm2.column(B_P).sum() * ss_norm;
+        let ss_m = spm2.column(B_M).sum() * ss_norm;
 
-        let inc_ss_common =
-            sqrt(sqr(spm2[(SP_M, A)] * vars[(SP_M, A)]) + sqr(spm2[(SP_P, A)] * vars[(SP_P, A)]))
-                / (2. * abs(ss_denom));
-
-        let inc_ss_p = sqrt(
-            sqr(spm2[(SP_M, B_P)] * vars[(SP_M, B_P)]) + sqr(spm2[(SP_P, B_P)] * vars[(SP_P, B_P)]),
-        ) / abs(spm2[(SP_M, B_P)] + spm2[(SP_P, B_P)])
-            + inc_ss_common;
-        let inc_ss_m = sqrt(
-            sqr(spm2[(SP_M, B_M)] * vars[(SP_M, B_M)]) + sqr(spm2[(SP_P, B_M)] * vars[(SP_P, B_M)]),
-        ) / abs(spm2[(SP_M, B_M)] + spm2[(SP_P, B_M)])
-            + inc_ss_common;
+        let inc_num = |col| spm2.column(col).component_mul(&vars.column(col)).norm();
+        let inc_ss_common = inc_num(A) / (2. * abs(ss_denom));
+        let inc = |col| inc_num(col) / abs(spm2.column(col).sum()) + inc_ss_common;
+        let inc_ss_p = inc(B_P);
+        let inc_ss_m = inc(B_M);
 
         let variance = (self.variance - sqr(self.sigma) / n_ev) / (n_ev - 1.);
         let prec = sqrt(variance / n_ev) / abs(self.sigma / n_ev);

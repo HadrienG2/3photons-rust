@@ -61,8 +61,12 @@ impl Event {
     }
 
     /// Extract the 4-momentum of a single particle (internal for now)
+    ///
+    /// We return an owned momentum vector because that's more convenient to
+    /// handle than a slice and the compiler is smart enough to elide the copy.
+    ///
     fn momentum(&self, par: usize) -> Momentum {
-        Momentum::from_iterator(self.0.fixed_rows::<U1>(par).iter().cloned())
+        Momentum::from_iterator(self.0.row(par).iter().copied())
     }
 
     /// Extract the electron 4-momentum
@@ -89,15 +93,18 @@ impl Event {
     /// Minimal outgoing photon energy
     pub fn min_photon_energy(&self) -> Float {
         if cfg!(feature = "no-photon-sorting") {
-            let first_out_e = self.outgoing_momenta()[(0, E)];
+            // This somewhat elaborate method (compared to, say, min_by())
+            // allows us to propagate what we know about the matrix' layout and
+            // contents to the compiler, enabling better optimization.
+            let first_out_e = self.outgoing_momentum(0)[E];
             self.outgoing_momenta()
-                .fixed_columns::<U1>(E)
+                .column(E)
                 .iter()
                 .skip(1)
                 .fold(first_out_e, |e1, &e2| if e1 < e2 { e1 } else { e2 })
         } else {
             // Use the fact that photons are sorted by decreasing energy
-            self.outgoing_momenta()[(NUM_OUTGOING - 1, E)]
+            self.outgoing_momentum(NUM_OUTGOING - 1)[E]
         }
     }
 }

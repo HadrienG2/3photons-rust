@@ -5,10 +5,7 @@ use crate::{
         Event, ParticleMatrix, ParticleVector, INCOMING_E_M as E_M, INCOMING_E_P as E_P,
         NUM_INCOMING, NUM_OUTGOING, NUM_SPINS,
     },
-    linalg::{
-        dimension::*,
-        momentum::{E, X, Y, Z},
-    },
+    linalg::momentum::{E, X, Y, Z},
     numeric::{
         functions::*,
         reals::{consts::SQRT_2, MIN_POSITIVE},
@@ -38,20 +35,14 @@ impl SpinorProducts {
         assert_eq!(NUM_OUTGOING, 3);
         assert_eq!(NUM_SPINS, 2);
 
-        // Access the array of incoming and outgoing particle 4-momenta
-        let ps = event.all_momenta();
-        let ps_x = ps.fixed_columns::<U1>(X);
-        let ps_y = ps.fixed_columns::<U1>(Y);
-        let ps_z = ps.fixed_columns::<U1>(Z);
-        let ps_e = ps.fixed_columns::<U1>(E);
-
         // Compute the spinor products (method from M. Mangano and S. Parke)
-        let xx = (ps_e + ps_z).map(sqrt);
+        let ps = event.all_momenta();
+        let xx = (ps.column(E) + ps.column(Z)).map(sqrt);
         let fx = ParticleVector::from_fn(|par, _| {
             if xx[par] > MIN_POSITIVE {
-                Complex::new(ps_x[par], ps_y[par]) / xx[par]
+                Complex::new(ps[(par, X)], ps[(par, Y)]) / xx[par]
             } else {
-                Complex::from(sqrt(2. * ps_e[par]))
+                Complex::from(sqrt(2. * ps[(par, E)]))
             }
         });
 
