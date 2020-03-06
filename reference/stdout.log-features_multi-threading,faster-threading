@@ -1,0 +1,43 @@
+ITOT           : 10000000
+ETOT           : 91.187
+oCutpar.ACUT   : 0.9
+oCutpar.BCUT   : 0.9396
+oCutpar.EMIN   : 4.559
+oCutpar.SINCUT : 0
+ALPHA          : 0.007297353079644818
+ALPHAZ         : 0.0078125
+CONVERS        : 389379660
+oParam.MZ0     : 91.187
+oParam.GZ0     : 2.49
+SIN2W          : 0.2319
+BREPEM         : 0.03367
+BETAPLUS       : 1
+BETAMOINS      : 1
+NBIN           : 200
+oParam.IMPR    : false
+PLOT           : false
+IBegin
+
+       :        -          +
+sigma0  : 0.705370 | 0.705370
+alpha0  : -2.64693e-4 | 2.2895e-4
+beta0   : 0 | 0
+lambda0 : 2.5624 | 1.9172
+mu0     : 12.1323 | 9.07719
+mu/lamb : 4.73471 | 4.73471
+mu (num): 10.6048
+rapport : 0.652557
+mu (th) : 16.2511
+
+s (pb) :   Sig_cut_Th    Sig_Th      Rapport
+       :   Sig_Num
+       :   Ecart_relatif  Incertitude
+
+s+(pb) : 5.91991 | 6.09415 | 0.971408
+       : 4.18248
+       : -0.293489 | 0.00017455 | -1681.43
+
+s-(pb) : 9.81379 | 10.1569 | 0.966218
+       : 6.42227
+       : -0.345587 | 0.000195181 | -1770.60
+
