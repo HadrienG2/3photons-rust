@@ -223,9 +223,6 @@ jobs:
       - name: Run the program
         run: ./target/release/trois_photons | tee stdout.log
 
-      - name: Check standard output
-        run: diff -Nu "reference/stdout.log-features_${{ matrix.features }}" stdout.log
-
       - name: Cache numdiff installation
         id: cache-numdiff
         uses: actions/cache@v1
@@ -259,6 +256,18 @@ jobs:
               ;;
           esac
           $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
+
+      - name: Check standard output
+        run: |
+          case "${{ matrix.features }}" in
+            "f32")
+              PRECISION=""
+              ;;
+            *)
+              PRECISION=""
+              ;;
+          esac
+          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/stdout.log-features_${{ matrix.features }}" stdout.log
 
 
   # Variant of the run-stable job for unstable periodical builds
@@ -332,9 +341,6 @@ jobs:
       - name: Run the program
         run: ./target/release/trois_photons | tee stdout.log
 
-      - name: Check standard output
-        run: diff -Nu "reference/stdout.log-features_${{ matrix.features }}" stdout.log
-
       - name: Cache numdiff installation
         id: cache-numdiff
         uses: actions/cache@v1
@@ -368,3 +374,15 @@ jobs:
               ;;
           esac
           $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
+
+      - name: Check standard output
+        run: |
+          case "${{ matrix.features }}" in
+            "f32")
+              PRECISION=""
+              ;;
+            *)
+              PRECISION=""
+              ;;
+          esac
+          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/stdout.log-features_${{ matrix.features }}" stdout.log
