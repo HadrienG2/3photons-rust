@@ -261,7 +261,7 @@ jobs:
         run: |
           case "${{ matrix.features }}" in
             "f32")
-              PRECISION=""
+              PRECISION="-r 1.9e-5"
               ;;
             *)
               PRECISION=""
@@ -379,7 +379,7 @@ jobs:
         run: |
           case "${{ matrix.features }}" in
             "f32")
-              PRECISION=""
+              PRECISION="-r 1.9e-5"
               ;;
             *)
               PRECISION=""
