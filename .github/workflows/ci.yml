@@ -142,9 +142,9 @@ jobs:
           args: --features "${{ matrix.features }}"
 
       - name: Check clippy lints
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/clippy-check@v1
         with:
-          command: clippy
+          token: ${{ secrets.GITHUB_TOKEN }}
           args: --features "${{ matrix.features }}" -- -D warnings
 
 
