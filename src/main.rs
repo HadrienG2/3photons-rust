@@ -96,7 +96,7 @@ fn main() -> Result<()> {
     let couplings = Couplings::new(&cfg);
 
     // Initialize the event generator
-    let evgen = EventGenerator::new(cfg.e_tot);
+    let evgen = EventGenerator::new(cfg.e_total);
 
     // ### SIMULATION EXECUTION ###
 

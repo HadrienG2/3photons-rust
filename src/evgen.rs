@@ -21,7 +21,7 @@ use crate::{
 /// Generator of ee -> ppp events
 pub struct EventGenerator {
     /// Total center-of-mass energy of the collision
-    e_tot: Float,
+    e_total: Float,
 
     /// Weight of generated events
     ev_weight: Float,
@@ -33,13 +33,13 @@ pub struct EventGenerator {
 impl EventGenerator {
     // ### CONSTRUCTION ###
 
-    /// Initialize event generation for a center-of-mass energy of e_tot.
+    /// Initialize event generation for a center-of-mass energy of e_total.
     ///
     /// Combines former functionality of ppp constructor and IBEGIN-based lazy
     /// initialization from the original C++ 3photons code.
     ///
     #[rustfmt::skip]
-    pub fn new(e_tot: Float) -> Self {
+    pub fn new(e_total: Float) -> Self {
         // Check on the number of particles. The check for N<101 is gone since
         // unlike the original RAMBO, we don't use arrays of hardcoded size.
         assert!(NUM_OUTGOING > 1);
@@ -47,35 +47,34 @@ impl EventGenerator {
         // As currently written, this code only works for two incoming particles
         assert_eq!(NUM_INCOMING, 2);
 
-        // Compute some numerical constants. Replaces the lazy initialization
-        // from the original RAMBO code with something less branchy.
+        // Factorials for the phase space weight. Replaces the lazy
+        // initialization from the original RAMBO code with less branchy code.
         println!("IBegin");
         // Replaces Z[INP-1] in the original 3photons code
-        let mut z = ((NUM_OUTGOING - 1) as Float) * ln(FRAC_PI_2);
+        let mut z_n = ((NUM_OUTGOING - 1) as Float) * ln(FRAC_PI_2);
         for k in 2..NUM_OUTGOING {
-            z -= 2. * ln((k - 1) as Float);
+            z_n -= 2. * ln((k - 1) as Float);
         }
-        let z = z - ln((NUM_OUTGOING - 1) as Float);
+        let z_n = z_n - ln((NUM_OUTGOING - 1) as Float);
 
         // NOTE: The check on total energy is gone, because we only generate
         //       massless photons and so the total energy will always be enough.
         //       Counting of nonzero masses is also gone because it was unused.
 
         // All generated events will have the same weight: pre-compute it
-        let ln_weight = (2. * (NUM_OUTGOING as Float) - 4.) * ln(e_tot) + z;
+        let ln_weight = (2. * (NUM_OUTGOING as Float) - 4.) * ln(e_total) + z_n;
         assert!((ln_weight >= -180.) && (ln_weight <= 174.));
         let ev_weight = exp(ln_weight);
 
         // Compute the incoming particle momenta
-        let half_e_tot = e_tot / 2.;
         let incoming_momenta = Matrix2x4::new(
-            -half_e_tot, 0., 0., half_e_tot,
-            half_e_tot,  0., 0., half_e_tot,
+            -e_total / 2., 0., 0., e_total / 2.,
+            e_total / 2.,  0., 0., e_total / 2.,
         );
 
         // Construct and return the output data structure
         EventGenerator {
-            e_tot,
+            e_total,
             ev_weight,
             incoming_momenta,
         }
@@ -98,7 +97,7 @@ impl EventGenerator {
         // Calculate the parameters of the conformal transformation
         let r = q.column_sum();
         let r_norm_2 = r[E] * r[E] - r.xyz().norm_squared();
-        let alpha = self.e_tot / r_norm_2;
+        let alpha = self.e_total / r_norm_2;
         let r_norm = sqrt(r_norm_2);
         let beta = 1. / (r_norm + r[E]);
 

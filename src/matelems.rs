@@ -45,7 +45,7 @@ pub struct MEsContributions {
     ///     - Configuration 1 (0b001) is --+
     ///     - And so on...
     ///
-    m2x: Matrix5x8<Float>,
+    m2: Matrix5x8<Float>,
 }
 //
 impl MEsContributions {
@@ -63,13 +63,13 @@ impl MEsContributions {
         use crate::spinor::PhotonHelicities::*;
         let helicities = Vector8::from_column_slice(&[MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP]);
         let a_amps = helicities.map(|hel| spinor.a(hel) * couplings.g_a);
-        let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_bp);
-        let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_bm);
+        let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_beta_p);
+        let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_beta_m);
         let mixed_amps = a_amps.zip_map(&bp_amps, |a, b_p| 2. * a * conj(b_p));
 
         // Compute the matrix elements
         MEsContributions {
-            m2x: Matrix5x8::from_fn(|contrib, hel| match contrib {
+            m2: Matrix5x8::from_fn(|contrib, hel| match contrib {
                 A => a_amps[hel].norm_sqr(),
                 B_P => bp_amps[hel].norm_sqr(),
                 B_M => bm_amps[hel].norm_sqr(),
@@ -82,7 +82,7 @@ impl MEsContributions {
 
     /// Compute the sums of the squared matrix elements for each contribution
     pub fn m2_sums(&self) -> MEsVector {
-        self.m2x.column_sum()
+        self.m2.column_sum()
     }
 }
 
@@ -94,7 +94,7 @@ impl Display for MEsContributions {
         for index in 0..NUM_MAT_ELEMS {
             writeln!(fmt, "Matrix element #{}", index)?;
             writeln!(fmt, "---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++")?;
-            let contribution = self.m2x.row(index);
+            let contribution = self.m2.row(index);
             for &matrix_elem in contribution.iter() {
                 write!(fmt, "{}  \t", matrix_elem)?;
             }

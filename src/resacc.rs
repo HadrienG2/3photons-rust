@@ -47,10 +47,10 @@ pub struct ResultsAccumulator<'cfg> {
     norm_weight: Float,
 
     /// Z° propagator
-    propag: Float,
+    propagator: Float,
 
-    /// ??? (Ask Vincent Lafage)
-    ecart_pic: Float,
+    /// Distance to Z° peak (???)
+    delta_with_z0_peak: Float,
 }
 //
 impl<'cfg> ResultsAccumulator<'cfg> {
@@ -60,13 +60,13 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         assert_eq!(NUM_MAT_ELEMS, 5);
 
         // Common factor (see definition and remarks above)
-        let fact_com = 1. / 6. * cfg.convers;
-        let gzr = cfg.g_z0 / cfg.m_z0;
+        let fact_com = 1. / 6. * cfg.gev2_to_picobarn;
+        let relat_width = cfg.g_z0 / cfg.m_z0;
 
         // Sum over polarisations factors
         let p_aa = 2.;
-        let p_ab = 1. - 4. * cfg.sin2_w;
-        let p_bb = p_ab + 8. * sqr(cfg.sin2_w);
+        let p_ab = 1. - 4. * cfg.sin2_weinberg;
+        let p_bb = p_ab + 8. * sqr(cfg.sin2_weinberg);
 
         // Homogeneity coefficient
         let c_aa = fact_com * p_aa;
@@ -74,9 +74,9 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         let c_bb = fact_com * p_bb / powi(cfg.m_z0, 4);
 
         // Switch to dimensionless variable
-        let dzeta = sqr(cfg.e_tot / cfg.m_z0);
-        let ecart_pic = (dzeta - 1.) / gzr;
-        let propag = 1. / (1. + sqr(ecart_pic));
+        let dzeta = sqr(cfg.e_total / cfg.m_z0);
+        let delta_with_z0_peak = (dzeta - 1.) / relat_width;
+        let propagator = 1. / (1. + sqr(delta_with_z0_peak));
 
         // Apply total phase space normalization to the event weight
         let n_ev = cfg.num_events as Float;
@@ -88,13 +88,13 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         // Again, this avoids duplicate work in the integration loop.
         let com_contrib = norm_weight / 4.;
         let aa_contrib = com_contrib * c_aa;
-        let bb_contrib = com_contrib * c_bb * propag / sqr(gzr);
-        let ab_contrib = com_contrib * c_ab * 2. * cfg.beta_plus * propag / gzr;
+        let bb_contrib = com_contrib * c_bb * propagator / sqr(relat_width);
+        let ab_contrib = com_contrib * c_ab * 2. * cfg.beta_plus * propagator / relat_width;
         let sigma_contribs = MEsVector::new(
             aa_contrib,                       // A
             bb_contrib * sqr(cfg.beta_plus),  // B_P
             bb_contrib * sqr(cfg.beta_minus), // B_M
-            ab_contrib * ecart_pic,           // R_MX
+            ab_contrib * delta_with_z0_peak,  // R_MX
             -ab_contrib,                      // I_MX
         );
 
@@ -110,8 +110,8 @@ impl<'cfg> ResultsAccumulator<'cfg> {
             cfg,
             fact_com,
             norm_weight,
-            propag,
-            ecart_pic,
+            propagator,
+            delta_with_z0_peak,
         }
     }
 
@@ -161,28 +161,28 @@ impl<'cfg> ResultsAccumulator<'cfg> {
 
         // Electroweak polarisations factors for the 𝛽₊/𝛽₋ anomalous
         // contribution
-        let pol_p = -2. * cfg.sin2_w;
-        let pol_m = 1. + pol_p;
-        let pols = Vector2::new(pol_m, pol_p);
+        let polar_p = -2. * cfg.sin2_weinberg;
+        let polar_m = 1. + polar_p;
+        let polars = Vector2::new(polar_m, polar_p);
 
         // Take polarisations into account
         spm2.fixed_columns_mut::<U4>(B_P)
             .column_iter_mut()
-            .for_each(|mut col| col.component_mul_assign(&pols));
+            .for_each(|mut col| col.component_mul_assign(&polars));
         spm2.fixed_columns_mut::<U2>(B_P)
             .column_iter_mut()
-            .for_each(|mut col| col.component_mul_assign(&pols));
+            .for_each(|mut col| col.component_mul_assign(&polars));
 
-        // Flux factor (=1/2s for 2 initial massless particles)
-        let flux = 1. / (2. * sqr(cfg.e_tot));
+        // Incident flux factor (=1/2s for 2 initial massless particles)
+        let incident_flux = 1. / (2. * sqr(cfg.e_total));
 
         // Apply physical coefficients and Z⁰ propagator to each spin
-        spm2 *= self.fact_com * flux * self.norm_weight;
+        spm2 *= self.fact_com * incident_flux * self.norm_weight;
         let gm_z0 = cfg.g_z0 * cfg.m_z0;
         spm2.fixed_columns_mut::<U4>(B_P)
-            .apply(|x| x * self.propag / gm_z0);
+            .apply(|x| x * self.propagator / gm_z0);
         spm2.fixed_columns_mut::<U2>(B_P).apply(|x| x / gm_z0);
-        spm2.column_mut(R_MX).apply(|x| x * self.ecart_pic);
+        spm2.column_mut(R_MX).apply(|x| x * self.delta_with_z0_peak);
 
         // Compute other parts of the result
         let beta_min = sqrt(spm2.column(A).sum() / spm2.column(B_P).sum());
@@ -201,7 +201,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
 
         let variance = (self.variance - sqr(self.sigma) / n_ev) / (n_ev - 1.);
         let prec = sqrt(variance / n_ev) / abs(self.sigma / n_ev);
-        let sigma = self.sigma * flux;
+        let sigma = self.sigma * incident_flux;
 
         // Return the final results
         FinalResults {

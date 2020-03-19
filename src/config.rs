@@ -12,7 +12,7 @@ pub struct Configuration {
     pub num_events: usize,
 
     /// Collision energy at center of mass (GeV)
-    pub e_tot: Float,
+    pub e_total: Float,
 
     /// Cuts on the angles and energies of generated photons
     pub event_cut: EventCut,
@@ -20,11 +20,11 @@ pub struct Configuration {
     /// Fine structure constant
     pub alpha: Float,
 
-    /// Fine structure constant at the Z peak
+    /// Fine structure constant at the Z⁰ mass peak
     pub alpha_z: Float,
 
     /// Conversion factor from GeV^(-2) to pb
-    pub convers: Float,
+    pub gev2_to_picobarn: Float,
 
     /// Z⁰ boson mass (GeV)
     pub m_z0: Float,
@@ -33,10 +33,10 @@ pub struct Configuration {
     pub g_z0: Float,
 
     /// Square sine of Weinberg's Theta
-    pub sin2_w: Float,
+    pub sin2_weinberg: Float,
 
-    /// Branching factor from Z to e+/e-
-    pub br_ep_em: Float,
+    /// Branching ratio from Z to e+/e-
+    pub branching_ep_em: Float,
 
     /// Beta + (???)
     pub beta_plus: Float,
@@ -45,7 +45,7 @@ pub struct Configuration {
     pub beta_minus: Float,
 
     /// Number of histogram bins (UNUSED)
-    n_bin: i32,
+    num_bins: i32,
 
     /// Whether intermediary results should be displayed (UNUSED)
     impr: bool,
@@ -85,23 +85,23 @@ impl Configuration {
         // Decode the configuration items into concrete values
         let config = Configuration {
             num_events: next_item("num_events")?.parse::<usize>()?,
-            e_tot: next_item("e_tot")?.parse::<Float>()?,
+            e_total: next_item("e_total")?.parse::<Float>()?,
             event_cut: EventCut::new(
-                next_item("a_cut")?.parse::<Float>()?,
-                next_item("b_cut")?.parse::<Float>()?,
+                next_item("beam_photons_cut")?.parse::<Float>()?,
+                next_item("photon_photon_cut")?.parse::<Float>()?,
                 next_item("e_min")?.parse::<Float>()?,
-                next_item("sin_cut")?.parse::<Float>()?,
+                next_item("beam_photon_plane_cut")?.parse::<Float>()?,
             ),
             alpha: next_item("alpha")?.parse::<Float>()?,
             alpha_z: next_item("alpha_z")?.parse::<Float>()?,
-            convers: next_item("convers")?.parse::<Float>()?,
+            gev2_to_picobarn: next_item("gev2_to_picobarn")?.parse::<Float>()?,
             m_z0: next_item("m_z0")?.parse::<Float>()?,
             g_z0: next_item("g_z0")?.parse::<Float>()?,
-            sin2_w: next_item("sin2_w")?.parse::<Float>()?,
-            br_ep_em: next_item("br_ep_em")?.parse::<Float>()?,
+            sin2_weinberg: next_item("sin2_weinberg")?.parse::<Float>()?,
+            branching_ep_em: next_item("branching_ep_em")?.parse::<Float>()?,
             beta_plus: next_item("beta_plus")?.parse::<Float>()?,
             beta_minus: next_item("beta_moins")?.parse::<Float>()?,
-            n_bin: next_item("n_bin")?.parse::<i32>()?,
+            num_bins: next_item("num_bins")?.parse::<i32>()?,
             impr: next_item("impr")?.parse_bool()?,
             plot: next_item("plot")?.parse_bool()?,
         };
@@ -134,21 +134,22 @@ impl Display for Configuration {
     /// Display the configuration, following formatting of the original version
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(fmt, "ITOT           : {}", self.num_events)?;
-        writeln!(fmt, "ETOT           : {}", self.e_tot)?;
-        writeln!(fmt, "oCutpar.ACUT   : {}", self.event_cut.a_cut)?;
-        writeln!(fmt, "oCutpar.BCUT   : {}", self.event_cut.b_cut)?;
+        writeln!(fmt, "ETOT           : {}", self.e_total)?;
+        writeln!(fmt, "oCutpar.ACUT   : {}", self.event_cut.beam_photons_cut)?;
+        writeln!(fmt, "oCutpar.BCUT   : {}", self.event_cut.photon_photon_cut)?;
         writeln!(fmt, "oCutpar.EMIN   : {}", self.event_cut.e_min)?;
-        writeln!(fmt, "oCutpar.SINCUT : {}", self.event_cut.sin_cut)?;
+        let beam_phpl_cut = self.event_cut.beam_photon_plane_cut;
+        writeln!(fmt, "oCutpar.SINCUT : {}", beam_phpl_cut)?;
         writeln!(fmt, "ALPHA          : {}", self.alpha)?;
         writeln!(fmt, "ALPHAZ         : {}", self.alpha_z)?;
-        writeln!(fmt, "CONVERS        : {}", self.convers)?;
+        writeln!(fmt, "CONVERS        : {}", self.gev2_to_picobarn)?;
         writeln!(fmt, "oParam.MZ0     : {}", self.m_z0)?;
         writeln!(fmt, "oParam.GZ0     : {}", self.g_z0)?;
-        writeln!(fmt, "SIN2W          : {}", self.sin2_w)?;
-        writeln!(fmt, "BREPEM         : {}", self.br_ep_em)?;
+        writeln!(fmt, "SIN2W          : {}", self.sin2_weinberg)?;
+        writeln!(fmt, "BREPEM         : {}", self.branching_ep_em)?;
         writeln!(fmt, "BETAPLUS       : {}", self.beta_plus)?;
         writeln!(fmt, "BETAMOINS      : {}", self.beta_minus)?;
-        writeln!(fmt, "NBIN           : {}", self.n_bin)?;
+        writeln!(fmt, "NBIN           : {}", self.num_bins)?;
         writeln!(fmt, "oParam.IMPR    : {}", self.impr)?;
         writeln!(fmt, "PLOT           : {}", self.plot)?;
         Ok(())

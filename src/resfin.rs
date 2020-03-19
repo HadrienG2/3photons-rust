@@ -69,7 +69,8 @@ impl<'cfg> FinalResults<'cfg> {
         let spm2 = &self.spm2;
         let cfg = self.cfg;
 
-        let mu_th = cfg.br_ep_em * cfg.convers / (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
+        let mu_th = cfg.branching_ep_em * cfg.gev2_to_picobarn
+            / (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
         let sigma0 = spm2.column(A) / 2.;
         let alpha0 = spm2.column(I_MX) / 2.;
         let beta0 = -spm2.column(R_MX) / 2.;
@@ -105,17 +106,18 @@ impl<'cfg> FinalResults<'cfg> {
         let spm2 = &self.spm2;
         let vars = &self.vars;
 
-        let mre = cfg.m_z0 / cfg.e_tot;
-        let gre = cfg.g_z0 * cfg.m_z0 / sqr(cfg.e_tot);
+        let mre = cfg.m_z0 / cfg.e_total;
+        let gre = cfg.g_z0 * cfg.m_z0 / sqr(cfg.e_total);
         let x = 1. - sqr(mre);
         let sdz = Complex::new(x, -gre) / (sqr(x) + sqr(gre));
-        let del = (1. - ev_cut.b_cut) / 2.;
-        let eps = 2. * ev_cut.e_min / cfg.e_tot;
+        let del = (1. - ev_cut.photon_photon_cut) / 2.;
+        let eps = 2. * ev_cut.e_min / cfg.e_total;
         let bra = cfg.m_z0 / (3. * 6. * powi(PI, 3) * 16. * 120.);
-        let sig = 12. * PI / sqr(cfg.m_z0) * cfg.br_ep_em * cfg.g_z0 * bra / sqr(cfg.e_tot)
-            * powi(cfg.e_tot / cfg.m_z0, 8)
+        let sig = 12. * PI / sqr(cfg.m_z0) * cfg.branching_ep_em * cfg.g_z0 * bra
+            / sqr(cfg.e_total)
+            * powi(cfg.e_total / cfg.m_z0, 8)
             * sdz.norm_sqr()
-            * cfg.convers;
+            * cfg.gev2_to_picobarn;
 
         let eps_4 = powi(eps, 4);
         let del_2 = powi(del, 2);
@@ -138,9 +140,10 @@ impl<'cfg> FinalResults<'cfg> {
             - 9. / 11. * (9. / 7. - 70. * eps_4) * del_2
             - 8. / 11. * (1. - 105. / 11. * eps_4) * del_3;
 
-        let sincut_3 = powi(ev_cut.sin_cut, 3);
-        let ff = f1 * (1. - sincut_3);
-        let gg = g1 - 27. / 16. * g2 * ev_cut.sin_cut + 11. / 16. * g3 * sincut_3;
+        let beam_photon_plane_cut_3 = powi(ev_cut.beam_photon_plane_cut, 3);
+        let ff = f1 * (1. - beam_photon_plane_cut_3);
+        let gg = g1 - 27. / 16. * g2 * ev_cut.beam_photon_plane_cut
+            + 11. / 16. * g3 * beam_photon_plane_cut_3;
 
         let sig_p = sig * (ff + 2. * gg);
         let sig_m = sig_p + 2. * sig * gg;

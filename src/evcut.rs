@@ -12,26 +12,31 @@ use crate::{
 /// Cuts on generated events
 pub struct EventCut {
     /// Cut on maximum cosine of (beam, photons) angle
-    pub a_cut: Float,
+    pub beam_photons_cut: Float,
 
     /// Cut on maximum cosine of (photon, photon) angle
-    pub b_cut: Float,
+    pub photon_photon_cut: Float,
 
     /// Cut on minimum photon energy
     pub e_min: Float,
 
     /// Cut on minimum cosine of (beam, normal to the photon plane) angle
-    pub sin_cut: Float,
+    pub beam_photon_plane_cut: Float,
 }
 //
 impl EventCut {
     /// Setup the cuts on generated events
-    pub fn new(a_cut: Float, b_cut: Float, e_min: Float, sin_cut: Float) -> Self {
+    pub fn new(
+        beam_photons_cut: Float,
+        photon_photon_cut: Float,
+        e_min: Float,
+        beam_photon_plane_cut: Float,
+    ) -> Self {
         EventCut {
-            a_cut,
-            b_cut,
+            beam_photons_cut,
+            photon_photon_cut,
             e_min,
-            sin_cut,
+            beam_photon_plane_cut,
         }
     }
 
@@ -52,7 +57,7 @@ impl EventCut {
             let cos_nums = ps_out_xyz * p_el.xyz();
             let cos_denoms = ps_out.column(E) * p_el[E];
             for (&num, denom) in cos_nums.iter().zip(cos_denoms.iter()) {
-                if abs(num) > self.a_cut * denom {
+                if abs(num) > self.beam_photons_cut * denom {
                     return false;
                 }
             }
@@ -67,7 +72,7 @@ impl EventCut {
                 let p_ph2 = event.outgoing_momentum(ph2);
                 let cos_num = p_ph1.xyz().dot(&p_ph2.xyz());
                 let cos_denom = p_ph1[E] * p_ph2[E];
-                if cos_num > self.b_cut * cos_denom {
+                if cos_num > self.photon_photon_cut * cos_denom {
                     return false;
                 }
             }
@@ -86,7 +91,7 @@ impl EventCut {
         let cos_denom = p_el[E] * n_ppp.norm();
 
         // Check if the (beam, normal to photon plane) angle passes the cut
-        if abs(cos_num) < self.sin_cut * cos_denom {
+        if abs(cos_num) < self.beam_photon_plane_cut * cos_denom {
             return false;
         }
 

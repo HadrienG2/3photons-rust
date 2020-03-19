@@ -68,20 +68,24 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
         // Write the results to the file
         writeln_3p(dat_file, ("Nombre d'evenements", cfg.num_events))?;
         writeln_3p(dat_file, ("... apres coupure", res.selected_events))?;
-        writeln_3p(dat_file, ("energie dans le CdM      (GeV)", cfg.e_tot))?;
-        writeln_3p(dat_file, ("coupure / cos(photon,faisceau)", ev_cut.a_cut))?;
-        writeln_3p(dat_file, ("coupure / cos(photon,photon)", ev_cut.b_cut))?;
-        let sin_cut = ev_cut.sin_cut;
-        writeln_3p(dat_file, ("coupure / sin(normale,faisceau)", sin_cut))?;
+        writeln_3p(dat_file, ("energie dans le CdM      (GeV)", cfg.e_total))?;
+        let beam_ph_cut = ev_cut.beam_photons_cut;
+        writeln_3p(dat_file, ("coupure / cos(photon,faisceau)", beam_ph_cut))?;
+        let ph_ph_cut = ev_cut.photon_photon_cut;
+        writeln_3p(dat_file, ("coupure / cos(photon,photon)", ph_ph_cut))?;
+        let beam_phpl_cut = ev_cut.beam_photon_plane_cut;
+        writeln_3p(dat_file, ("coupure / sin(normale,faisceau)", beam_phpl_cut))?;
         writeln_3p(dat_file, ("coupure sur l'energie    (GeV)", ev_cut.e_min))?;
         let inv_alpha = 1. / cfg.alpha;
         writeln_3p(dat_file, ("1/(constante de structure fine)", inv_alpha))?;
         writeln_3p(dat_file, ("1/(structure fine au pic)", 1. / cfg.alpha_z))?;
-        writeln_3p(dat_file, ("facteur de conversion GeV-2/pb", cfg.convers))?;
+        let gev2_to_pb = cfg.gev2_to_picobarn;
+        writeln_3p(dat_file, ("facteur de conversion GeV-2/pb", gev2_to_pb))?;
         writeln_3p(dat_file, ("Masse du Z0              (GeV)", cfg.m_z0))?;
         writeln_3p(dat_file, ("Largeur du Z0            (GeV)", cfg.g_z0))?;
-        writeln_3p(dat_file, ("Sinus^2 Theta Weinberg", cfg.sin2_w))?;
-        writeln_3p(dat_file, ("Taux de branchement Z--->e+e-", cfg.br_ep_em))?;
+        writeln_3p(dat_file, ("Sinus^2 Theta Weinberg", cfg.sin2_weinberg))?;
+        let br_ep_em = cfg.branching_ep_em;
+        writeln_3p(dat_file, ("Taux de branchement Z--->e+e-", br_ep_em))?;
         writeln_3p(dat_file, ("Beta plus", cfg.beta_plus))?;
         writeln_3p(dat_file, ("Beta moins", cfg.beta_minus))?;
         writeln_3p(dat_file, "---------------------------------------------")?;
@@ -154,7 +158,7 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
         writeln!(
             cum_dat_file,
             "{} {} {} {} {} {} {}",
-            cfg.e_tot,
+            cfg.e_total,
             res1 / 4.,
             res2 / 4.,
             res3 / 4.,
