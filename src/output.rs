@@ -11,7 +11,7 @@ use crate::{
 
 use chrono;
 
-use num_traits::clamp_min;
+use num_traits::clamp_max;
 
 use prefix_num_ops::real::*;
 
@@ -108,7 +108,7 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
 
         // Write more results (nature and purpose unclear in C++ code...)
         writeln!(dat_file)?;
-        let decimals = clamp_min(SIG_DIGITS - 1, 7);
+        let decimals = clamp_max(SIG_DIGITS - 1, 7);
         for sp in 0..NUM_SPINS {
             for k in 0..NUM_MAT_ELEMS {
                 writeln!(
