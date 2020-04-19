@@ -6,7 +6,7 @@ use crate::{
     event::NUM_SPINS,
     linalg::{dimension::*, vecmat::*},
     matelems::{A, B_M, B_P, I_MX, NUM_MAT_ELEMS, R_MX},
-    numeric::{reals::consts::PI, Complex, Float},
+    numeric::{floats::consts::PI, functions::*, Complex, Float},
 };
 
 use prefix_num_ops::real::*;
@@ -72,7 +72,7 @@ impl<'cfg> FinalResults<'cfg> {
         let cfg = self.cfg;
 
         let mu_th = cfg.branching_ep_em * cfg.gev2_to_picobarn
-            / (8. * 9. * 5. * powi(PI, 2) * cfg.m_z0 * cfg.g_z0);
+            / (8. * 9. * 5. * PI.powi(2) * cfg.m_z0 * cfg.g_z0);
         let sigma0 = spm2.column(A) / 2.;
         let alpha0 = spm2.column(I_MX) / 2.;
         let beta0 = -spm2.column(R_MX) / 2.;
@@ -109,21 +109,21 @@ impl<'cfg> FinalResults<'cfg> {
         let vars = &self.vars;
 
         let mre = cfg.m_z0 / cfg.e_total;
-        let gre = cfg.g_z0 * cfg.m_z0 / powi(cfg.e_total, 2);
-        let x = 1. - powi(mre, 2);
-        let sdz = Complex::new(x, -gre) / (powi(x, 2) + powi(gre, 2));
+        let gre = cfg.g_z0 * cfg.m_z0 / cfg.e_total.powi(2);
+        let x = 1. - mre.powi(2);
+        let sdz = Complex::new(x, -gre) / (x.powi(2) + gre.powi(2));
         let del = (1. - ev_cut.photon_photon_cut) / 2.;
         let eps = 2. * ev_cut.e_min / cfg.e_total;
-        let bra = cfg.m_z0 / (3. * 6. * powi(PI, 3) * 16. * 120.);
-        let sig = 12. * PI / powi(cfg.m_z0, 2) * cfg.branching_ep_em * cfg.g_z0 * bra
-            / powi(cfg.e_total, 2)
-            * powi(cfg.e_total / cfg.m_z0, 8)
-            * sdz.norm_sqr()
+        let bra = cfg.m_z0 / (3. * 6. * PI.powi(3) * 16. * 120.);
+        let sig = 12. * PI / cfg.m_z0.powi(2) * cfg.branching_ep_em * cfg.g_z0 * bra
+            / cfg.e_total.powi(2)
+            * (cfg.e_total / cfg.m_z0).powi(8)
+            * norm_sqr(sdz)
             * cfg.gev2_to_picobarn;
 
-        let eps_4 = powi(eps, 4);
-        let del_2 = powi(del, 2);
-        let del_3 = powi(del, 3);
+        let eps_4 = eps.powi(4);
+        let del_2 = del.powi(2);
+        let del_3 = del.powi(3);
         let f1 = 1. - 15. * eps_4 - 9. / 7. * (1. - 70. * eps_4) * del_2
             + 6. / 7. * (1. + 70. * eps_4) * del_3;
         let g1 = 1.
@@ -142,7 +142,7 @@ impl<'cfg> FinalResults<'cfg> {
             - 9. / 11. * (9. / 7. - 70. * eps_4) * del_2
             - 8. / 11. * (1. - 105. / 11. * eps_4) * del_3;
 
-        let beam_photon_plane_cut_3 = powi(ev_cut.beam_photon_plane_cut, 3);
+        let beam_photon_plane_cut_3 = ev_cut.beam_photon_plane_cut.powi(3);
         let ff = f1 * (1. - beam_photon_plane_cut_3);
         let gg = g1 - 27. / 16. * g2 * ev_cut.beam_photon_plane_cut
             + 11. / 16. * g3 * beam_photon_plane_cut_3;

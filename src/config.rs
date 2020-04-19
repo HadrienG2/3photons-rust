@@ -178,7 +178,6 @@ impl<'data> ConfigItem<'data> {
             .parse::<T>()
             .map_err(Error::new)
             .context(format!("Could not parse configuration of {}", self.name))
-            .map_err(|e| e.into())
     }
 
     /// Parse this data using special logic which handles Fortran's bool syntax

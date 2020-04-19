@@ -2,7 +2,7 @@
 
 use crate::{
     config::Configuration,
-    numeric::{reals::consts::PI, Float},
+    numeric::{floats::consts::PI, Float},
 };
 
 use prefix_num_ops::real::*;
@@ -25,9 +25,9 @@ impl Couplings {
         let e2 = 4. * PI * cfg.alpha;
         let e2_z = 4. * PI * cfg.alpha_z;
         let cos2_weinberg = 1. - cfg.sin2_weinberg;
-        let g_beta = -sqrt(e2_z / (4. * cos2_weinberg * cfg.sin2_weinberg)) / powi(cfg.m_z0, 4);
+        let g_beta = -sqrt(e2_z / (4. * cos2_weinberg * cfg.sin2_weinberg)) / cfg.m_z0.powi(4);
         Couplings {
-            g_a: -powi(sqrt(e2), 3),
+            g_a: -sqrt(e2).powi(3),
             g_beta_p: g_beta,
             g_beta_m: g_beta,
         }

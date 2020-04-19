@@ -8,7 +8,7 @@ use crate::{
         vecmat::*,
     },
     numeric::{
-        reals::{
+        floats::{
             consts::{FRAC_PI_2, PI},
             MIN_POSITIVE,
         },
@@ -40,6 +40,7 @@ impl EventGenerator {
     /// initialization from the original C++ 3photons code.
     ///
     #[rustfmt::skip]
+    #[allow(clippy::assertions_on_constants)]
     pub fn new(e_total: Float) -> Self {
         // Check on the number of particles. The check for N<101 is gone since
         // unlike the original RAMBO, we don't use arrays of hardcoded size.
@@ -166,7 +167,7 @@ impl EventGenerator {
             //        logarithms. Using a vectorized ln() implementation in the
             //        computation of the energy vector should help.
             //
-            let sin_theta = cos_theta.map(|cos| sqrt(1. - powi(cos, 2)));
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - cos.powi(2)));
             let energy = exp_min_e.map(|e_me| -ln(e_me + MIN_POSITIVE));
             Matrix4x3::from_fn(|coord, par| {
                 energy[par]
@@ -199,7 +200,7 @@ impl EventGenerator {
             // Compute the outgoing momenta
             let cos_phi = phi.map(cos);
             let sin_phi = phi.map(sin);
-            let sin_theta = cos_theta.map(|cos| sqrt(1. - powi(cos, 2)));
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - cos.powi(2)));
             let energy = exp_min_e.map(|e_me| -ln(e_me + MIN_POSITIVE));
             Matrix4x3::from_fn(|coord, par| {
                 energy[par]

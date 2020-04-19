@@ -4,7 +4,7 @@ use crate::{
     coupling::Couplings,
     event::{Event, NUM_OUTGOING, NUM_SPINS},
     linalg::vecmat::*,
-    numeric::{functions::conj, Float},
+    numeric::{functions::*, Float},
     spinor::SpinorProducts,
 };
 use std::fmt::Display;
@@ -70,11 +70,11 @@ impl MEsContributions {
         // Compute the matrix elements
         MEsContributions {
             m2: Matrix5x8::from_fn(|contrib, hel| match contrib {
-                A => a_amps[hel].norm_sqr(),
-                B_P => bp_amps[hel].norm_sqr(),
-                B_M => bm_amps[hel].norm_sqr(),
-                R_MX => mixed_amps[hel].re,
-                I_MX => mixed_amps[hel].im,
+                A => norm_sqr(a_amps[hel]),
+                B_P => norm_sqr(bp_amps[hel]),
+                B_M => norm_sqr(bm_amps[hel]),
+                R_MX => re(mixed_amps[hel]),
+                I_MX => im(mixed_amps[hel]),
                 _ => unreachable!(),
             }),
         }

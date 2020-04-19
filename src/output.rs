@@ -5,7 +5,7 @@ use crate::{
     config::Configuration,
     event::NUM_SPINS,
     matelems::{A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
-    numeric::{reals, Float},
+    numeric::{floats, Float},
     resfin::FinalResults,
 };
 
@@ -26,7 +26,7 @@ use std::{
 // Must print one less than the actual machine type precision to match the
 // output of the C++ version of 3photons.
 //
-const SIG_DIGITS: usize = (reals::DIGITS - 1) as usize;
+const SIG_DIGITS: usize = (floats::DIGITS - 1) as usize;
 
 /// Output the simulation results to the console and to disk
 #[allow(clippy::cast_lossless)]
@@ -156,8 +156,8 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
         writeln!(cum_dat_file, "{}", timestamp)?;
 
         let res1 = res.spm2.column(A).sum();
-        let res2 = res.spm2.column(B_P).sum() * powi(cfg.beta_plus, 2);
-        let res3 = res.spm2.column(B_M).sum() * powi(cfg.beta_minus, 2);
+        let res2 = res.spm2.column(B_P).sum() * cfg.beta_plus.powi(2);
+        let res3 = res.spm2.column(B_M).sum() * cfg.beta_minus.powi(2);
         let res4 = res.spm2.column(R_MX).sum() * cfg.beta_plus;
         writeln!(
             cum_dat_file,
@@ -241,7 +241,7 @@ fn write_engineering(writer: &mut impl Write, x: Float, sig_digits: usize) -> Re
             // Since Rust's precision controls number of digits after the
             // decimal point, we must adjust it depending on magnitude in order
             // to operate at a constant number of significant digits.
-            precision = (precision as isize - log_x.trunc() as isize) as usize;
+            precision = (precision as isize - trunc(log_x) as isize) as usize;
 
             // Numbers smaller than 1 must get one extra digit since the leading
             // zero does not count as a significant digit.
