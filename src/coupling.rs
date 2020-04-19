@@ -2,8 +2,10 @@
 
 use crate::{
     config::Configuration,
-    numeric::{functions::*, reals::consts::PI, Float},
+    numeric::{reals::consts::PI, Float},
 };
+
+use prefix_num_ops::real::*;
 
 /// Set of physical couplings
 pub struct Couplings {

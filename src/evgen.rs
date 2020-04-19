@@ -8,7 +8,6 @@ use crate::{
         vecmat::*,
     },
     numeric::{
-        functions::*,
         reals::{
             consts::{FRAC_PI_2, PI},
             MIN_POSITIVE,
@@ -17,6 +16,8 @@ use crate::{
     },
     random::RandomGenerator,
 };
+
+use prefix_num_ops::real::*;
 
 /// Generator of ee -> ppp events
 pub struct EventGenerator {
@@ -165,7 +166,7 @@ impl EventGenerator {
             //        logarithms. Using a vectorized ln() implementation in the
             //        computation of the energy vector should help.
             //
-            let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - powi(cos, 2)));
             let energy = exp_min_e.map(|e_me| -ln(e_me + MIN_POSITIVE));
             Matrix4x3::from_fn(|coord, par| {
                 energy[par]
@@ -198,7 +199,7 @@ impl EventGenerator {
             // Compute the outgoing momenta
             let cos_phi = phi.map(cos);
             let sin_phi = phi.map(sin);
-            let sin_theta = cos_theta.map(|cos| sqrt(1. - sqr(cos)));
+            let sin_theta = cos_theta.map(|cos| sqrt(1. - powi(cos, 2)));
             let energy = exp_min_e.map(|e_me| -ln(e_me + MIN_POSITIVE));
             Matrix4x3::from_fn(|coord, par| {
                 energy[par]

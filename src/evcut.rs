@@ -6,8 +6,10 @@ use crate::{
         dimension::*,
         momentum::{E, X},
     },
-    numeric::{functions::*, Float},
+    numeric::Float,
 };
+
+use prefix_num_ops::real::*;
 
 /// Cuts on generated events
 pub struct EventCut {

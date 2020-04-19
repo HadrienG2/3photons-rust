@@ -4,9 +4,11 @@ use crate::{
     event::{NUM_OUTGOING, NUM_SPINS},
     linalg::{dimension::*, vecmat::*},
     matelems::{MEsContributions, MEsVector, A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
-    numeric::{functions::*, reals::consts::PI, Float},
+    numeric::{reals::consts::PI, Float},
     resfin::{FinalResults, PerSpinMEs},
 };
+
+use prefix_num_ops::real::*;
 
 use num_traits::Zero;
 
@@ -66,17 +68,17 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         // Sum over polarisations factors
         let p_aa = 2.;
         let p_ab = 1. - 4. * cfg.sin2_weinberg;
-        let p_bb = p_ab + 8. * sqr(cfg.sin2_weinberg);
+        let p_bb = p_ab + 8. * powi(cfg.sin2_weinberg, 2);
 
         // Homogeneity coefficient
         let c_aa = fact_com * p_aa;
-        let c_ab = fact_com * p_ab / sqr(cfg.m_z0);
+        let c_ab = fact_com * p_ab / powi(cfg.m_z0, 2);
         let c_bb = fact_com * p_bb / powi(cfg.m_z0, 4);
 
         // Switch to dimensionless variable
-        let dzeta = sqr(cfg.e_total / cfg.m_z0);
+        let dzeta = powi(cfg.e_total/cfg.m_z0, 2);
         let delta_with_z0_peak = (dzeta - 1.) / relat_width;
-        let propagator = 1. / (1. + sqr(delta_with_z0_peak));
+        let propagator = 1. / (1. + powi(delta_with_z0_peak, 2));
 
         // Apply total phase space normalization to the event weight
         let n_ev = cfg.num_events as Float;
@@ -88,14 +90,14 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         // Again, this avoids duplicate work in the integration loop.
         let com_contrib = norm_weight / 4.;
         let aa_contrib = com_contrib * c_aa;
-        let bb_contrib = com_contrib * c_bb * propagator / sqr(relat_width);
+        let bb_contrib = com_contrib * c_bb * propagator / powi(relat_width, 2);
         let ab_contrib = com_contrib * c_ab * 2. * cfg.beta_plus * propagator / relat_width;
         let sigma_contribs = MEsVector::new(
-            aa_contrib,                       // A
-            bb_contrib * sqr(cfg.beta_plus),  // B_P
-            bb_contrib * sqr(cfg.beta_minus), // B_M
-            ab_contrib * delta_with_z0_peak,  // R_MX
-            -ab_contrib,                      // I_MX
+            aa_contrib,                           // A
+            bb_contrib * powi(cfg.beta_plus, 2),  // B_P
+            bb_contrib * powi(cfg.beta_minus, 2), // B_M
+            ab_contrib * delta_with_z0_peak,      // R_MX
+            -ab_contrib,                          // I_MX
         );
 
         // Return a complete results builder
@@ -121,10 +123,10 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         self.selected_events += 1;
         let spm2_dif = result.m2_sums();
         self.spm2 += spm2_dif;
-        self.vars += spm2_dif.map(sqr);
+        self.vars += spm2_dif.map(|x| powi(x, 2));
         let weight = spm2_dif.dot(&self.sigma_contribs);
         self.sigma += weight;
-        self.variance += sqr(weight);
+        self.variance += powi(weight, 2);
     }
 
     /// Integrate simulation results from another ResultsAccumulator
@@ -151,7 +153,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
 
         // Compute the relative uncertainties for one spin
         for (&v_spm2, v_var) in self.spm2.iter().zip(self.vars.iter_mut()) {
-            *v_var = (*v_var - sqr(v_spm2) / n_ev) / (n_ev - 1.);
+            *v_var = (*v_var - powi(v_spm2, 2) / n_ev) / (n_ev - 1.);
             *v_var = sqrt(*v_var / n_ev) / abs(v_spm2 / n_ev);
         }
 
@@ -174,7 +176,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
             .for_each(|mut col| col.component_mul_assign(&polars));
 
         // Incident flux factor (=1/2s for 2 initial massless particles)
-        let incident_flux = 1. / (2. * sqr(cfg.e_total));
+        let incident_flux = 1. / (2. * powi(cfg.e_total, 2));
 
         // Apply physical coefficients and Z⁰ propagator to each spin
         spm2 *= self.fact_com * incident_flux * self.norm_weight;
@@ -199,7 +201,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         let inc_ss_p = inc(B_P);
         let inc_ss_m = inc(B_M);
 
-        let variance = (self.variance - sqr(self.sigma) / n_ev) / (n_ev - 1.);
+        let variance = (self.variance - powi(self.sigma, 2) / n_ev) / (n_ev - 1.);
         let prec = sqrt(variance / n_ev) / abs(self.sigma / n_ev);
         let sigma = self.sigma * incident_flux;
 

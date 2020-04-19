@@ -4,7 +4,7 @@ use crate::{
     coupling::Couplings,
     event::{Event, NUM_OUTGOING, NUM_SPINS},
     linalg::vecmat::*,
-    numeric::{functions::*, Float},
+    numeric::{functions::conj, Float},
     spinor::SpinorProducts,
 };
 use std::fmt::Display;

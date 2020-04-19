@@ -23,6 +23,7 @@ standard-random = ["rand", "rand_xoshiro"]
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4"
+prefix_num_ops = "0.1"
 nalgebra = "0.21"
 num-complex = "0.2"
 num-traits = "0.2"

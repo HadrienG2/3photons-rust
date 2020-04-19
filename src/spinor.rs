@@ -7,13 +7,15 @@ use crate::{
     },
     linalg::momentum::{E, X, Y, Z},
     numeric::{
-        functions::*,
+        functions::conj,
         reals::{consts::SQRT_2, MIN_POSITIVE},
         Complex, Float,
     },
 };
 
-use num_traits::Zero;
+use prefix_num_ops::real::*;
+
+use num_traits::{pow, Zero};
 
 /// Square root of eight
 const RAC8: Float = 2. * SQRT_2;
@@ -118,27 +120,27 @@ impl SpinorProducts {
     /// Standard amplitude for helicities ++-
     #[inline]
     fn a_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(E_M, E_P) * sqr(self.s(E_M, k3))
+        -RAC8 * self.s(E_M, E_P) * pow(self.s(E_M, k3), 2)
             / (self.s(E_M, k1) * self.s(E_M, k2) * self.s(E_P, k1) * self.s(E_P, k2))
     }
 
     /// Standard amplitude for helicities +--
     #[inline]
     fn a_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(E_M, E_P) * sqr(self.t(E_P, k1))
+        -RAC8 * self.t(E_M, E_P) * pow(self.t(E_P, k1), 2)
             / (self.t(E_P, k2) * self.t(E_P, k3) * self.t(E_M, k2) * self.t(E_M, k3))
     }
 
     /// Anomalous amplitude 𝛽₊ for helicities ++-
     #[inline]
     fn bp_ppm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.t(E_M, E_P) * sqr(self.t(k1, k2) * self.s(k3, E_M))
+        -RAC8 * self.t(E_M, E_P) * pow(self.t(k1, k2) * self.s(k3, E_M), 2)
     }
 
     /// Anomalous amplitude 𝛽₊ for helicities +--
     #[inline]
     fn bp_pmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
-        -RAC8 * self.s(E_M, E_P) * sqr(self.t(k1, E_P) * self.s(k2, k3))
+        -RAC8 * self.s(E_M, E_P) * pow(self.t(k1, E_P) * self.s(k2, k3), 2)
     }
 
     /// Anomalous amplitude 𝛽₋ for helicities +++
@@ -146,9 +148,9 @@ impl SpinorProducts {
     fn bm_ppp(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8
             * self.s(E_M, E_P)
-            * (sqr(self.t(k1, k2) * self.t(k3, E_P))
-                + sqr(self.t(k1, k3) * self.t(k2, E_P))
-                + sqr(self.t(k2, k3) * self.t(k1, E_P)))
+            * (pow(self.t(k1, k2) * self.t(k3, E_P), 2)
+                + pow(self.t(k1, k3) * self.t(k2, E_P), 2)
+                + pow(self.t(k2, k3) * self.t(k1, E_P), 2))
     }
 
     /// Anomalous amplitude 𝛽₋ for helicities ---
@@ -156,9 +158,9 @@ impl SpinorProducts {
     fn bm_mmm(&self, k1: usize, k2: usize, k3: usize) -> Complex {
         -RAC8
             * self.t(E_M, E_P)
-            * (sqr(self.s(k1, E_M) * self.s(k2, k3))
-                + sqr(self.s(k2, E_M) * self.s(k1, k3))
-                + sqr(self.s(k3, E_M) * self.s(k1, k2)))
+            * (pow(self.s(k1, E_M) * self.s(k2, k3), 2)
+                + pow(self.s(k2, E_M) * self.s(k1, k3), 2)
+                + pow(self.s(k3, E_M) * self.s(k1, k2), 2))
     }
 }
 

@@ -6,8 +6,10 @@ use crate::{
     event::NUM_SPINS,
     linalg::{dimension::*, vecmat::*},
     matelems::{A, B_M, B_P, I_MX, NUM_MAT_ELEMS, R_MX},
-    numeric::{functions::*, reals::consts::PI, Complex, Float},
+    numeric::{reals::consts::PI, Complex, Float},
 };
+
+use prefix_num_ops::real::*;
 
 /// Matrix of per-spin result contributions
 ///
@@ -70,7 +72,7 @@ impl<'cfg> FinalResults<'cfg> {
         let cfg = self.cfg;
 
         let mu_th = cfg.branching_ep_em * cfg.gev2_to_picobarn
-            / (8. * 9. * 5. * sqr(PI) * cfg.m_z0 * cfg.g_z0);
+            / (8. * 9. * 5. * powi(PI, 2) * cfg.m_z0 * cfg.g_z0);
         let sigma0 = spm2.column(A) / 2.;
         let alpha0 = spm2.column(I_MX) / 2.;
         let beta0 = -spm2.column(R_MX) / 2.;
@@ -107,14 +109,14 @@ impl<'cfg> FinalResults<'cfg> {
         let vars = &self.vars;
 
         let mre = cfg.m_z0 / cfg.e_total;
-        let gre = cfg.g_z0 * cfg.m_z0 / sqr(cfg.e_total);
-        let x = 1. - sqr(mre);
-        let sdz = Complex::new(x, -gre) / (sqr(x) + sqr(gre));
+        let gre = cfg.g_z0 * cfg.m_z0 / powi(cfg.e_total, 2);
+        let x = 1. - powi(mre, 2);
+        let sdz = Complex::new(x, -gre) / (powi(x, 2) + powi(gre, 2));
         let del = (1. - ev_cut.photon_photon_cut) / 2.;
         let eps = 2. * ev_cut.e_min / cfg.e_total;
         let bra = cfg.m_z0 / (3. * 6. * powi(PI, 3) * 16. * 120.);
-        let sig = 12. * PI / sqr(cfg.m_z0) * cfg.branching_ep_em * cfg.g_z0 * bra
-            / sqr(cfg.e_total)
+        let sig = 12. * PI / powi(cfg.m_z0, 2) * cfg.branching_ep_em * cfg.g_z0 * bra
+            / powi(cfg.e_total, 2)
             * powi(cfg.e_total / cfg.m_z0, 8)
             * sdz.norm_sqr()
             * cfg.gev2_to_picobarn;

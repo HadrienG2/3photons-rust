@@ -5,11 +5,15 @@ use crate::{
     config::Configuration,
     event::NUM_SPINS,
     matelems::{A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
-    numeric::{functions::*, reals, Float},
+    numeric::{reals, Float},
     resfin::FinalResults,
 };
 
 use chrono;
+
+use num_traits::clamp_min;
+
+use prefix_num_ops::real::*;
 
 use std::{
     fs::{File, OpenOptions},
@@ -104,7 +108,7 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
 
         // Write more results (nature and purpose unclear in C++ code...)
         writeln!(dat_file)?;
-        let decimals = (SIG_DIGITS - 1).min(7);
+        let decimals = clamp_min(SIG_DIGITS - 1, 7);
         for sp in 0..NUM_SPINS {
             for k in 0..NUM_MAT_ELEMS {
                 writeln!(
@@ -113,7 +117,7 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
                     sp + 1,
                     k + 1,
                     res.spm2[(sp, k)],
-                    res.spm2[(sp, k)].abs() * res.vars[(sp, k)],
+                    abs(res.spm2[(sp, k)]) * res.vars[(sp, k)],
                     res.vars[(sp, k)],
                     width = decimals + 8,
                     decs = decimals,
@@ -152,8 +156,8 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
         writeln!(cum_dat_file, "{}", timestamp)?;
 
         let res1 = res.spm2.column(A).sum();
-        let res2 = res.spm2.column(B_P).sum() * sqr(cfg.beta_plus);
-        let res3 = res.spm2.column(B_M).sum() * sqr(cfg.beta_minus);
+        let res2 = res.spm2.column(B_P).sum() * powi(cfg.beta_plus, 2);
+        let res3 = res.spm2.column(B_M).sum() * powi(cfg.beta_minus, 2);
         let res4 = res.spm2.column(R_MX).sum() * cfg.beta_plus;
         writeln!(
             cum_dat_file,
@@ -230,7 +234,7 @@ fn write_engineering(writer: &mut impl Write, x: Float, sig_digits: usize) -> Re
         write!(writer, "0")
     } else {
         // Otherwise, use log to evaluate order of magnitude
-        let log_x = x.abs().log10();
+        let log_x = log10(abs(x));
         if log_x >= -3. && log_x <= (sig_digits as Float) {
             // Print using naive notation
             //
