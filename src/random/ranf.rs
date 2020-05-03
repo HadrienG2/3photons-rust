@@ -172,6 +172,6 @@ impl RanfGenerator {
     #[cfg(all(feature = "multi-threading", feature = "faster-threading"))]
     pub fn jump(&mut self) {
         let new_seed = self.seed + 123456;
-        ::std::mem::replace(self, Self::seeded_new(new_seed));
+        *self = Self::seeded_new(new_seed);
     }
 }
