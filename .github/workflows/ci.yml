@@ -5,15 +5,9 @@
 # - Two times a month, a scheduled job makes sure that the code remains
 #   compatible and lint-free on upcoming Rust toolchains (beta and nightly).
 #
-# Here's why we don't cache some things:
-#
-# - Toolchain caching is hard to do correctly (there are permission problems
-#   since the toolchain is not installed in the home directory, we'd need to
-#   override toolchain's defaut directory to avoid that) and was not measured to
-#   be worthwhile on operating systems where it actually seems to work.
-# - There is no point in caching the target directory on unstable Rust releases,
-#   since its contents are invalidated by every compiler update, which happens
-#   relatively frequently at the time scale of scheduled unstable jobs.
+# No caching of Rust toolchains or target directories is performed on unstable
+# runs, since those runs are rare and the caches would be invalidated inbetween
+# two of them (especially for nightly toolchains).
 
 on:
   push:
@@ -35,6 +29,17 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
+
+      # NOTE: No need to put OS and rust version in key since only one is used
+      - name: Cache stable toolchain
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.rustup/settings.toml
+            ~/.rustup/toolchains/stable-*
+            ~/.rustup/update-hashes/stable-*
+          key: format-toolchain
 
       - name: Install stable toolchain
         if: github.event_name != 'schedule'
@@ -84,6 +89,17 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      # NOTE: No need to put OS and rust version in key since only one is used
+      - name: Cache stable toolchain
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.rustup/settings.toml
+            ~/.rustup/toolchains/stable-*
+            ~/.rustup/update-hashes/stable-*
+          key: lints-toolchain
+
       - name: Install stable toolchain
         id: toolchain-stable
         if: github.event_name != 'schedule'
@@ -106,34 +122,27 @@ jobs:
       - name: Make cargo feature set hashable
         run: echo "${{ matrix.features }}" > __features.log
 
-      - name: Cache Cargo registry
-        uses: actions/cache@v1
+      - name: Cache Cargo registry and index
+        uses: actions/cache@v2
         with:
-          path: ~/.cargo/registry
-          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: alljobs-deps-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-features_${{ hashFiles('__features.log') }}
-            cargo-registry
+            alljobs-deps-features_${{ hashFiles('__features.log') }}
+            alljobs-deps
 
-      - name: Cache Cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
-            cargo-index-features_${{ hashFiles('__features.log') }}
-            cargo-index
-
-      # NOTE: No target directory caching on unstable, see top comment.
-      - name: Cache Cargo check target directory
+      # NOTE: No dependency on OS since only one is used
+      - name: Cache stable Cargo check target directory
         if: github.event_name != 'schedule'
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: target
-          key: cargo-target_check-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-target_check-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
-            cargo-target_check-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}
+            lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
+            lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}
 
       - name: Type-check the program
         uses: actions-rs/cargo@v1
@@ -176,6 +185,17 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      # NOTE: No dependency on OS since only one is used
+      - name: Cache stable toolchain
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.rustup/settings.toml
+            ~/.rustup/toolchains/${{ matrix.rust }}-*
+            ~/.rustup/update-hashes/${{ matrix.rust }}-*
+          key: run-toolchain-rust_${{ matrix.rust }}
+
       - name: Install toolchain
         id: toolchain
         uses: actions-rs/toolchain@v1
@@ -187,32 +207,27 @@ jobs:
       - name: Make cargo feature set hashable
         run: echo "${{ matrix.features }}" > __features.log
 
-      - name: Cache Cargo registry
-        uses: actions/cache@v1
+      - name: Cache Cargo registry and index
+        uses: actions/cache@v2
         with:
-          path: ~/.cargo/registry
-          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: alljobs-deps-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-features_${{ hashFiles('__features.log') }}
-            cargo-registry
+            alljobs-deps-features_${{ hashFiles('__features.log') }}
+            alljobs-deps
 
-      - name: Cache Cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
-            cargo-index-features_${{ hashFiles('__features.log') }}
-            cargo-index
-
-      - name: Cache Cargo release target directory
-        uses: actions/cache@v1
+      # NOTE: No dependency on OS since only one is used
+      - name: Cache stable Cargo run target directory
+        if: github.event_name != 'schedule'
+        uses: actions/cache@v2
         with:
           path: target
-          key: cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          key: run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore_keys: |
-            cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
-            cargo-target_release-rust_${{ steps.toolchain.outputs.rustc_hash }}
+            run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
+            run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Build the program
         uses: actions-rs/cargo@v1
@@ -225,7 +240,7 @@ jobs:
 
       - name: Cache numdiff installation
         id: cache-numdiff
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: $HOME/numdiff
           key: numdiff-5.9.0
@@ -312,25 +327,16 @@ jobs:
       - name: Make cargo feature set hashable
         run: echo "${{ matrix.features }}" > __features.log
 
-      - name: Cache Cargo registry
-        uses: actions/cache@v1
+      - name: Cache Cargo registry and index
+        uses: actions/cache@v2
         with:
-          path: ~/.cargo/registry
-          key: cargo-registry-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+          key: alljobs-deps-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-registry-features_${{ hashFiles('__features.log') }}
-            cargo-registry
-
-      - name: Cache Cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: cargo-index-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
-            cargo-index-features_${{ hashFiles('__features.log') }}
-            cargo-index
-
-      # NOTE: No target directory caching on unstable, see top comment.
+            alljobs-deps-features_${{ hashFiles('__features.log') }}
+            alljobs-deps
 
       - name: Build the program
         uses: actions-rs/cargo@v1
@@ -343,7 +349,7 @@ jobs:
 
       - name: Cache numdiff installation
         id: cache-numdiff
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: $HOME/numdiff
           key: numdiff-5.9.0
