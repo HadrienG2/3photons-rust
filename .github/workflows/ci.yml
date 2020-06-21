@@ -140,7 +140,7 @@ jobs:
         with:
           path: target
           key: lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
+          restore-keys: |
             lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
             lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}
 
@@ -225,7 +225,7 @@ jobs:
         with:
           path: target
           key: run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore_keys: |
+          restore-keys: |
             run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
             run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
@@ -243,7 +243,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: $HOME/numdiff
-          key: numdiff-5.9.0
+          key: run-numdiff-5.9.0
 
       - name: Install numdiff
         if: steps.cache-numdiff.outputs.cache-hit != 'true'
@@ -352,7 +352,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: $HOME/numdiff
-          key: numdiff-5.9.0
+          key: run-numdiff-5.9.0
 
       - name: Install numdiff
         if: steps.cache-numdiff.outputs.cache-hit != 'true'
