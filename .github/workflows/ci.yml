@@ -238,6 +238,7 @@ jobs:
       - name: Run the program
         run: ./target/release/trois_photons | tee stdout.log
 
+      # NOTE: No dependency on OS since only one is used
       - name: Cache numdiff installation
         id: cache-numdiff
         uses: actions/cache@v2
@@ -348,6 +349,7 @@ jobs:
       - name: Run the program
         run: ./target/release/trois_photons | tee stdout.log
 
+      # NOTE: No dependency on OS since only one is used
       - name: Cache numdiff installation
         id: cache-numdiff
         uses: actions/cache@v2
