@@ -242,15 +242,16 @@ jobs:
         id: cache-numdiff
         uses: actions/cache@v2
         with:
-          path: $HOME/numdiff
-          key: run-numdiff-5.9.0
+          path: numdiff
+          key: alljobs-numdiff-5.9.0
 
       - name: Install numdiff
         if: steps.cache-numdiff.outputs.cache-hit != 'true'
         run: |
+          CI_DIR=`pwd`
           curl https://mirrors.up.pt/pub/nongnu/numdiff/numdiff-5.9.0.tar.gz | tar -xz
           cd numdiff-5.9.0
-          ./configure --prefix=$HOME/numdiff
+          ./configure --prefix=$CI_DIR/numdiff
           make
           make install
           cd -
@@ -270,7 +271,7 @@ jobs:
               PRECISION=""
               ;;
           esac
-          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
+          numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
 
       - name: Check standard output
         run: |
@@ -282,7 +283,7 @@ jobs:
               PRECISION=""
               ;;
           esac
-          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/stdout.log-features_${{ matrix.features }}" stdout.log
+          numdiff/bin/numdiff $PRECISION -V "reference/stdout.log-features_${{ matrix.features }}" stdout.log
 
 
   # Variant of the run-stable job for unstable periodical builds
@@ -351,15 +352,16 @@ jobs:
         id: cache-numdiff
         uses: actions/cache@v2
         with:
-          path: $HOME/numdiff
-          key: run-numdiff-5.9.0
+          path: numdiff
+          key: alljobs-numdiff-5.9.0
 
       - name: Install numdiff
         if: steps.cache-numdiff.outputs.cache-hit != 'true'
         run: |
+          CI_DIR=`pwd`
           curl https://mirrors.up.pt/pub/nongnu/numdiff/numdiff-5.9.0.tar.gz | tar -xz
           cd numdiff-5.9.0
-          ./configure --prefix=$HOME/numdiff
+          ./configure --prefix=$CI_DIR/numdiff
           make
           make install
           cd -
@@ -379,7 +381,7 @@ jobs:
               PRECISION=""
               ;;
           esac
-          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
+          numdiff/bin/numdiff $PRECISION -V "reference/res.data-features_${{ matrix.features }}" res.data
 
       - name: Check standard output
         run: |
@@ -391,4 +393,4 @@ jobs:
               PRECISION=""
               ;;
           esac
-          $HOME/numdiff/bin/numdiff $PRECISION -V "reference/stdout.log-features_${{ matrix.features }}" stdout.log
+          numdiff/bin/numdiff $PRECISION -V "reference/stdout.log-features_${{ matrix.features }}" stdout.log
