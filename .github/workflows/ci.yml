@@ -266,7 +266,7 @@ jobs:
               PRECISION="-a 1.1e-8"
               ;;
             "standard-random,multi-threading,faster-threading")
-              PRECISION="-a 1.1e-17"
+              PRECISION="-a 1.1e-16"
               ;;
             *)
               PRECISION=""
@@ -377,7 +377,7 @@ jobs:
               PRECISION="-a 1.1e-8"
               ;;
             "standard-random,multi-threading,faster-threading")
-              PRECISION="-a 1.1e-17"
+              PRECISION="-a 1.1e-16"
               ;;
             *)
               PRECISION=""
