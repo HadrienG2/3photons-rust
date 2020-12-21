@@ -29,7 +29,7 @@ num-complex = "0.3"
 num-traits = "0.2"
 # These deps are only needed when some features are enabled
 rand = { version = "0.7", optional = true }
-rand_xoshiro = { version = "0.4", optional = true }
+rand_xoshiro = { version = "0.6", optional = true }
 rayon = { version = "1.5", optional = true }
 
 
