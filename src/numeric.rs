@@ -2,8 +2,6 @@
 
 #![allow(missing_docs)]
 
-use num_complex;
-
 // Floating-point precision is configured here
 #[cfg(feature = "f32")]
 pub type Float = f32;

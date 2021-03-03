@@ -165,7 +165,7 @@ impl SpinorProducts {
 }
 
 /// Output photon helicities (M is - and P is +)
-#[allow(missing_docs)]
+#[allow(missing_docs, clippy::upper_case_acronyms)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PhotonHelicities {
     MMM,

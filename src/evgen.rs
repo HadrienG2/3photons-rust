@@ -65,7 +65,7 @@ impl EventGenerator {
 
         // All generated events will have the same weight: pre-compute it
         let ln_weight = (2. * (NUM_OUTGOING as Float) - 4.) * ln(e_total) + z_n;
-        assert!((ln_weight >= -180.) && (ln_weight <= 174.));
+        assert!((-180. ..=174.).contains(&ln_weight));
         let ev_weight = exp(ln_weight);
 
         // Compute the incoming particle momenta
