@@ -5,8 +5,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::{random::RandomGenerator, resacc::ResultsAccumulator, scheduling::EVENT_BATCH_SIZE};
 
-use rayon;
-
 use std::sync::Mutex;
 
 /// Simulate events in multi-threaded mode
