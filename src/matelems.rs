@@ -3,10 +3,10 @@
 use crate::{
     coupling::Couplings,
     event::{Event, NUM_OUTGOING, NUM_SPINS},
-    linalg::vecmat::*,
     numeric::{functions::*, Float},
-    spinor::SpinorProducts,
+    spinor::{SpinorProducts, NUM_HELICITIES},
 };
+use nalgebra::{SMatrix, SVector};
 use std::fmt::Display;
 
 // ### MATRIX ELEMENTS ###
@@ -15,7 +15,7 @@ use std::fmt::Display;
 pub const NUM_MAT_ELEMS: usize = 5;
 
 /// Storage for per-matrix element data
-pub type MEsVector = Vector5<Float>;
+pub type MEsVector = SVector<Float, NUM_MAT_ELEMS>;
 
 /// Index of the electromagnetic element
 pub const A: usize = 0;
@@ -45,7 +45,7 @@ pub struct MEsContributions {
     ///     - Configuration 1 (0b001) is --+
     ///     - And so on...
     ///
-    m2: Matrix5x8<Float>,
+    m2: SMatrix<Float, NUM_MAT_ELEMS, NUM_HELICITIES>,
 }
 //
 impl MEsContributions {
@@ -60,8 +60,10 @@ impl MEsContributions {
 
         // Compute the helicity amplitudes, formerly known as a, b_p and b_m,
         // for each possible output spin configuration
-        use crate::spinor::PhotonHelicities::*;
-        let helicities = Vector8::from_column_slice(&[MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP]);
+        use crate::spinor::PhotonHelicities::{self, *};
+        let helicities = SVector::<PhotonHelicities, NUM_HELICITIES>::from_column_slice(&[
+            MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP,
+        ]);
         let a_amps = helicities.map(|hel| spinor.a(hel) * couplings.g_a);
         let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_beta_p);
         let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_beta_m);
@@ -69,7 +71,7 @@ impl MEsContributions {
 
         // Compute the matrix elements
         MEsContributions {
-            m2: Matrix5x8::from_fn(|contrib, hel| match contrib {
+            m2: SMatrix::from_fn(|contrib, hel| match contrib {
                 A => norm_sqr(a_amps[hel]),
                 B_P => norm_sqr(bp_amps[hel]),
                 B_M => norm_sqr(bm_amps[hel]),

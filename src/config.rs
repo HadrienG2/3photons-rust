@@ -1,9 +1,7 @@
 //! Mechanism for loading and sharing the simulation configuration
 
 use crate::{evcut::EventCut, numeric::Float, Result};
-
 use anyhow::{ensure, format_err, Context, Error};
-
 use std::{fmt::Display, fs::File, io::Read, str::FromStr};
 
 /// Simulation configuration

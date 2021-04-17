@@ -4,18 +4,17 @@
 use crate::{
     config::Configuration,
     event::NUM_SPINS,
-    linalg::vecmat::*,
     matelems::{A, B_M, B_P, I_MX, NUM_MAT_ELEMS, R_MX},
     numeric::{floats::consts::PI, functions::*, Complex, Float},
 };
-
+use nalgebra::SMatrix;
 use prefix_num_ops::real::*;
 
 /// Matrix of per-spin result contributions
 ///
 /// Rows are spins, columns are result contributions (in the rescont.rs sense)
 ///
-pub type PerSpinMEs = Matrix2x5<Float>;
+pub type PerSpinMEs = SMatrix<Float, NUM_SPINS, NUM_MAT_ELEMS>;
 
 /// Index of negative spin data
 pub const SP_M: usize = 0;

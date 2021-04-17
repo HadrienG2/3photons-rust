@@ -5,17 +5,15 @@ use crate::{
         Event, ParticleMatrix, ParticleVector, INCOMING_E_M as E_M, INCOMING_E_P as E_P,
         NUM_INCOMING, NUM_OUTGOING, NUM_SPINS,
     },
-    linalg::momentum::{E, X, Y, Z},
+    momentum::{E, X, Y, Z},
     numeric::{
         floats::{consts::SQRT_2, MIN_POSITIVE},
         functions::*,
         Complex, Float,
     },
 };
-
-use prefix_num_ops::real::*;
-
 use num_traits::Zero;
+use prefix_num_ops::real::*;
 
 /// Square root of eight
 const RAC8: Float = 2. * SQRT_2;
@@ -177,3 +175,6 @@ pub enum PhotonHelicities {
     PPM,
     PPP,
 }
+
+/// Number of photon helicities
+pub const NUM_HELICITIES: usize = 2usize.pow(NUM_OUTGOING as u32);

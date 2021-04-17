@@ -8,11 +8,8 @@ use crate::{
     numeric::{floats, Float},
     resfin::FinalResults,
 };
-
 use num_traits::clamp_max;
-
 use prefix_num_ops::real::*;
-
 use std::{
     fs::{File, OpenOptions},
     io::{Result, Write},

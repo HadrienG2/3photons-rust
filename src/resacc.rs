@@ -2,15 +2,13 @@
 use crate::{
     config::Configuration,
     event::{NUM_OUTGOING, NUM_SPINS},
-    linalg::vecmat::*,
     matelems::{MEsContributions, MEsVector, A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
     numeric::{floats::consts::PI, Float},
     resfin::{FinalResults, PerSpinMEs},
 };
-
-use prefix_num_ops::real::*;
-
+use nalgebra::SVector;
 use num_traits::Zero;
+use prefix_num_ops::real::*;
 
 /// This struct will accumulate intermediary results during integration, and
 /// ultimately compute the final results (see FinalResults below).
@@ -165,7 +163,7 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         // contribution
         let polar_p = -2. * cfg.sin2_weinberg;
         let polar_m = 1. + polar_p;
-        let polars = Vector2::new(polar_m, polar_p);
+        let polars = SVector::<Float, NUM_SPINS>::new(polar_m, polar_p);
 
         // Take polarisations into account
         spm2.fixed_columns_mut::<4>(B_P)

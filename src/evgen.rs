@@ -1,11 +1,8 @@
 //! This module provides event generation facilities
 
 use crate::{
-    event::{Event, NUM_INCOMING, NUM_OUTGOING, NUM_PARTICLES},
-    linalg::{
-        momentum::{E, X, Y, Z},
-        vecmat::*,
-    },
+    event::{Event, NUM_INCOMING, NUM_OUTGOING},
+    momentum::{E, MOMENTUM_DIM, X, Y, Z},
     numeric::{
         floats::{
             consts::{FRAC_PI_2, PI},
@@ -15,7 +12,7 @@ use crate::{
     },
     random::RandomGenerator,
 };
-
+use nalgebra::{SMatrix, SVector};
 use prefix_num_ops::real::*;
 
 /// Generator of ee -> ppp events
@@ -27,7 +24,7 @@ pub struct EventGenerator {
     ev_weight: Float,
 
     /// Incoming electron and positron momenta
-    incoming_momenta: Matrix2x4<Float>,
+    incoming_momenta: SMatrix<Float, NUM_INCOMING, MOMENTUM_DIM>,
 }
 //
 impl EventGenerator {
@@ -44,9 +41,6 @@ impl EventGenerator {
         // Check on the number of particles. The check for N<101 is gone since
         // unlike the original RAMBO, we don't use arrays of hardcoded size.
         assert!(NUM_OUTGOING > 1);
-
-        // As currently written, this code only works for two incoming particles
-        assert_eq!(NUM_INCOMING, 2);
 
         // Factorials for the phase space weight. Replaces the lazy
         // initialization from the original RAMBO code with less branchy code.
@@ -68,7 +62,8 @@ impl EventGenerator {
         let ev_weight = exp(ln_weight);
 
         // Compute the incoming particle momenta
-        let incoming_momenta = Matrix2x4::new(
+        assert_eq!(NUM_INCOMING, 2);
+        let incoming_momenta = SMatrix::<Float, NUM_INCOMING, MOMENTUM_DIM>::new(
             -e_total / 2., 0., 0., e_total / 2.,
             e_total / 2.,  0., 0., e_total / 2.,
         );
@@ -123,8 +118,7 @@ impl EventGenerator {
         }
 
         // Build the final event: incoming momenta + output 4-momenta
-        assert_eq!(NUM_PARTICLES, 5, "This part assumes 5-particles events");
-        Event::new(Matrix5x4::from_fn(|par, coord| {
+        Event::new(SMatrix::from_fn(|par, coord| {
             if par < NUM_INCOMING {
                 self.incoming_momenta[(par, coord)]
             } else if coord <= Z {
@@ -142,9 +136,7 @@ impl EventGenerator {
     /// The output momenta are provided as a matrix where rows are 4-momentum
     /// components (Px, Py, Pz, E) and columns are particles.
     ///
-    fn generate_raw(rng: &mut RandomGenerator) -> Matrix4x3<Float> {
-        assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
-
+    fn generate_raw(rng: &mut RandomGenerator) -> SMatrix<Float, MOMENTUM_DIM, NUM_OUTGOING> {
         // In all operating modes, random number generation is kept
         // well-separated from computations, as it was observed that it has a
         // harmful interaction with the compiler's loop optimizations.
@@ -154,7 +146,7 @@ impl EventGenerator {
             // original 3photons did. This enables greater performance.
 
             // Generate the basic random parameters of the particles
-            let params = Matrix3::from_column_slice(&rng.random9()[..]);
+            let params = SMatrix::<Float, NUM_OUTGOING, 3>::from_column_slice(&rng.random9()[..]);
             let cos_theta = params.column(0).map(|r| 2. * r - 1.);
             let exp_min_e = params.column(1).component_mul(&params.column(2));
             let sincos_phi = Self::random_unit_2d_outgoing(rng);
@@ -168,7 +160,7 @@ impl EventGenerator {
             //
             let sin_theta = cos_theta.map(|cos| sqrt(1. - cos.powi(2)));
             let energy = exp_min_e.map(|e_me| -ln(e_me + MIN_POSITIVE));
-            Matrix4x3::from_fn(|coord, par| {
+            SMatrix::from_fn(|coord, par| {
                 energy[par]
                     * match coord {
                         X => sin_theta[par] * sincos_phi[(par, X)],
@@ -186,7 +178,7 @@ impl EventGenerator {
             const COS_THETA: usize = 0;
             const PHI: usize = 1;
             const EXP_MIN_E: usize = 2;
-            let params = Matrix3::from_fn(|coord, _par| match coord {
+            let params = SMatrix::<Float, 3, NUM_OUTGOING>::from_fn(|coord, _par| match coord {
                 COS_THETA => 2. * rng.random() - 1.,
                 PHI => 2. * PI * rng.random(),
                 EXP_MIN_E => rng.random() * rng.random(),
@@ -201,7 +193,7 @@ impl EventGenerator {
             let sin_phi = phi.map(sin);
             let sin_theta = cos_theta.map(|cos| sqrt(1. - cos.powi(2)));
             let energy = exp_min_e.map(|e_me| -ln(e_me + MIN_POSITIVE));
-            Matrix4x3::from_fn(|coord, par| {
+            SMatrix::from_fn(|coord, par| {
                 energy[par]
                     * match coord {
                         X => sin_theta[par] * sin_phi[par],
@@ -225,19 +217,22 @@ impl EventGenerator {
     ///         more computations close to them.
     ///       - Statistics force us to discard more points and call the RNG more
     ///
-    fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> Matrix3x2<Float> {
-        assert_eq!(NUM_OUTGOING, 3, "This part assumes 3 outgoing particles");
-
+    fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> SMatrix<Float, NUM_OUTGOING, 2> {
         // Grab three random points on the unit square
-        let mut points = Matrix3x2::from_iterator(rng.random6().iter().map(|r| 2. * r - 1.));
+        let mut points = SMatrix::<Float, NUM_OUTGOING, 2>::from_iterator(
+            rng.random6().iter().map(|r| 2. * r - 1.),
+        );
 
         // Re-roll each point until it falls on the unit disc, and is not
         // too close to the origin (otherwise we'll get floating-point issues)
-        let mut radii2 = Vector3::from_iterator(points.row_iter().map(|row| row.norm_squared()));
+        let mut radii2 = SVector::<Float, NUM_OUTGOING>::from_iterator(
+            points.row_iter().map(|row| row.norm_squared()),
+        );
         for (point_idx, radius2) in radii2.iter_mut().enumerate() {
             const MIN_POSITIVE_2: Float = MIN_POSITIVE * MIN_POSITIVE;
             while *radius2 > 1. || *radius2 < MIN_POSITIVE_2 {
-                let new_point = Vector2::from_iterator(rng.random2().iter().map(|r| 2. * r - 1.));
+                let new_point =
+                    SVector::<Float, 2>::from_iterator(rng.random2().iter().map(|r| 2. * r - 1.));
                 points.set_row(point_idx, &new_point.transpose());
                 *radius2 = new_point.norm_squared();
             }

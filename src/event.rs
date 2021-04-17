@@ -1,13 +1,10 @@
 //! This module defines the properties and storage of generated events
 
 use crate::{
-    linalg::{
-        dimension::*,
-        momentum::{Momentum, E},
-        vecmat::*,
-    },
+    momentum::{Momentum, E, MOMENTUM_DIM},
     numeric::Float,
 };
+use nalgebra::{Const, MatrixSlice, SMatrix, SVector};
 use std::fmt::Display;
 
 /// Number of incoming particles
@@ -20,16 +17,23 @@ pub const NUM_OUTGOING: usize = 3;
 pub const NUM_PARTICLES: usize = NUM_INCOMING + NUM_OUTGOING;
 
 /// Vector type whose side is the number of particles in an event
-pub type ParticleVector<T> = Vector5<T>;
+pub type ParticleVector<T> = SVector<T, NUM_PARTICLES>;
 
 /// Square matrix type whose side is the number of particles in an event
-pub type ParticleMatrix<T> = Matrix5<T>;
+pub type ParticleMatrix<T> = SMatrix<T, NUM_PARTICLES, NUM_PARTICLES>;
 
 /// Event data matrix type (columns are 4-coordinates, rows are particles)
-type EventMatrix = Matrix5x4<Float>;
+type EventMatrix = SMatrix<Float, NUM_PARTICLES, MOMENTUM_DIM>;
 
 /// Slice of the event data matrix containing only outgoing particles
-type OutgoingMomentaSlice<'matrix> = MatrixSlice3x4<'matrix, Float, U1, U5>;
+type OutgoingMomentaSlice<'matrix> = MatrixSlice<
+    'matrix,
+    Float,
+    Const<NUM_OUTGOING>,
+    Const<MOMENTUM_DIM>,
+    Const<1>,
+    Const<NUM_PARTICLES>,
+>;
 
 /// Row of the incoming electron in the event data matrix
 pub const INCOMING_E_M: usize = 0;
@@ -87,7 +91,7 @@ impl Event {
 
     /// Access the outgoing 4-momenta
     pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
-        self.0.fixed_rows::<3>(NUM_INCOMING)
+        self.0.fixed_rows::<NUM_OUTGOING>(NUM_INCOMING)
     }
 
     /// Minimal outgoing photon energy

@@ -4,7 +4,6 @@ use crate::{
     config::Configuration,
     numeric::{floats::consts::PI, Float},
 };
-
 use prefix_num_ops::real::*;
 
 /// Set of physical couplings

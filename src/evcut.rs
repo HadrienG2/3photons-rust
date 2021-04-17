@@ -2,10 +2,9 @@
 
 use crate::{
     event::{Event, NUM_OUTGOING},
-    linalg::momentum::{E, X},
+    momentum::{E, X},
     numeric::Float,
 };
-
 use prefix_num_ops::real::*;
 
 /// Cuts on generated events
