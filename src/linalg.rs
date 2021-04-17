@@ -9,19 +9,19 @@ pub mod dimension {
 
 /// Re-export of nalgebra's matrix and vector types + some extra definitions
 pub mod vecmat {
-    use nalgebra::{dimension::*, MatrixMN, VectorN};
+    use nalgebra::{SMatrix, SVector};
 
     // Re-export of various matrix and vector types from nalgebra
     pub use nalgebra::{
         Matrix2x3, Matrix2x4, Matrix2x5, Matrix3, Matrix3x2, Matrix3x4, Matrix4x3, Matrix5,
-        Matrix5x4, MatrixSlice, Vector2, Vector3, Vector5,
+        Matrix5x4, MatrixSlice3x4, Vector2, Vector3, Vector5,
     };
 
     /// An 8-dimensional vector type
-    pub type Vector8<T> = VectorN<T, U8>;
+    pub type Vector8<T> = SVector<T, 8>;
 
     /// A 5x8 matrix type
-    pub type Matrix5x8<T> = MatrixMN<T, U5, U8>;
+    pub type Matrix5x8<T> = SMatrix<T, 5, 8>;
 }
 
 /// Handling of relativistic 4-momenta

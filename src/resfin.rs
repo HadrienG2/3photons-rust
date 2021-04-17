@@ -4,7 +4,7 @@
 use crate::{
     config::Configuration,
     event::NUM_SPINS,
-    linalg::{dimension::*, vecmat::*},
+    linalg::vecmat::*,
     matelems::{A, B_M, B_P, I_MX, NUM_MAT_ELEMS, R_MX},
     numeric::{floats::consts::PI, functions::*, Complex, Float},
 };
@@ -78,7 +78,7 @@ impl<'cfg> FinalResults<'cfg> {
         let beta0 = -spm2.column(R_MX) / 2.;
         let lambda0 = (spm2.column(B_M) - spm2.column(B_P)) / 2.;
         let mu0 = (spm2.column(B_M) + spm2.column(B_P)) / 2.;
-        let mu_num = spm2.fixed_columns::<U2>(B_P).sum() / 4.;
+        let mu_num = spm2.fixed_columns::<2>(B_P).sum() / 4.;
 
         println!();
         println!("       :        -          +");

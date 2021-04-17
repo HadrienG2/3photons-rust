@@ -2,7 +2,7 @@
 use crate::{
     config::Configuration,
     event::{NUM_OUTGOING, NUM_SPINS},
-    linalg::{dimension::*, vecmat::*},
+    linalg::vecmat::*,
     matelems::{MEsContributions, MEsVector, A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
     numeric::{floats::consts::PI, Float},
     resfin::{FinalResults, PerSpinMEs},
@@ -92,13 +92,13 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         let aa_contrib = com_contrib * c_aa;
         let bb_contrib = com_contrib * c_bb * propagator / relat_width.powi(2);
         let ab_contrib = com_contrib * c_ab * 2. * cfg.beta_plus * propagator / relat_width;
-        let sigma_contribs = MEsVector::new(
+        let sigma_contribs = MEsVector::from_column_slice(&[
             aa_contrib,                          // A
             bb_contrib * cfg.beta_plus.powi(2),  // B_P
             bb_contrib * cfg.beta_minus.powi(2), // B_M
             ab_contrib * delta_with_z0_peak,     // R_MX
             -ab_contrib,                         // I_MX
-        );
+        ]);
 
         // Return a complete results builder
         ResultsAccumulator {
@@ -168,10 +168,10 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         let polars = Vector2::new(polar_m, polar_p);
 
         // Take polarisations into account
-        spm2.fixed_columns_mut::<U4>(B_P)
+        spm2.fixed_columns_mut::<4>(B_P)
             .column_iter_mut()
             .for_each(|mut col| col.component_mul_assign(&polars));
-        spm2.fixed_columns_mut::<U2>(B_P)
+        spm2.fixed_columns_mut::<2>(B_P)
             .column_iter_mut()
             .for_each(|mut col| col.component_mul_assign(&polars));
 
@@ -181,9 +181,9 @@ impl<'cfg> ResultsAccumulator<'cfg> {
         // Apply physical coefficients and Z⁰ propagator to each spin
         spm2 *= self.fact_com * incident_flux * self.norm_weight;
         let gm_z0 = cfg.g_z0 * cfg.m_z0;
-        spm2.fixed_columns_mut::<U4>(B_P)
+        spm2.fixed_columns_mut::<4>(B_P)
             .apply(|x| x * self.propagator / gm_z0);
-        spm2.fixed_columns_mut::<U2>(B_P).apply(|x| x / gm_z0);
+        spm2.fixed_columns_mut::<2>(B_P).apply(|x| x / gm_z0);
         spm2.column_mut(R_MX).apply(|x| x * self.delta_with_z0_peak);
 
         // Compute other parts of the result

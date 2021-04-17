@@ -3,7 +3,6 @@
 use crate::{
     event::{Event, NUM_INCOMING, NUM_OUTGOING, NUM_PARTICLES},
     linalg::{
-        dimension::*,
         momentum::{E, X, Y, Z},
         vecmat::*,
     },
@@ -105,7 +104,7 @@ impl EventGenerator {
 
         // Perform the conformal transformation from Q's to output 4-momenta
         let tr_q = q.transpose();
-        let tr_q_xyz = tr_q.fixed_columns::<U3>(X);
+        let tr_q_xyz = tr_q.fixed_columns::<3>(X);
         let rq = tr_q_xyz * r.xyz();
         let mut p_e = alpha * (r[E] * tr_q.column(E) - rq);
         let b_rq_e = beta * rq - tr_q.column(E);

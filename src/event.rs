@@ -29,7 +29,7 @@ pub type ParticleMatrix<T> = Matrix5<T>;
 type EventMatrix = Matrix5x4<Float>;
 
 /// Slice of the event data matrix containing only outgoing particles
-type OutgoingMomentaSlice<'matrix> = MatrixSlice<'matrix, Float, U3, U4, U1, U5>;
+type OutgoingMomentaSlice<'matrix> = MatrixSlice3x4<'matrix, Float, U1, U5>;
 
 /// Row of the incoming electron in the event data matrix
 pub const INCOMING_E_M: usize = 0;
@@ -87,7 +87,7 @@ impl Event {
 
     /// Access the outgoing 4-momenta
     pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
-        self.0.fixed_rows::<U3>(NUM_INCOMING)
+        self.0.fixed_rows::<3>(NUM_INCOMING)
     }
 
     /// Minimal outgoing photon energy

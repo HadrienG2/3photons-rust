@@ -2,10 +2,7 @@
 
 use crate::{
     event::{Event, NUM_OUTGOING},
-    linalg::{
-        dimension::*,
-        momentum::{E, X},
-    },
+    linalg::momentum::{E, X},
     numeric::Float,
 };
 
@@ -55,7 +52,7 @@ impl EventCut {
         // Check if the (beam, photon) angles pass the cut
         {
             let ps_out = event.outgoing_momenta();
-            let ps_out_xyz = ps_out.fixed_columns::<U3>(X);
+            let ps_out_xyz = ps_out.fixed_columns::<3>(X);
             let cos_nums = ps_out_xyz * p_el.xyz();
             let cos_denoms = ps_out.column(E) * p_el[E];
             for (&num, denom) in cos_nums.iter().zip(cos_denoms.iter()) {
