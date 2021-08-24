@@ -63,8 +63,6 @@ impl EventCut {
 
         // Check if the (photon1, photon{2, 3}) angles pass the cut
         for ph1 in 0..NUM_OUTGOING - 1 {
-            // FIXME: Consider re-vectorizing this inner loop once const
-            //        generics make it ergonomic to do so.
             for ph2 in ph1 + 1..NUM_OUTGOING {
                 let p_ph1 = event.outgoing_momentum(ph1);
                 let p_ph2 = event.outgoing_momentum(ph2);

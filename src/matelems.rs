@@ -6,7 +6,7 @@ use crate::{
     numeric::{functions::*, Float},
     spinor::{SpinorProducts, NUM_HELICITIES},
 };
-use nalgebra::{SMatrix, SVector};
+use nalgebra::{vector, SMatrix, SVector};
 use std::fmt::Display;
 
 // ### MATRIX ELEMENTS ###
@@ -60,10 +60,8 @@ impl MEsContributions {
 
         // Compute the helicity amplitudes, formerly known as a, b_p and b_m,
         // for each possible output spin configuration
-        use crate::spinor::PhotonHelicities::{self, *};
-        let helicities = SVector::<PhotonHelicities, NUM_HELICITIES>::from_column_slice(&[
-            MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP,
-        ]);
+        use crate::spinor::PhotonHelicities::*;
+        let helicities = vector![MMM, MMP, MPM, MPP, PMM, PMP, PPM, PPP];
         let a_amps = helicities.map(|hel| spinor.a(hel) * couplings.g_a);
         let bp_amps = helicities.map(|hel| spinor.b_p(hel) * couplings.g_beta_p);
         let bm_amps = helicities.map(|hel| spinor.b_m(hel) * couplings.g_beta_m);

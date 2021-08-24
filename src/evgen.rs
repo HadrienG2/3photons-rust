@@ -12,7 +12,7 @@ use crate::{
     },
     random::RandomGenerator,
 };
-use nalgebra::{SMatrix, SVector};
+use nalgebra::{matrix, SMatrix, SVector};
 use prefix_num_ops::real::*;
 
 /// Generator of ee -> ppp events
@@ -63,10 +63,10 @@ impl EventGenerator {
 
         // Compute the incoming particle momenta
         assert_eq!(NUM_INCOMING, 2);
-        let incoming_momenta = SMatrix::<Float, NUM_INCOMING, MOMENTUM_DIM>::new(
-            -e_total / 2., 0., 0., e_total / 2.,
-            e_total / 2.,  0., 0., e_total / 2.,
-        );
+        let incoming_momenta = matrix![
+            -e_total / 2., 0., 0., e_total / 2.;
+            e_total / 2.,  0., 0., e_total / 2.
+        ];
 
         // Construct and return the output data structure
         EventGenerator {
@@ -241,7 +241,7 @@ impl EventGenerator {
         // Now you only need to normalize to get points on the unit circle
         let norms = radii2.map(|r2| 1. / sqrt(r2));
         for (mut point, norm) in points.row_iter_mut().zip(norms.iter()) {
-            point.apply(|coord| coord * norm);
+            point.apply(|coord| *coord *= norm);
         }
         points
     }
