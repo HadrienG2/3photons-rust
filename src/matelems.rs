@@ -56,7 +56,7 @@ impl MEsContributions {
         assert_eq!(NUM_MAT_ELEMS, 5);
 
         // Compute spinor inner products
-        let spinor = SpinorProducts::new(&event);
+        let spinor = SpinorProducts::new(event);
 
         // Compute the helicity amplitudes, formerly known as a, b_p and b_m,
         // for each possible output spin configuration
