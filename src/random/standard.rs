@@ -29,27 +29,8 @@ impl RandGenerator {
         self.rng.gen()
     }
 
-    /// Generate an array of 2 random numbers
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
-    pub fn random2(&mut self) -> [Float; 2] {
-        self.rng.gen()
-    }
-
-    /// Generate an array of 6 random numbers
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
-    pub fn random6(&mut self) -> [Float; 6] {
-        self.rng.gen()
-    }
-
-    /// Generate an array of 9 random numbers
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
-    pub fn random9(&mut self) -> [Float; 9] {
+    /// Generate an array of random numbers
+    pub fn random_array<const N: usize>(&mut self) -> [Float; N] {
         self.rng.gen()
     }
 
@@ -61,13 +42,10 @@ impl RandGenerator {
         }
     }
 
-    // Advance state as if random9() had been called
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
+    // Advance state as if random_array::<N>() had been called
     #[cfg(all(feature = "multi-threading", not(feature = "faster-threading")))]
-    pub fn skip9(&mut self) {
-        self.random9();
+    pub fn skip_array<const N: usize>(&mut self) {
+        self.random_array::<N>();
     }
 
     // Advance state in an arbitrary but maximally fast way

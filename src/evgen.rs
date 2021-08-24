@@ -146,7 +146,8 @@ impl EventGenerator {
             // original 3photons did. This enables greater performance.
 
             // Generate the basic random parameters of the particles
-            let params = SMatrix::<Float, NUM_OUTGOING, 3>::from_column_slice(&rng.random9()[..]);
+            let params =
+                SMatrix::<Float, NUM_OUTGOING, 3>::from_column_slice(&rng.random_array::<9>()[..]);
             let cos_theta = params.column(0).map(|r| 2. * r - 1.);
             let exp_min_e = params.column(1).component_mul(&params.column(2));
             let sincos_phi = Self::random_unit_2d_outgoing(rng);
@@ -220,7 +221,7 @@ impl EventGenerator {
     fn random_unit_2d_outgoing(rng: &mut RandomGenerator) -> SMatrix<Float, NUM_OUTGOING, 2> {
         // Grab three random points on the unit square
         let mut points = SMatrix::<Float, NUM_OUTGOING, 2>::from_iterator(
-            rng.random6().iter().map(|r| 2. * r - 1.),
+            rng.random_array::<6>().iter().map(|r| 2. * r - 1.),
         );
 
         // Re-roll each point until it falls on the unit disc, and is not
@@ -231,8 +232,9 @@ impl EventGenerator {
         for (point_idx, radius2) in radii2.iter_mut().enumerate() {
             const MIN_POSITIVE_2: Float = MIN_POSITIVE * MIN_POSITIVE;
             while *radius2 > 1. || *radius2 < MIN_POSITIVE_2 {
-                let new_point =
-                    SVector::<Float, 2>::from_iterator(rng.random2().iter().map(|r| 2. * r - 1.));
+                let new_point = SVector::<Float, 2>::from_iterator(
+                    rng.random_array::<2>().iter().map(|r| 2. * r - 1.),
+                );
                 points.set_row(point_idx, &new_point.transpose());
                 *radius2 = new_point.norm_squared();
             }
@@ -256,7 +258,7 @@ impl EventGenerator {
     pub fn simulate_event_batch(rng: &mut RandomGenerator, num_events: usize) {
         if cfg!(feature = "faster-evgen") {
             for _ in 0..num_events {
-                rng.skip9();
+                rng.skip_array::<9>();
                 Self::random_unit_2d_outgoing(rng);
             }
         } else {

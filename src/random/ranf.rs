@@ -68,70 +68,35 @@ impl RanfGenerator {
     /// Generate a random number between 0 and 1, with INV_MODULO granularity
     /// Roughly maps to the RN() method in the original code.
     pub fn random(&mut self) -> Float {
-        let mut buffer = [0.; 1];
-        self.random_slice(&mut buffer[..]);
-        buffer[0]
+        self.random_array::<1>()[0]
     }
 
-    /// Generate an array of 2 random numbers
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
-    pub fn random2(&mut self) -> [Float; 2] {
-        let mut buffer = [0.; 2];
-        self.random_slice(&mut buffer[..]);
-        buffer
-    }
-
-    /// Generate an array of 6 random numbers
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
-    pub fn random6(&mut self) -> [Float; 6] {
-        let mut buffer = [0.; 6];
-        self.random_slice(&mut buffer[..]);
-        buffer
-    }
-
-    /// Generate an array of 9 random numbers
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
-    pub fn random9(&mut self) -> [Float; 9] {
-        let mut buffer = [0.; 9];
-        self.random_slice(&mut buffer[..]);
-        buffer
-    }
-
-    /// Fill a slice with random numbers
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
-    #[inline(always)]
+    /// Generate an array of random numbers
     #[allow(clippy::cast_lossless)]
-    fn random_slice(&mut self, storage: &mut [Float]) {
+    pub fn random_array<const N: usize>(&mut self) -> [Float; N] {
         // Assuming that we will never need more than a round of numbers at a
         // time allows us to take implementation and performance shortcuts.
-        let request_len = storage.len();
         let round_size = self.numbers.len() - 1;
         assert!(
-            request_len <= round_size,
+            N <= round_size,
             "Current algorithm only supports a round of numbers at a time"
         );
 
         // In principle, we could reuse the remaining numbers in the active
         // round, in practice it costs more than it helps...
-        if self.index < request_len {
+        if self.index < N {
             self.reset();
             self.index = round_size;
         }
 
         // ...so it's best to generate all the numbers in one go
-        self.index -= request_len;
-        let numbers = &self.numbers[self.index + 1..self.index + 1 + request_len];
-        for (dst, src) in storage.iter_mut().zip(numbers) {
+        self.index -= N;
+        let numbers = &self.numbers[self.index + 1..self.index + 1 + N];
+        let mut result = [0.; N];
+        for (dst, src) in result.iter_mut().zip(numbers) {
             *dst = (*src as Float) * INV_MODULO;
         }
+        result
     }
 
     /// Generate 55 new random numbers between 0 and 1/FMODUL
@@ -159,13 +124,10 @@ impl RanfGenerator {
         }
     }
 
-    // Advance state as if random9() had been called
-    ///
-    /// TODO: Clean up this API once Rust has const generics
-    ///
+    // Advance state as if random_array() had been called
     #[cfg(all(feature = "multi-threading", not(feature = "faster-threading")))]
-    pub fn skip9(&mut self) {
-        self.random9();
+    pub fn skip_array<const N: usize>(&mut self) {
+        self.random_array::<N>();
     }
 
     // Just switch to another state as fast as we can
