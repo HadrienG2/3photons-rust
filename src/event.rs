@@ -56,9 +56,6 @@ impl Event {
         Self(matrix)
     }
 
-    // FIXME: Remove a big bunch of those and use direct matrix access instead
-    //        once const generics allow us to have elegant matrix slicing.
-
     /// Access the full internal 4-momentum array by reference
     pub fn all_momenta(&self) -> &EventMatrix {
         &self.0
