@@ -11,6 +11,7 @@ const INV_MODULO: Float = 1e-9;
 #[derive(Clone)]
 pub struct RanfGenerator {
     /// Seed which this generator was initialized with
+    #[cfg(all(feature = "multi-threading", feature = "faster-threading"))]
     seed: RanfInt,
 
     /// Current set of random numbers, maps to IA in original code
@@ -35,6 +36,7 @@ impl RanfGenerator {
     fn seeded_new(seed: RanfInt) -> RanfGenerator {
         // Start by zero-initializing the generator state
         let mut result = RanfGenerator {
+            #[cfg(all(feature = "multi-threading", feature = "faster-threading"))]
             seed,
             numbers: [0; 56],
             index: 55,
