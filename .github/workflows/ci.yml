@@ -302,6 +302,7 @@ jobs:
         rust:
           - beta
           - nightly
+          - 1.51.0  # MSRV (compatibility can be broken by deps updates)
         features:
           - ''
           - f32
