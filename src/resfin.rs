@@ -91,9 +91,9 @@ impl<'cfg> FinalResults<'cfg> {
             mu0[SP_M] / lambda0[SP_M],
             mu0[SP_P] / lambda0[SP_P]
         );
-        println!("mu (num): {:.4}", mu_num);
+        println!("mu (num): {mu_num:.4}");
         println!("rapport : {:.6}", mu_num / mu_th);
-        println!("mu (th) : {:.4}", mu_th);
+        println!("mu (th) : {mu_th:.4}");
     }
 
     /// Display Fawzi's (???) analytical results and compare them to the Monte

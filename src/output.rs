@@ -187,7 +187,7 @@ trait Write3p: Sized {
 impl Write3p for &str {
     // Strings work in the usual way
     fn write(self, file: &mut File) -> Result<()> {
-        write!(file, "{}", self)
+        write!(file, "{self}")
     }
 }
 
@@ -195,7 +195,7 @@ impl Write3p for usize {
     // Integers work in the usual way too
     // FIXME: Simplify and generalize this once Rust has specialization
     fn write(self, file: &mut File) -> Result<()> {
-        write!(file, "{}", self)
+        write!(file, "{self}")
     }
 }
 
@@ -246,7 +246,7 @@ fn write_engineering(writer: &mut impl Write, x: Float, sig_digits: usize) -> Re
 
             // People don't normally expect trailing zeros or decimal point in
             // naive notation, but be careful with integer numbers...
-            let str_with_zeros = format!("{:.1$}", x, precision);
+            let str_with_zeros = format!("{x:.precision$}");
             if str_with_zeros.contains('.') {
                 write!(
                     writer,

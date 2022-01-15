@@ -105,7 +105,7 @@ impl Configuration {
         };
 
         // Display it the way the C++ version used to (this eases comparisons)
-        print!("{}", config);
+        print!("{config}");
 
         // A sensible simulation must run for at least one event
         ensure!(config.num_events > 0, "Please simulate at least one event");
@@ -137,7 +137,7 @@ impl Display for Configuration {
         writeln!(fmt, "oCutpar.BCUT   : {}", self.event_cut.photon_photon_cut)?;
         writeln!(fmt, "oCutpar.EMIN   : {}", self.event_cut.e_min)?;
         let beam_phpl_cut = self.event_cut.beam_photon_plane_cut;
-        writeln!(fmt, "oCutpar.SINCUT : {}", beam_phpl_cut)?;
+        writeln!(fmt, "oCutpar.SINCUT : {beam_phpl_cut}")?;
         writeln!(fmt, "ALPHA          : {}", self.alpha)?;
         writeln!(fmt, "ALPHAZ         : {}", self.alpha_z)?;
         writeln!(fmt, "CONVERS        : {}", self.gev2_to_picobarn)?;
