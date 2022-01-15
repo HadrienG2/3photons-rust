@@ -148,7 +148,7 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
             .create(true)
             .open("pil.mc")?;
 
-        writeln!(cum_dat_file, "{}", timestamp)?;
+        writeln!(cum_dat_file, "{timestamp}")?;
 
         let res1 = res.spm2.column(A).sum();
         let res2 = res.spm2.column(B_P).sum() * cfg.beta_plus.powi(2);
@@ -254,11 +254,11 @@ fn write_engineering(writer: &mut impl Write, x: Float, sig_digits: usize) -> Re
                     str_with_zeros.trim_end_matches('0').trim_end_matches('.')
                 )
             } else {
-                write!(writer, "{}", str_with_zeros)
+                write!(writer, "{str_with_zeros}")
             }
         } else {
             // Print using scientific notation
-            write!(writer, "{:.1$e}", x, precision)
+            write!(writer, "{x:.precision$e}")
         }
     }
 }

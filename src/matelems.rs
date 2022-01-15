@@ -92,11 +92,11 @@ impl Display for MEsContributions {
         assert_eq!(NUM_SPINS, 2);
 
         for index in 0..NUM_MAT_ELEMS {
-            writeln!(fmt, "Matrix element #{}", index)?;
+            writeln!(fmt, "Matrix element #{index}")?;
             writeln!(fmt, "---  \t--+  \t-+-  \t-++  \t+--  \t+-+  \t++-  \t+++")?;
             let contribution = self.m2.row(index);
             for &matrix_elem in contribution.iter() {
-                write!(fmt, "{}  \t", matrix_elem)?;
+                write!(fmt, "{matrix_elem}  \t")?;
             }
             writeln!(fmt)?;
         }
