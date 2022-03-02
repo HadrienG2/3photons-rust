@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # NOTE: No need to put OS and rust version in key since only one is used
       - name: Cache stable toolchain
@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # NOTE: No need to put OS and rust version in key since only one is used
       - name: Cache stable toolchain
@@ -183,7 +183,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # NOTE: No dependency on OS since only one is used
       - name: Cache stable toolchain
@@ -317,7 +317,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install toolchain
         id: toolchain
