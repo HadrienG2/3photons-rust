@@ -156,7 +156,7 @@ impl<'cfg> FastAccumulator<'cfg> {
     }
 
     /// Integrate the results of the n-th simulation task
-    #[allow(clippy::significant_drop_in_scrutinee)]
+    #[allow(unknown_lints, clippy::significant_drop_in_scrutinee)]
     fn set_task_result(&self, task_id: usize, result: ResultsAccumulator<'cfg>) {
         // Initialize the accumulator or merge the task result into it
         match *self
