@@ -154,7 +154,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --features "${{ matrix.features }} -- -D warnings"
+          args: --features "${{ matrix.features }}" -- -D warnings
 
 
   # Test that 3photons runs and produces sensible output on all supported
