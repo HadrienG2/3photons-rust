@@ -30,40 +30,21 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      # NOTE: No need to put OS and rust version in key since only one is used
-      - name: Cache stable toolchain
+      - name: Set up stable toolchain
         if: github.event_name != 'schedule'
-        uses: actions/cache@v3
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          path: |
-            ~/.rustup/settings.toml
-            ~/.rustup/toolchains/stable-*
-            ~/.rustup/update-hashes/stable-*
-          key: format-toolchain
-
-      - name: Install stable toolchain
-        if: github.event_name != 'schedule'
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt
 
-      - name: Install nightly toolchain
+      - name: Set up nightly toolchain
         if: github.event_name == 'schedule'
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
           components: rustfmt
 
       - name: Check format
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        uses: actions-rust-lang/rustfmt@v1
 
 
   # Clippy and rustc lints depend on cargo features. We don't care about
@@ -89,77 +70,29 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      # NOTE: No need to put OS and rust version in key since only one is used
-      - name: Cache stable toolchain
+      - name: Set up stable toolchain
         if: github.event_name != 'schedule'
-        uses: actions/cache@v3
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          path: |
-            ~/.rustup/settings.toml
-            ~/.rustup/toolchains/stable-*
-            ~/.rustup/update-hashes/stable-*
-          key: lints-toolchain
-
-      - name: Install stable toolchain
-        id: toolchain-stable
-        if: github.event_name != 'schedule'
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: clippy
 
-      - name: Install nightly toolchain
+      - name: Set up nightly toolchain
         if: github.event_name == 'schedule'
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
           components: clippy
-
-      - name: Make cargo feature set hashable
-        run: echo "${{ matrix.features }}" > __features.log
-
-      - name: Cache Cargo registry and index
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/git
-            ~/.cargo/registry
-          key: alljobs-deps-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            alljobs-deps-features_${{ hashFiles('__features.log') }}
-            alljobs-deps
-
-      # NOTE: No dependency on OS since only one is used
-      - name: Cache stable Cargo check target directory
-        if: github.event_name != 'schedule'
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
-            lints-target-rust_${{ steps.toolchain-stable.outputs.rustc_hash }}
 
       - name: Type-check the program
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --features "${{ matrix.features }}"
+        run: cargo check --features "${{ matrix.features }}"
 
       - name: Check clippy lints
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --features "${{ matrix.features }}" -- -D warnings
+        run: cargo clippy --features "${{ matrix.features }}" -- -D warnings
 
 
   # Test that 3photons runs and produces sensible output on all supported
   # combinations of rust version and features.
-  run-stable:
+  run-contrib:
     if: github.event_name != 'schedule'
 
     runs-on: ubuntu-latest
@@ -185,55 +118,13 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      # NOTE: No dependency on OS since only one is used
-      - name: Cache stable toolchain
-        if: github.event_name != 'schedule'
-        uses: actions/cache@v3
+      - name: Set up toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          path: |
-            ~/.rustup/settings.toml
-            ~/.rustup/toolchains/${{ matrix.rust }}-*
-            ~/.rustup/update-hashes/${{ matrix.rust }}-*
-          key: run-toolchain-rust_${{ matrix.rust }}
-
-      - name: Install toolchain
-        id: toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Make cargo feature set hashable
-        run: echo "${{ matrix.features }}" > __features.log
-
-      - name: Cache Cargo registry and index
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/git
-            ~/.cargo/registry
-          key: alljobs-deps-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            alljobs-deps-features_${{ hashFiles('__features.log') }}
-            alljobs-deps
-
-      # NOTE: No dependency on OS since only one is used
-      - name: Cache stable Cargo run target directory
-        if: github.event_name != 'schedule'
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}-features_${{ hashFiles('__features.log') }}
-            run-target-rust_${{ steps.toolchain.outputs.rustc_hash }}
 
       - name: Build the program
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --features "${{ matrix.features }}"
+        run: cargo build --release --features "${{ matrix.features }}"
 
       - name: Run the program
         run: ./target/release/trois_photons | tee stdout.log
@@ -287,7 +178,7 @@ jobs:
           numdiff/bin/numdiff $PRECISION -V "reference/stdout.log-features_${{ matrix.features }}" stdout.log
 
 
-  # Variant of the run-stable job for unstable periodical builds
+  # Check compatibility with newer Rust/deps versions (scheduled CI)
   #
   # FIXME: There should be a way to use conditional build matrices without
   #        duplicating the whole job recipe...
@@ -319,33 +210,13 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Install toolchain
-        id: toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Set up toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Make cargo feature set hashable
-        run: echo "${{ matrix.features }}" > __features.log
-
-      - name: Cache Cargo registry and index
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/git
-            ~/.cargo/registry
-          key: alljobs-deps-features_${{ hashFiles('__features.log') }}-lock_${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            alljobs-deps-features_${{ hashFiles('__features.log') }}
-            alljobs-deps
 
       - name: Build the program
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --features "${{ matrix.features }}"
+        run: cargo build --release --features "${{ matrix.features }}"
 
       - name: Run the program
         run: ./target/release/trois_photons | tee stdout.log
