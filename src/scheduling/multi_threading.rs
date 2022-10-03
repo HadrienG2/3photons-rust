@@ -22,7 +22,7 @@ pub fn run_simulation_impl<'cfg>(
     assert!(num_events > 0, "Must simulate at least one event");
 
     // We know in advance how many batches of event we will process
-    let num_batches = num_events / EVENT_BATCH_SIZE + (num_events % EVENT_BATCH_SIZE != 0).into();
+    let num_batches = num_events / EVENT_BATCH_SIZE + (num_events % EVENT_BATCH_SIZE != 0) as usize;
 
     // The results of parallel tasks will be aggregated...
     let accumulator = {
