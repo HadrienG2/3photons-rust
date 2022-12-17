@@ -169,7 +169,7 @@ impl<'cfg> FinalResults<'cfg> {
             sig * 3.,
             sig_p / (3. * sig)
         );
-        println!("       : {:.5}", mc_p);
+        println!("       : {mc_p:.5}");
         println!(
             "       : {:.6} | {:.8} | {:.2}",
             mc_p / sig_p - 1.,
@@ -183,7 +183,7 @@ impl<'cfg> FinalResults<'cfg> {
             sig * 5.,
             sig_m / (5. * sig)
         );
-        println!("       : {:.5}", mc_m);
+        println!("       : {mc_m:.5}");
         println!(
             "       : {:.6} | {:.9} | {:.2}",
             mc_m / sig_m - 1.,
