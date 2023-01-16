@@ -4,7 +4,7 @@ use crate::{
     momentum::{Momentum, E, MOMENTUM_DIM},
     numeric::Float,
 };
-use nalgebra::{Const, MatrixSlice, SMatrix, SVector};
+use nalgebra::{Const, MatrixView, SMatrix, SVector};
 use std::fmt::Display;
 
 /// Number of incoming particles
@@ -25,8 +25,8 @@ pub type ParticleMatrix<T> = SMatrix<T, NUM_PARTICLES, NUM_PARTICLES>;
 /// Event data matrix type (columns are 4-coordinates, rows are particles)
 type EventMatrix = SMatrix<Float, NUM_PARTICLES, MOMENTUM_DIM>;
 
-/// Slice of the event data matrix containing only outgoing particles
-type OutgoingMomentaSlice<'matrix> = MatrixSlice<
+/// View of the event data matrix containing only outgoing particles
+type OutgoingMomentaView<'matrix> = MatrixView<
     'matrix,
     Float,
     Const<NUM_OUTGOING>,
@@ -64,7 +64,7 @@ impl Event {
     /// Extract the 4-momentum of a single particle (internal for now)
     ///
     /// We return an owned momentum vector because that's more convenient to
-    /// handle than a slice and the compiler is smart enough to elide the copy.
+    /// handle than a view and the compiler is smart enough to elide the copy.
     ///
     fn momentum(&self, par: usize) -> Momentum {
         Momentum::from_iterator(self.0.row(par).iter().copied())
@@ -87,7 +87,7 @@ impl Event {
     }
 
     /// Access the outgoing 4-momenta
-    pub fn outgoing_momenta(&self) -> OutgoingMomentaSlice {
+    pub fn outgoing_momenta(&self) -> OutgoingMomentaView {
         self.0.fixed_rows::<NUM_OUTGOING>(NUM_INCOMING)
     }
 
