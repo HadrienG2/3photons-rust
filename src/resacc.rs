@@ -1,4 +1,5 @@
-///! This module allows integrating simulation results across generated events
+//! This module allows integrating simulation results across generated events
+
 use crate::{
     config::Configuration,
     event::{NUM_OUTGOING, NUM_SPINS},
