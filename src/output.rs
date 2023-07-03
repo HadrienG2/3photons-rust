@@ -8,13 +8,15 @@ use crate::{
     numeric::{floats, Float},
     resfin::FinalResults,
 };
+use anyhow::Result;
 use num_traits::clamp_max;
 use prefix_num_ops::real::*;
 use std::{
     fs::{File, OpenOptions},
-    io::{Result, Write},
+    io::{self, Write},
     time::Duration,
 };
+use time::OffsetDateTime;
 
 // Number of significant digits in file output
 //
@@ -31,8 +33,11 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
     res.fawzi();
 
     // Compute a timestamp of when the run ended
-    let current_time = chrono::Utc::now();
-    let timestamp = current_time.format("%d-%b-%y   %T").to_string();
+    let current_time = OffsetDateTime::now_utc();
+    let time_format = time::format_description::parse(
+        "[day]-[month repr:short]-[year repr:last_two] [hour]:[minute]:[second]",
+    )?;
+    let timestamp = current_time.format(&time_format)?;
 
     // Write execution timings to a file
     {
@@ -172,7 +177,7 @@ pub fn dump_results(cfg: &Configuration, res: &FinalResults, elapsed_time: Durat
 }
 
 /// Text output facility that mimicks 3photons' file output styling
-fn writeln_3p(file: &mut File, data: impl Write3p) -> Result<()> {
+fn writeln_3p(file: &mut File, data: impl Write3p) -> io::Result<()> {
     write!(file, " ")?;
     data.write(file)?;
     writeln!(file)
@@ -181,12 +186,12 @@ fn writeln_3p(file: &mut File, data: impl Write3p) -> Result<()> {
 /// Trait implemented by things which can be printed The 3photons Way (tm)
 trait Write3p: Sized {
     /// Write down `self` to the output file using 3photons style
-    fn write(self, file: &mut File) -> Result<()>;
+    fn write(self, file: &mut File) -> io::Result<()>;
 }
 
 impl Write3p for &str {
     // Strings work in the usual way
-    fn write(self, file: &mut File) -> Result<()> {
+    fn write(self, file: &mut File) -> io::Result<()> {
         write!(file, "{self}")
     }
 }
@@ -194,21 +199,21 @@ impl Write3p for &str {
 impl Write3p for usize {
     // Integers work in the usual way too
     // FIXME: Simplify and generalize this once Rust has specialization
-    fn write(self, file: &mut File) -> Result<()> {
+    fn write(self, file: &mut File) -> io::Result<()> {
         write!(file, "{self}")
     }
 }
 
 impl Write3p for Float {
     // 3photons used %g for floats, this is a close approximation
-    fn write(self, file: &mut File) -> Result<()> {
+    fn write(self, file: &mut File) -> io::Result<()> {
         write_engineering(file, self, SIG_DIGITS)
     }
 }
 
 impl<T: Write3p> Write3p for (&str, T) {
     // Key-value output that uses fixed-size columns for better readability
-    fn write(self, file: &mut File) -> Result<()> {
+    fn write(self, file: &mut File) -> io::Result<()> {
         write!(*file, "{:<31}: ", self.0)?;
         self.1.write(file)
     }
@@ -222,7 +227,7 @@ impl<T: Write3p> Write3p for (&str, T) {
 /// up larger than the scientific notation, or so large that we would be forced
 /// to print more significant digits than requested.
 ///
-fn write_engineering(writer: &mut impl Write, x: Float, sig_digits: usize) -> Result<()> {
+fn write_engineering(writer: &mut impl Write, x: Float, sig_digits: usize) -> io::Result<()> {
     let mut precision = sig_digits - 1;
     if x == 0. {
         // Zero is special because you can't take its log

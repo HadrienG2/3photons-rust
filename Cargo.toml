@@ -23,11 +23,11 @@ standard-random = ["rand", "rand_xoshiro"]
 
 [dependencies]
 anyhow = "1.0"
-chrono = "0.4"
 prefix_num_ops = "0.1"
 nalgebra = "0.32.2"
 num-complex = "0.4"
 num-traits = "0.2"
+time = { version = "0.3", features = ["formatting"] }
 # These deps are only needed when some features are enabled
 rand = { version = "0.8", features = ["min_const_gen"], optional = true }
 rand_xoshiro = { version = "0.6", optional = true }
