@@ -3,7 +3,7 @@ name = "trois_photons"
 version = "2.0.0"
 authors = ["Hadrien G. <knights_of_ni@gmx.com>"]
 edition = "2021"
-rust-version = "1.61.0"
+rust-version = "1.65.0"
 
 
 [features]
