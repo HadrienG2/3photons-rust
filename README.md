@@ -1,10 +1,10 @@
 # Rust version of 3photons
 
 [![Continuous Integration](https://github.com/HadrienG2/3photons-rust/workflows/Continuous%20Integration/badge.svg)](https://github.com/HadrienG2/3photons-rust/actions?query=workflow%3A%22Continuous+Integration%22)
-![Requires rustc 1.65+](https://img.shields.io/badge/rustc-1.65+-red.svg)
+![Requires rustc 1.67+](https://img.shields.io/badge/rustc-1.67+-red.svg)
 
 To run this version, you will need recent versions of the rustc compiler and
-Cargo package manager, as featured in the Rust v1.65.0 release and newer. You
+Cargo package manager, as featured in the Rust v1.67.0 release and newer. You
 can find installation instructions at <https://www.rust-lang.org/install.html>.
 
 Once you're ready, the program can be built and run with the following command:

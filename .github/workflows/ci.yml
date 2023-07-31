@@ -111,7 +111,7 @@ jobs:
       matrix:
         rust:
           - stable
-          - 1.65.0  # Minimum supported Rust version
+          - 1.67.0  # Minimum supported Rust version
         features:
           - ''
           - f32
@@ -203,7 +203,7 @@ jobs:
         rust:
           - beta
           - nightly
-          - 1.65.0  # MSRV (compatibility can be broken by deps updates)
+          - 1.67.0  # MSRV (compatibility can be broken by deps updates)
         features:
           - ''
           - f32
