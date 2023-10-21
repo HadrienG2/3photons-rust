@@ -22,9 +22,9 @@ standard-random = ["rand", "rand_xoshiro"]
 
 
 [dependencies]
-anyhow = "1.0"
+eyre = "0.6"
 prefix_num_ops = "0.1"
-nalgebra = "0.32.2"
+nalgebra = { version = "0.32.2", default-features = false, features = ["macros", "std"] }
 num-complex = "0.4"
 num-traits = "0.2"
 time = { version = "0.3", features = ["formatting"] }

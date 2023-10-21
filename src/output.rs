@@ -7,8 +7,8 @@ use crate::{
     matelems::{A, B_M, B_P, NUM_MAT_ELEMS, R_MX},
     numeric::{floats, Float},
     resfin::FinalResults,
+    Result,
 };
-use anyhow::Result;
 use num_traits::clamp_max;
 use prefix_num_ops::real::*;
 use std::{

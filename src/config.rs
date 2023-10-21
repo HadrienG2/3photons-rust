@@ -1,7 +1,7 @@
 //! Mechanism for loading and sharing the simulation configuration
 
 use crate::{evcut::EventCut, numeric::Float, Result};
-use anyhow::{ensure, format_err, Context, Error};
+use eyre::{ensure, eyre, Report, WrapErr};
 use std::{fmt::Display, fs::File, io::Read, str::FromStr};
 
 /// Simulation configuration
@@ -77,7 +77,7 @@ impl Configuration {
             config_iter
                 .next()
                 .map(|data| ConfigItem::new(name, data))
-                .ok_or_else(|| format_err!("Missing configuration of {}", name))
+                .ok_or_else(|| eyre!("missing configuration of {}", name))
         };
 
         // Decode the configuration items into concrete values
@@ -174,8 +174,8 @@ impl<'data> ConfigItem<'data> {
     {
         self.data
             .parse::<T>()
-            .map_err(Error::new)
-            .context(format!("Could not parse configuration of {}", self.name))
+            .map_err(Report::new)
+            .wrap_err_with(|| eyre!("could not parse configuration of {}", self.name))
     }
 
     /// Parse this data using special logic which handles Fortran's bool syntax
