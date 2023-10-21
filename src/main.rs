@@ -61,24 +61,22 @@ mod resfin;
 mod scheduling;
 mod spinor;
 
-use anyhow::Context;
-
 use crate::{
     config::Configuration, coupling::Couplings, evgen::EventGenerator, matelems::MEsContributions,
     random::RandomGenerator, resacc::ResultsAccumulator,
 };
-
+use eyre::WrapErr;
 use std::time::Instant;
 
-/// We'll use anyhow's type-erased result type throughout the application
-type Result<T> = anyhow::Result<T>;
+/// We'll use eyre's type-erased result type throughout the application
+type Result<T> = eyre::Result<T>;
 
 /// This will act as our main function, with suitable error handling
 fn main() -> Result<()> {
     // ### CONFIGURATION READOUT ###
 
     // Load the configuration from its file
-    let cfg = Configuration::load("valeurs").context("Failed to load the configuration")?;
+    let cfg = Configuration::load("valeurs").wrap_err("failed to load the configuration")?;
 
     // ### SIMULATION INITIALIZATION ###
 
@@ -140,7 +138,7 @@ fn main() -> Result<()> {
     let elapsed_time = start_time.elapsed();
 
     // Send the results to the standard output and to disk
-    output::dump_results(&cfg, &result, elapsed_time).context("Failed to output the results")?;
+    output::dump_results(&cfg, &result, elapsed_time).wrap_err("failed to output the results")?;
 
     // ...and we're done
     Ok(())
