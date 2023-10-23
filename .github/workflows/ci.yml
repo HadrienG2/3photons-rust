@@ -4,28 +4,32 @@
 #   minimal supported Rust version and the current stable Rust version.
 # - Two times a month, a scheduled job makes sure that the code remains
 #   compatible and lint-free on upcoming Rust toolchains (beta and nightly).
-#
-# No caching of Rust toolchains or target directories is performed on unstable
-# runs, since those runs are rare and the caches would be invalidated inbetween
-# two of them (especially for nightly toolchains).
+
+name: Continuous Integration
 
 on:
   push:
   pull_request:
   schedule:
-    - cron: '0 0 3,17 * *'
+    - cron: '0 0 2/15 * *'
 
-name: Continuous Integration
+# Cancel existing jobs on new pushes to the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 env:
   RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  MINIMAL_RUST: 1.67.0  # Minimal Supported Rust Version
 
 jobs:
-  # Formatter output doesn't depend on cargo features, and only needs to be
-  # tested on the latest supported release of each CI run.
+  # Formatter output doesn't depend on cargo features or OS.
+  #
+  # We don't care about warnings on the minimum supported Rust version, only
+  # about building and running correctly.
   format:
-    # Only run on "pull_request" event for external PRs. This is to avoid
-    # duplicate builds for PRs created from internal branches.
+    # Don't run CI twice when a PR is created from a branch internal to the repo
     if: github.event_name == 'push' || github.event_name == 'schedule' || github.event.pull_request.head.repo.full_name != github.repository
 
     runs-on: ubuntu-latest
@@ -48,14 +52,16 @@ jobs:
           components: rustfmt
 
       - name: Check format
-        uses: actions-rust-lang/rustfmt@v1
+        run: cargo fmt --all --check
 
 
-  # Clippy and rustc lints depend on cargo features. We don't care about
-  # warnings on the minimum supported version, only about building and running.
+  # Lints depend on cargo features, but not on OS since there's no OS-specific
+  # code path in this crate.
+  #
+  # We don't care about warnings on the minimum supported Rust version, only
+  # about building and running correctly.
   lints:
-    # Only run on "pull_request" event for external PRs. This is to avoid
-    # duplicate builds for PRs created from internal branches.
+    # Don't run CI twice when a PR is created from a branch internal to the repo
     if: github.event_name == 'push' || github.event_name == 'schedule' || github.event.pull_request.head.repo.full_name != github.repository
 
     runs-on: ubuntu-latest
@@ -91,18 +97,15 @@ jobs:
           toolchain: nightly
           components: clippy
 
-      - name: Type-check the program
-        run: cargo check --features "${{ matrix.features }}"
-
       - name: Check clippy lints
-        run: cargo clippy --features "${{ matrix.features }}" -- -D warnings
+        run: cargo clippy --workspace --all-targets --features "${{ matrix.features }}" -- -D warnings
 
 
   # Test that 3photons runs and produces sensible output on all supported
   # combinations of rust version and features.
   run-contrib:
-    # Only run on "pull_request" event for external PRs. This is to avoid
-    # duplicate builds for PRs created from internal branches.
+    # Don't run CI twice when a PR is created from a branch internal to the repo
+    # Don't run in scheduled jobs, that's what run-scheduled is for
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
 
     runs-on: ubuntu-latest
@@ -111,7 +114,7 @@ jobs:
       matrix:
         rust:
           - stable
-          - 1.67.0  # Minimum supported Rust version
+          - $MINIMAL_RUST  # Minimum supported Rust version
         features:
           - ''
           - f32
@@ -193,7 +196,7 @@ jobs:
   # FIXME: There should be a way to use conditional build matrices without
   #        duplicating the whole job recipe...
   #
-  run-unstable:
+  run-scheduled:
     if: github.event_name == 'schedule'
 
     runs-on: ubuntu-latest
@@ -203,7 +206,7 @@ jobs:
         rust:
           - beta
           - nightly
-          - 1.67.0  # MSRV (compatibility can be broken by deps updates)
+          - $MINIMAL_RUST  # Compatibility can be broken by deps updates
         features:
           - ''
           - f32
