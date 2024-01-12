@@ -24,6 +24,16 @@ env:
   MINIMAL_RUST: 1.67.0  # Minimal Supported Rust Version
 
 jobs:
+  # Workaround for github CI dropping env var expansion in matrix strategy
+  matrix_vars:
+    runs-on: ubuntu-latest
+    outputs:
+      MINIMAL_RUST: ${{ env.MINIMAL_RUST }}
+    steps:
+      - name: Forward env var to output
+        run: echo "MINIMAL_RUST=${{ env.MINIMAL_RUST }}" >> $GITHUB_OUTPUT
+
+
   # Formatter output doesn't depend on cargo features or OS.
   #
   # We don't care about warnings on the minimum supported Rust version, only
@@ -110,11 +120,13 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    needs: matrix_vars
+
     strategy:
       matrix:
         rust:
           - stable
-          - $MINIMAL_RUST  # Minimum supported Rust version
+          - ${{ needs.matrix_vars.outputs.MINIMAL_RUST }}
         features:
           - ''
           - f32
@@ -201,12 +213,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    needs: matrix_vars
+
     strategy:
       matrix:
         rust:
           - beta
           - nightly
-          - $MINIMAL_RUST  # Compatibility can be broken by deps updates
+          - ${{ needs.matrix_vars.outputs.MINIMAL_RUST }}
         features:
           - ''
           - f32
